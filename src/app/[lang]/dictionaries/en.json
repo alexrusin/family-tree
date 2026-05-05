@@ -1,0 +1,59 @@
+{
+  "meta": {
+    "title": "Generations — Preserve Your Family Heritage",
+    "description": "Build a living record of your family's journey. Add members, define relationships, and share your tree with loved ones."
+  },
+  "nav": {
+    "logo": "Generations",
+    "login": "Log in",
+    "signup": "Sign up",
+    "langToggle": "Русский"
+  },
+  "hero": {
+    "badge": "Your legacy begins here",
+    "headline": "Discover your heritage.",
+    "headlineSub": "One branch at a time.",
+    "body": "Build a living record of your family's journey. Generations provides a warm, secure space to document stories, preserve portraits, and connect across generations.",
+    "ctaPrimary": "Start Your Tree",
+    "ctaSecondary": "Log in"
+  },
+  "features": {
+    "sectionHeadline": "Built for Privacy & Connection",
+    "sectionBody": "We treat your family history with the same care you do—safeguarding your memories for the next generation.",
+    "security": {
+      "title": "Vault-Grade Security",
+      "body": "Your data is encrypted and private by default. You control exactly who sees your tree and what information is shared with others."
+    },
+    "collaboration": {
+      "title": "Collaborative Research",
+      "body": "Invite siblings, cousins, and elders to contribute. Piece together your history together without overwriting each other's work."
+    }
+  },
+  "cta": {
+    "headline": "Your story is waiting to be told.",
+    "body": "Be among the first families to preserve their heritage with Generations.",
+    "button": "Create Your Free Account",
+    "badgeNoCard": "No Credit Card Required",
+    "badgeGdpr": "GDPR Compliant"
+  },
+  "footer": {
+    "copyright": "© 2026 Generations",
+    "exploreTitle": "Explore",
+    "links": {
+      "login": "Log in",
+      "signup": "Sign up"
+    },
+    "legalTitle": "Legal",
+    "legalLinks": {
+      "privacy": "Privacy Policy",
+      "support": "Support"
+    }
+  },
+  "treeDemo": {
+    "you": "You",
+    "grandparent1": "Grandparent",
+    "grandparent2": "Grandparent",
+    "parent1": "Parent",
+    "parent2": "Parent"
+  }
+}
