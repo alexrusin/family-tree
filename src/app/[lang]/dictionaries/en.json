@@ -55,5 +55,21 @@
     "grandparent2": "Grandparent",
     "parent1": "Parent",
     "parent2": "Parent"
+  },
+  "dashboard": {
+    "title": "My Legacy",
+    "subtitle": "Manage and explore your genealogical journey across generations.",
+    "createTree": "Create New Tree",
+    "myTrees": "My Trees",
+    "sharedWithMe": "Shared With Me",
+    "members": "Members",
+    "owner": "Owner",
+    "lastEdit": "Last Edit",
+    "emptyTitle": "No trees here yet",
+    "emptyBody": "Trees shared with you by collaborators will appear here.",
+    "cardMenuRename": "Rename",
+    "cardMenuDelete": "Delete",
+    "navFamilyTree": "Family Tree",
+    "navGallery": "Gallery"
   }
 }
