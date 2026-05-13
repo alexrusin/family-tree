@@ -59,6 +59,7 @@
   "dashboard": {
     "title": "Моё наследие",
     "subtitle": "Управляйте своим генеалогическим путешествием сквозь поколения.",
+    "logout": "Выйти",
     "createTree": "Создать дерево",
     "myTrees": "Мои деревья",
     "sharedWithMe": "Доступные мне",
@@ -71,5 +72,114 @@
     "cardMenuDelete": "Удалить",
     "navFamilyTree": "Семейное дерево",
     "navGallery": "Галерея"
+  },
+  "auth": {
+    "register": {
+      "title": "Создайте аккаунт",
+      "subtitle": "Начните сохранять историю вашей семьи уже сегодня.",
+      "nameLabel": "Полное имя",
+      "namePlaceholder": "Алекс Русин",
+      "emailLabel": "Email",
+      "emailPlaceholder": "legacy@example.com",
+      "passwordLabel": "Пароль",
+      "passwordPlaceholder": "Минимум 8 символов",
+      "confirmPasswordLabel": "Подтвердите пароль",
+      "confirmPasswordPlaceholder": "Повторите пароль",
+      "passwordHint": "Используйте не менее 8 символов и добавьте цифру или спецсимвол.",
+      "submit": "Создать аккаунт",
+      "submitting": "Создаем аккаунт...",
+      "alreadyHaveAccount": "Уже есть аккаунт?",
+      "loginLink": "Войти",
+      "errors": {
+        "requiredName": "Введите имя.",
+        "requiredEmail": "Введите email.",
+        "invalidEmail": "Введите корректный email.",
+        "requiredPassword": "Введите пароль.",
+        "requiredConfirmPassword": "Подтвердите пароль.",
+        "passwordStrength": "Пароль должен быть не короче 8 символов и содержать цифру или спецсимвол.",
+        "passwordMismatch": "Пароли не совпадают.",
+        "generic": "Не удалось создать аккаунт. Попробуйте еще раз."
+      }
+    },
+    "login": {
+      "title": "С возвращением",
+      "subtitle": "Войдите, чтобы продолжить ваше путешествие в прошлое.",
+      "brandBody": "У каждой семьи есть своя история. Начните сохранять вашу уже сегодня.",
+      "heritageTagline": "Сохраняем историю 4 поколений",
+      "emailLabel": "Email",
+      "emailPlaceholder": "name@example.com",
+      "passwordLabel": "Пароль",
+      "passwordPlaceholder": "••••••••",
+      "rememberMe": "Оставаться в системе",
+      "submit": "Войти",
+      "submitting": "Входим...",
+      "forgotPassword": "Забыли пароль?",
+      "noAccount": "Нет аккаунта?",
+      "signupLink": "Зарегистрироваться",
+      "errors": {
+        "requiredEmail": "Введите email.",
+        "invalidEmail": "Введите корректный email.",
+        "requiredPassword": "Введите пароль.",
+        "invalidCredentials": "Неверный email или пароль.",
+        "generic": "Не удалось выполнить вход. Попробуйте еще раз."
+      }
+    },
+    "forgotPassword": {
+      "title": "Сброс пароля",
+      "body": "Введите email, чтобы сбросить пароль. Мы отправим ссылку для восстановления доступа.",
+      "emailLabel": "Email",
+      "emailPlaceholder": "например, heirloom@family.com",
+      "submit": "Отправить ссылку",
+      "submitting": "Отправляем...",
+      "successMessage": "Если аккаунт с таким email существует, мы отправили ссылку для сброса.",
+      "backToLogin": "Вернуться ко входу",
+      "errors": {
+        "requiredEmail": "Введите email.",
+        "invalidEmail": "Введите корректный email.",
+        "generic": "Не удалось отправить ссылку. Попробуйте еще раз."
+      }
+    },
+    "resetPassword": {
+      "title": "Новый пароль",
+      "body": "Введите новый пароль, чтобы восстановить доступ к аккаунту.",
+      "newPasswordLabel": "Новый пароль",
+      "newPasswordPlaceholder": "Минимум 8 символов",
+      "confirmPasswordLabel": "Подтвердите пароль",
+      "confirmPasswordPlaceholder": "Повторите пароль",
+      "passwordHint": "Используйте не менее 8 символов и добавьте цифру или спецсимвол.",
+      "submit": "Сбросить пароль",
+      "submitting": "Сбрасываем...",
+      "invalidToken": "Ссылка для сброса недействительна или истекла.",
+      "success": "Пароль обновлен. Перенаправляем на страницу входа...",
+      "errors": {
+        "requiredPassword": "Введите пароль.",
+        "requiredConfirmPassword": "Подтвердите пароль.",
+        "passwordStrength": "Пароль должен быть не короче 8 символов и содержать цифру или спецсимвол.",
+        "passwordMismatch": "Пароли не совпадают.",
+        "generic": "Не удалось сбросить пароль. Попробуйте еще раз."
+      },
+      "email": {
+        "intro": "Нажмите на ссылку ниже, чтобы сбросить пароль.",
+        "cta": "Сбросить пароль",
+        "expiry": "Ссылка действует 1 час.",
+        "fallback": "Если кнопка не работает, скопируйте и вставьте этот URL в браузер:"
+      }
+    },
+    "verifyEmail": {
+      "title": "Проверьте почту",
+      "body": "Мы отправили письмо с ссылкой для подтверждения. Откройте его, чтобы перейти в ваш кабинет.",
+      "resend": "Отправить снова",
+      "resending": "Отправляем...",
+      "resendSuccess": "Письмо для подтверждения отправлено повторно.",
+      "resendError": "Не удалось отправить письмо повторно. Попробуйте еще раз.",
+      "missingEmail": "Email отсутствует. Вернитесь к регистрации и попробуйте снова.",
+      "changeEmail": "Изменить email",
+      "wrongAddressPrompt": "Ввели неправильный адрес?",
+      "checkSpam": "Если письма нет во входящих, проверьте папку Спам."
+    },
+    "emailSubjects": {
+      "verify": "Подтвердите ваш email",
+      "reset": "Сброс пароля"
+    }
   }
 }

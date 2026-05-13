@@ -59,6 +59,7 @@
   "dashboard": {
     "title": "My Legacy",
     "subtitle": "Manage and explore your genealogical journey across generations.",
+    "logout": "Log out",
     "createTree": "Create New Tree",
     "myTrees": "My Trees",
     "sharedWithMe": "Shared With Me",
@@ -71,5 +72,114 @@
     "cardMenuDelete": "Delete",
     "navFamilyTree": "Family Tree",
     "navGallery": "Gallery"
+  },
+  "auth": {
+    "register": {
+      "title": "Create your account",
+      "subtitle": "Start preserving your family story today.",
+      "nameLabel": "Full name",
+      "namePlaceholder": "Alex Rusin",
+      "emailLabel": "Email address",
+      "emailPlaceholder": "legacy@example.com",
+      "passwordLabel": "Password",
+      "passwordPlaceholder": "At least 8 characters",
+      "confirmPasswordLabel": "Confirm password",
+      "confirmPasswordPlaceholder": "Repeat your password",
+      "passwordHint": "Use at least 8 characters and include a number or symbol.",
+      "submit": "Create account",
+      "submitting": "Creating account...",
+      "alreadyHaveAccount": "Already have an account?",
+      "loginLink": "Log in",
+      "errors": {
+        "requiredName": "Please enter your name.",
+        "requiredEmail": "Please enter your email.",
+        "invalidEmail": "Enter a valid email address.",
+        "requiredPassword": "Please enter a password.",
+        "requiredConfirmPassword": "Please confirm your password.",
+        "passwordStrength": "Password must be at least 8 characters and include a number or symbol.",
+        "passwordMismatch": "Passwords do not match.",
+        "generic": "We could not create your account. Please try again."
+      }
+    },
+    "login": {
+      "title": "Welcome Back",
+      "subtitle": "Sign in to continue your journey through the past.",
+      "brandBody": "Every family has a story. Begin documenting yours today.",
+      "heritageTagline": "Preserving 4 generations of history",
+      "emailLabel": "Email Address",
+      "emailPlaceholder": "name@example.com",
+      "passwordLabel": "Password",
+      "passwordPlaceholder": "••••••••",
+      "rememberMe": "Keep me logged in",
+      "submit": "Log In",
+      "submitting": "Signing in...",
+      "forgotPassword": "Forgot Password?",
+      "noAccount": "Don't have an account?",
+      "signupLink": "Sign Up",
+      "errors": {
+        "requiredEmail": "Please enter your email.",
+        "invalidEmail": "Enter a valid email address.",
+        "requiredPassword": "Please enter a password.",
+        "invalidCredentials": "Invalid email or password.",
+        "generic": "We could not sign you in. Please try again."
+      }
+    },
+    "forgotPassword": {
+      "title": "Reset Password",
+      "body": "Enter your email to reset your password. We'll send you a link to get back into your account.",
+      "emailLabel": "Email Address",
+      "emailPlaceholder": "e.g. heirloom@family.com",
+      "submit": "Send Reset Link",
+      "submitting": "Sending...",
+      "successMessage": "If an account exists for this email, we sent a reset link.",
+      "backToLogin": "Back to Log In",
+      "errors": {
+        "requiredEmail": "Please enter your email.",
+        "invalidEmail": "Enter a valid email address.",
+        "generic": "We could not send a reset link. Please try again."
+      }
+    },
+    "resetPassword": {
+      "title": "Create New Password",
+      "body": "Enter a new password to restore access to your account.",
+      "newPasswordLabel": "New Password",
+      "newPasswordPlaceholder": "At least 8 characters",
+      "confirmPasswordLabel": "Confirm Password",
+      "confirmPasswordPlaceholder": "Repeat your password",
+      "passwordHint": "Use at least 8 characters and include a number or symbol.",
+      "submit": "Reset Password",
+      "submitting": "Resetting...",
+      "invalidToken": "This reset link is invalid or has expired.",
+      "success": "Password updated. Redirecting to login...",
+      "errors": {
+        "requiredPassword": "Please enter a password.",
+        "requiredConfirmPassword": "Please confirm your password.",
+        "passwordStrength": "Password must be at least 8 characters and include a number or symbol.",
+        "passwordMismatch": "Passwords do not match.",
+        "generic": "We could not reset your password. Please try again."
+      },
+      "email": {
+        "intro": "Click the link below to reset your password.",
+        "cta": "Reset password",
+        "expiry": "This link expires in 1 hour.",
+        "fallback": "If the button does not work, copy and paste this URL into your browser:"
+      }
+    },
+    "verifyEmail": {
+      "title": "Verify your email",
+      "body": "To begin preserving your family's legacy, please confirm your email address. We've sent a secure link to your inbox.",
+      "resend": "Resend Email",
+      "resending": "Sending...",
+      "resendSuccess": "Verification email sent again.",
+      "resendError": "Could not resend verification email. Try again.",
+      "missingEmail": "Email is missing. Return to registration and try again.",
+      "changeEmail": "Change Email",
+      "wrongAddressPrompt": "Entered the wrong address?",
+      "checkSpam": "Check your spam folder if you don't see it."
+    },
+    "emailSubjects": {
+      "verify": "Verify your email address",
+      "reset": "Reset your password"
+    }
   }
 }

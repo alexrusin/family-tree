@@ -1,14 +1,16 @@
 import Link from 'next/link'
 import LanguageToggle from './LanguageToggle'
+import LogoutButton from './LogoutButton'
 
 interface HeaderProps {
   lang: string
   langToggleLabel: string
   navFamilyTree: string
   navGallery: string
+  logoutLabel: string
 }
 
-export default function Header({ lang, langToggleLabel, navFamilyTree, navGallery }: HeaderProps) {
+export default function Header({ lang, langToggleLabel, navFamilyTree, navGallery, logoutLabel }: HeaderProps) {
   return (
     <header className="bg-[#FAFAF9] flex justify-between items-center w-full px-6 py-3 border-b border-stone-200 shadow-sm shadow-amber-900/5 fixed top-0 z-50">
       <div className="flex items-center gap-8">
@@ -36,6 +38,7 @@ export default function Header({ lang, langToggleLabel, navFamilyTree, navGaller
 
       <div className="flex items-center gap-3">
         <LanguageToggle label={langToggleLabel} currentLang={lang} />
+        <LogoutButton lang={lang} label={logoutLabel} />
         {/* Placeholder avatar */}
         <div className="w-9 h-9 rounded-full bg-amber-100 border-2 border-primary-container flex items-center justify-center text-amber-900 font-semibold text-sm select-none">
           A

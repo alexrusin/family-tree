@@ -18,13 +18,52 @@ enum Locale {
 }
 
 model User {
-  id             String   @id @default(uuid()) @db.Uuid
-  email          String   @unique
-  password_hash  String
-  display_name   String
-  avatar_url     String?
-  locale         Locale   @default(en)
-  email_verified Boolean  @default(false)
-  created_at     DateTime @db.Timestamp(6)
-  updated_at     DateTime @db.Timestamp(6)
+  id            String    @id
+  email         String    @unique
+  name          String
+  image         String?
+  locale        Locale    @default(en)
+  emailVerified Boolean   @default(false) @map("email_verified")
+  createdAt     DateTime  @map("created_at") @db.Timestamp(6)
+  updatedAt     DateTime  @map("updated_at") @db.Timestamp(6)
+  sessions      Session[]
+  accounts      Account[]
+}
+
+model Session {
+  id        String   @id
+  expiresAt DateTime @map("expires_at") @db.Timestamp(6)
+  token     String   @unique
+  createdAt DateTime @map("created_at") @db.Timestamp(6)
+  updatedAt DateTime @map("updated_at") @db.Timestamp(6)
+  ipAddress String?  @map("ip_address")
+  userAgent String?  @map("user_agent")
+  userId    String   @map("user_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Account {
+  id                    String    @id
+  accountId             String    @map("account_id")
+  providerId            String    @map("provider_id")
+  userId                String    @map("user_id")
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?   @map("access_token")
+  refreshToken          String?   @map("refresh_token")
+  idToken               String?   @map("id_token")
+  accessTokenExpiresAt  DateTime? @map("access_token_expires_at") @db.Timestamp(6)
+  refreshTokenExpiresAt DateTime? @map("refresh_token_expires_at") @db.Timestamp(6)
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @map("created_at") @db.Timestamp(6)
+  updatedAt             DateTime  @map("updated_at") @db.Timestamp(6)
+}
+
+model Verification {
+  id         String    @id
+  identifier String
+  value      String
+  expiresAt  DateTime  @map("expires_at") @db.Timestamp(6)
+  createdAt  DateTime? @map("created_at") @db.Timestamp(6)
+  updatedAt  DateTime? @map("updated_at") @db.Timestamp(6)
 }

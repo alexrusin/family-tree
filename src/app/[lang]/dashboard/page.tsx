@@ -46,6 +46,7 @@ export default async function DashboardPage({ params }: PageProps<'/[lang]/dashb
         langToggleLabel={t.nav.langToggle}
         navFamilyTree={t.dashboard.navFamilyTree}
         navGallery={t.dashboard.navGallery}
+        logoutLabel={t.dashboard.logout}
       />
       <main className="pt-24 pb-20 px-6">
         <div className="max-w-7xl mx-auto">
