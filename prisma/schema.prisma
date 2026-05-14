@@ -18,16 +18,18 @@ enum Locale {
 }
 
 model User {
-  id            String    @id
-  email         String    @unique
-  name          String
-  image         String?
-  locale        Locale    @default(en)
-  emailVerified Boolean   @default(false) @map("email_verified")
-  createdAt     DateTime  @map("created_at") @db.Timestamp(6)
-  updatedAt     DateTime  @map("updated_at") @db.Timestamp(6)
-  sessions      Session[]
-  accounts      Account[]
+  id                String         @id
+  email             String         @unique
+  name              String
+  image             String?
+  locale            Locale         @default(en)
+  emailVerified     Boolean        @default(false) @map("email_verified")
+  createdAt         DateTime       @map("created_at") @db.Timestamp(6)
+  updatedAt         DateTime       @map("updated_at") @db.Timestamp(6)
+  sessions          Session[]
+  accounts          Account[]
+  ownedTrees        FamilyTree[]   @relation(name: "OwnedTrees")
+  collaboratedTrees Collaborator[] @relation(name: "CollaboratedTrees")
 }
 
 model Session {
@@ -66,4 +68,41 @@ model Verification {
   expiresAt  DateTime  @map("expires_at") @db.Timestamp(6)
   createdAt  DateTime? @map("created_at") @db.Timestamp(6)
   updatedAt  DateTime? @map("updated_at") @db.Timestamp(6)
+}
+
+enum CollaboratorRole {
+  editor
+  viewer
+}
+
+model FamilyTree {
+  id            String         @id @default(uuid())
+  name          String
+  ownerId       String         @map("owner_id")
+  owner         User           @relation(name: "OwnedTrees", fields: [ownerId], references: [id], onDelete: Cascade)
+  shareToken    String         @unique @map("share_token")
+  shareEnabled  Boolean        @default(false) @map("share_enabled")
+  memberCount   Int            @default(0) @map("member_count")
+  createdAt     DateTime       @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt     DateTime       @updatedAt @map("updated_at") @db.Timestamp(6)
+  collaborators Collaborator[]
+
+  @@index([ownerId])
+}
+
+model Collaborator {
+  id         String           @id @default(uuid())
+  treeId     String           @map("tree_id")
+  tree       FamilyTree       @relation(fields: [treeId], references: [id], onDelete: Cascade)
+  userId     String           @map("user_id")
+  user       User             @relation(name: "CollaboratedTrees", fields: [userId], references: [id], onDelete: Cascade)
+  role       CollaboratorRole
+  invitedAt  DateTime         @default(now()) @map("invited_at") @db.Timestamp(6)
+  acceptedAt DateTime?        @map("accepted_at") @db.Timestamp(6)
+  createdAt  DateTime         @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt  DateTime         @updatedAt @map("updated_at") @db.Timestamp(6)
+
+  @@unique([treeId, userId])
+  @@index([userId])
+  @@index([treeId])
 }
