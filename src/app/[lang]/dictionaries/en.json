@@ -73,6 +73,17 @@
     "navFamilyTree": "Family Tree",
     "navGallery": "Gallery"
   },
+  "tree": {
+    "addMember": "Add Member",
+    "addRelationship": "Add Relationship",
+    "errors": {
+      "ERR_FIRST_NAME_REQUIRED": "First name is required",
+      "ERR_IMAGE_TOO_LARGE": "Image must be 5 MB or smaller",
+      "ERR_UNSUPPORTED_IMAGE_TYPE": "Only JPEG, PNG, and WebP are allowed",
+      "ERR_DUPLICATE_RELATIONSHIP": "This relationship already exists",
+      "ERR_SELF_RELATIONSHIP": "A member cannot be linked to themselves"
+    }
+  },
   "auth": {
     "register": {
       "title": "Create your account",

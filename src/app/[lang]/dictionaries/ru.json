@@ -73,6 +73,17 @@
     "navFamilyTree": "Семейное дерево",
     "navGallery": "Галерея"
   },
+  "tree": {
+    "addMember": "Добавить участника",
+    "addRelationship": "Добавить связь",
+    "errors": {
+      "ERR_FIRST_NAME_REQUIRED": "Имя обязательно",
+      "ERR_IMAGE_TOO_LARGE": "Размер изображения должен быть не более 5 МБ",
+      "ERR_UNSUPPORTED_IMAGE_TYPE": "Разрешены только JPEG, PNG и WebP",
+      "ERR_DUPLICATE_RELATIONSHIP": "Такая связь уже существует",
+      "ERR_SELF_RELATIONSHIP": "Участник не может быть связан с самим собой"
+    }
+  },
   "auth": {
     "register": {
       "title": "Создайте аккаунт",
