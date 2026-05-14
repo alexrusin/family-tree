@@ -15,6 +15,8 @@ import {
   type TreeFlowEdge,
 } from "@/lib/tree-domain/tree-layout";
 
+const MEMBER_HARD_LIMIT = 300;
+
 // ── Localisation shape ────────────────────────────────────────────────────
 interface MemberSubT {
   addTitle: string;
@@ -44,6 +46,9 @@ interface MemberSubT {
   profilePhoto: string;
   isLiving: string;
   update: string;
+  closeModal: string;
+  currentPhotoAlt: string;
+  photoEditingSoon: string;
 }
 interface RelationshipSubT {
   addTitle: string;
@@ -56,11 +61,15 @@ interface RelationshipSubT {
   child: string;
   spouse: string;
   sibling: string;
+  needTwoMembers: string;
+  closeModal: string;
   remove: string;
   removing: string;
+  removeFailed: string;
 }
 interface ErrorsSubT {
   ERR_FIRST_NAME_REQUIRED: string;
+  ERR_MEMBER_LIMIT_REACHED: string;
   ERR_IMAGE_TOO_LARGE: string;
   ERR_UNSUPPORTED_IMAGE_TYPE: string;
   ERR_DUPLICATE_RELATIONSHIP: string;
@@ -87,6 +96,9 @@ interface TreeT {
     emptyBody: string;
     addFirstMember: string;
     fitToScreen: string;
+    zoomIn: string;
+    zoomOut: string;
+    addMember: string;
     loading: string;
   };
   panel: {
@@ -107,10 +119,17 @@ interface TreeT {
     deleteConfirm: string;
     deleteCancel: string;
     deleting: string;
+    deleteFailed: string;
+    removeFailed: string;
+    genderMale: string;
+    genderFemale: string;
+    genderOther: string;
+    genderUndisclosed: string;
   };
   sidebar: {
     warningBanner: string;
     limitReached: string;
+    memberCount: string;
   };
   member: MemberSubT;
   relationship: RelationshipSubT;
@@ -132,8 +151,9 @@ function edgeLabel(
   getMemberName: (id: string) => string,
   t: { parentOf: string; spouseOf: string },
 ): { fromName: string; toName: string; typeLabel: string } | null {
-  const data = edge.data as { relationshipId?: string };
-  if (!data.relationshipId) return null;
+  const data = edge.data as { relationshipId?: string; relationshipIds?: string[] };
+  const relationshipId = data.relationshipId ?? data.relationshipIds?.[0];
+  if (!relationshipId) return null;
 
   if (edge.target.startsWith("union-")) {
     const sortedKey = edge.target.replace("union-", "");
@@ -190,6 +210,8 @@ export default function TreeDetailClient({
     position: { x: number; y: number };
     label: { fromName: string; toName: string; typeLabel: string };
   } | null>(null);
+  const [addMemberModalKey, setAddMemberModalKey] = useState(0);
+  const [addRelationshipModalKey, setAddRelationshipModalKey] = useState(0);
 
   const loadTreeData = useCallback(async () => {
     setIsLoading(true);
@@ -214,10 +236,26 @@ export default function TreeDetailClient({
   }, [treeId, t.errors.loadFailed]);
 
   useEffect(() => {
-    void loadTreeData();
+    const timerId = window.setTimeout(() => {
+      void loadTreeData();
+    }, 0);
+    return () => window.clearTimeout(timerId);
   }, [loadTreeData]);
 
   const memberCount = isLoading ? initialMemberCount : members.length;
+  const canAddMember = canEdit && memberCount < MEMBER_HARD_LIMIT;
+
+  const openAddMemberModal = useCallback(() => {
+    if (!canAddMember) return;
+    setAddMemberModalKey((prev) => prev + 1);
+    setIsAddMemberOpen(true);
+  }, [canAddMember]);
+
+  const openAddRelationshipModal = useCallback(() => {
+    if (!canEdit) return;
+    setAddRelationshipModalKey((prev) => prev + 1);
+    setIsAddRelationshipOpen(true);
+  }, [canEdit]);
 
   const getMemberName = useCallback(
     (id: string) => {
@@ -267,14 +305,16 @@ export default function TreeDetailClient({
         treeName={treeName}
         memberCount={memberCount}
         canEdit={canEdit}
-        onAddMember={() => setIsAddMemberOpen(true)}
-        onAddRelationship={() => setIsAddRelationshipOpen(true)}
+        canAddMember={canAddMember}
+        onAddMember={openAddMemberModal}
+        onAddRelationship={openAddRelationshipModal}
         t={{
           addMember: t.addMember,
           addRelationship: t.addRelationship,
           viewOnly: t.viewOnly,
           warningBanner: t.sidebar.warningBanner,
           limitReached: t.sidebar.limitReached,
+          memberCount: t.sidebar.memberCount,
         }}
       />
 
@@ -293,13 +333,13 @@ export default function TreeDetailClient({
           <TreeCanvas
             members={members}
             relationships={relationships}
-            canEdit={canEdit}
+            canAddMember={canAddMember}
             onNodeClick={(id) => {
               setActiveEdgePopover(null);
               setSelectedMemberId(id);
             }}
             onEdgeClick={handleEdgeClick}
-            onAddMember={() => setIsAddMemberOpen(true)}
+            onAddMember={openAddMemberModal}
             t={t.canvas}
           />
         )}
@@ -334,21 +374,35 @@ export default function TreeDetailClient({
           toName={activeEdgePopover.label.toName}
           typeLabel={activeEdgePopover.label.typeLabel}
           relationshipId={
-            (activeEdgePopover.edge.data as { relationshipId: string })
-              .relationshipId
+            (
+              activeEdgePopover.edge.data as {
+                relationshipId?: string;
+                relationshipIds?: string[];
+              }
+            ).relationshipId ??
+            (
+              activeEdgePopover.edge.data as {
+                relationshipId?: string;
+                relationshipIds?: string[];
+              }
+            ).relationshipIds?.[0] ??
+            ""
           }
           treeId={treeId}
           onRemoved={handleRelationshipRemoved}
           onClose={() => setActiveEdgePopover(null)}
           t={{
+            close: t.panel.close,
             remove: t.relationship.remove,
             removing: t.relationship.removing,
+            removeFailed: t.relationship.removeFailed,
           }}
         />
       )}
 
       {/* Add member modal */}
       <AddMemberModal
+        key={addMemberModalKey}
         isOpen={isAddMemberOpen}
         treeId={treeId}
         onClose={() => setIsAddMemberOpen(false)}
@@ -364,6 +418,7 @@ export default function TreeDetailClient({
 
       {/* Add relationship modal */}
       <AddRelationshipModal
+        key={addRelationshipModalKey}
         isOpen={isAddRelationshipOpen}
         treeId={treeId}
         members={members}
@@ -381,6 +436,7 @@ export default function TreeDetailClient({
       {/* Edit member modal */}
       {editingMember && (
         <EditMemberModal
+          key={editingMember.id}
           isOpen={true}
           treeId={treeId}
           member={editingMember}

@@ -114,7 +114,10 @@
       "isLiving": "Living member",
       "editTitle": "Edit Member",
       "editSubtitle": "Update this person's information.",
-      "update": "Save Changes"
+      "update": "Save Changes",
+      "closeModal": "Close modal",
+      "currentPhotoAlt": "Current photo",
+      "photoEditingSoon": "Photo editing coming soon."
     },
     "relationship": {
       "addTitle": "Add Relationship",
@@ -127,11 +130,15 @@
       "child": "Child",
       "spouse": "Spouse",
       "sibling": "Sibling",
+      "needTwoMembers": "At least two members are required to create a relationship.",
+      "closeModal": "Close modal",
       "remove": "Remove",
-      "removing": "Removing..."
+      "removing": "Removing...",
+      "removeFailed": "Unable to remove relationship. Please try again."
     },
     "errors": {
       "ERR_FIRST_NAME_REQUIRED": "First name is required",
+      "ERR_MEMBER_LIMIT_REACHED": "This tree has reached the 300-member limit.",
       "ERR_IMAGE_TOO_LARGE": "Image must be 5 MB or smaller",
       "ERR_UNSUPPORTED_IMAGE_TYPE": "Only JPEG, PNG, and WebP are allowed",
       "ERR_DUPLICATE_RELATIONSHIP": "This relationship already exists",
@@ -151,6 +158,9 @@
       "emptyBody": "Add your first family member to begin building the tree.",
       "addFirstMember": "Add First Member",
       "fitToScreen": "Fit to screen",
+      "zoomIn": "Zoom in",
+      "zoomOut": "Zoom out",
+      "addMember": "Add member",
       "loading": "Loading tree..."
     },
     "panel": {
@@ -170,11 +180,18 @@
       "deleteConfirmBody": "Are you sure you want to delete this member? All their relationships will also be removed. This cannot be undone.",
       "deleteConfirm": "Delete",
       "deleteCancel": "Cancel",
-      "deleting": "Deleting..."
+      "deleting": "Deleting...",
+      "deleteFailed": "Unable to delete member. Please try again.",
+      "removeFailed": "Unable to remove relationship. Please try again.",
+      "genderMale": "Male",
+      "genderFemale": "Female",
+      "genderOther": "Other",
+      "genderUndisclosed": "—"
     },
     "sidebar": {
       "warningBanner": "Approaching the 300-member limit ({count}/300).",
-      "limitReached": "300-member limit reached. No more members can be added."
+      "limitReached": "300-member limit reached. No more members can be added.",
+      "memberCount": "{count} members"
     }
   },
   "auth": {

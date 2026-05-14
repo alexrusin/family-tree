@@ -5,6 +5,7 @@ describe("createMember", () => {
   it("allows owner and editor", async () => {
     const repo = {
       getRole: vi.fn().mockResolvedValue("owner"),
+      getTreeMemberCount: vi.fn().mockResolvedValue(0),
       createMemberRecord: vi.fn().mockResolvedValue({ id: "m1" }),
     };
 
@@ -21,6 +22,7 @@ describe("createMember", () => {
   it("rejects viewer", async () => {
     const repo = {
       getRole: vi.fn().mockResolvedValue("viewer"),
+      getTreeMemberCount: vi.fn().mockResolvedValue(0),
       createMemberRecord: vi.fn(),
     };
 
@@ -32,5 +34,22 @@ describe("createMember", () => {
         input: { firstName: "Ivan", isLiving: false },
       }),
     ).rejects.toThrow("ERR_FORBIDDEN");
+  });
+
+  it("rejects when tree reached member limit", async () => {
+    const repo = {
+      getRole: vi.fn().mockResolvedValue("owner"),
+      getTreeMemberCount: vi.fn().mockResolvedValue(300),
+      createMemberRecord: vi.fn(),
+    };
+
+    await expect(
+      createMember({
+        repo,
+        actorUserId: "u1",
+        treeId: "t1",
+        input: { firstName: "Elena", isLiving: false },
+      }),
+    ).rejects.toThrow("ERR_MEMBER_LIMIT_REACHED");
   });
 });

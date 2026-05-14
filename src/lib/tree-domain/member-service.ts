@@ -3,6 +3,7 @@ import { canEditMembers, type TreeRole } from "./tree-access";
 
 export type MemberDatePrecision = "year" | "month" | "day";
 export type MemberGenderValue = "male" | "female" | "other" | "undisclosed";
+export const MEMBER_HARD_LIMIT = 300;
 
 export interface CreateMemberInput {
   firstName: string;
@@ -25,6 +26,7 @@ export interface CreateMemberInput {
 export async function createMember(params: {
   repo: {
     getRole: (treeId: string, userId: string) => Promise<TreeRole>;
+    getTreeMemberCount: (treeId: string) => Promise<number>;
     createMemberRecord: (
       args: { treeId: string } & CreateMemberInput,
     ) => Promise<{ id: string }>;
@@ -40,6 +42,11 @@ export async function createMember(params: {
 
   if (!params.input.firstName.trim()) {
     throw new Error("ERR_FIRST_NAME_REQUIRED");
+  }
+
+  const currentCount = await params.repo.getTreeMemberCount(params.treeId);
+  if (currentCount >= MEMBER_HARD_LIMIT) {
+    throw new Error("ERR_MEMBER_LIMIT_REACHED");
   }
 
   if (params.input.birthYear != null && params.input.deathYear != null) {

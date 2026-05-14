@@ -5,7 +5,6 @@ import { X } from "lucide-react";
 import {
   initialMemberFormState,
   type MemberFormState,
-  type BirthPrecision,
   validateMemberPhotoSelection,
 } from "./member-form-state";
 import MemberDateSection from "./MemberDateSection";
@@ -35,11 +34,13 @@ interface MemberT {
   dayLabel: string;
   profilePhoto: string;
   isLiving: string;
+  closeModal: string;
   cancel: string;
   saving: string;
   add: string;
   errors: {
     ERR_FIRST_NAME_REQUIRED: string;
+    ERR_MEMBER_LIMIT_REACHED: string;
     ERR_IMAGE_TOO_LARGE: string;
     ERR_UNSUPPORTED_IMAGE_TYPE: string;
     ERR_FORBIDDEN: string;
@@ -84,16 +85,15 @@ export default function AddMemberModal({
   const [photoError, setPhotoError] = useState<string | null>(null);
   const firstNameRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    if (!isOpen) {
-      return;
-    }
-
+  const resetForm = () => {
     setFormState(initialMemberFormState());
     setSelectedFile(null);
     setError(null);
     setPhotoError(null);
+  };
 
+  useEffect(() => {
+    if (!isOpen) return;
     setTimeout(() => {
       firstNameRef.current?.focus();
     }, 100);
@@ -103,6 +103,7 @@ export default function AddMemberModal({
     if (isLoading) {
       return;
     }
+    resetForm();
     onClose();
   };
 
@@ -195,6 +196,7 @@ export default function AddMemberModal({
         throw new Error(data?.errorCode ?? "ERR_UNKNOWN");
       }
 
+      resetForm();
       onClose();
       onMemberCreated();
     } catch (submitError) {
@@ -223,7 +225,7 @@ export default function AddMemberModal({
           <button
             onClick={handleClose}
             className="p-1 text-stone-400 hover:text-stone-600 transition-colors rounded-lg hover:bg-stone-100"
-            aria-label="Close modal"
+            aria-label={t.closeModal}
           >
             <X className="w-5 h-5" />
           </button>

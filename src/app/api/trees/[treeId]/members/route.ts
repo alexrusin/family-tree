@@ -163,6 +163,13 @@ export async function POST(
         repo: {
           getRole: (tId, uId) =>
             getTreeRole(tx as unknown as TreeRoleClient, tId, uId),
+          getTreeMemberCount: async (tId) => {
+            const tree = await tx.familyTree.findUnique({
+              where: { id: tId },
+              select: { memberCount: true },
+            });
+            return tree?.memberCount ?? 0;
+          },
           createMemberRecord: (args) => tx.treeMember.create({ data: args }),
         },
         actorUserId: session.user.id,
@@ -206,6 +213,12 @@ export async function POST(
       if (error.message === "ERR_FIRST_NAME_REQUIRED") {
         return NextResponse.json(
           { errorCode: "ERR_FIRST_NAME_REQUIRED" },
+          { status: 400 },
+        );
+      }
+      if (error.message === "ERR_MEMBER_LIMIT_REACHED") {
+        return NextResponse.json(
+          { errorCode: "ERR_MEMBER_LIMIT_REACHED" },
           { status: 400 },
         );
       }

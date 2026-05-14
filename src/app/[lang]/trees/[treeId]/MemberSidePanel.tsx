@@ -27,8 +27,14 @@ interface SidePanelT {
   deleteConfirm: string;
   deleteCancel: string;
   deleting: string;
+  deleteFailed: string;
   remove: string;
   removing: string;
+  removeFailed: string;
+  genderMale: string;
+  genderFemale: string;
+  genderOther: string;
+  genderUndisclosed: string;
 }
 
 interface MemberSidePanelProps {
@@ -44,13 +50,6 @@ interface MemberSidePanelProps {
   onRelationshipRemoved: () => void;
   t: SidePanelT;
 }
-
-const GENDER_LABELS: Record<string, string> = {
-  male: "Male",
-  female: "Female",
-  other: "Other",
-  undisclosed: "—",
-};
 
 export default function MemberSidePanel({
   member,
@@ -69,9 +68,16 @@ export default function MemberSidePanel({
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [removingRelId, setRemovingRelId] = useState<string | null>(null);
+  const [removeError, setRemoveError] = useState<string | null>(null);
 
   const displayName = `${member.firstName}${member.lastName ? ` ${member.lastName}` : ""}`;
   const dateRange = formatMemberDateRange(member);
+  const genderLabels: Record<string, string> = {
+    male: t.genderMale,
+    female: t.genderFemale,
+    other: t.genderOther,
+    undisclosed: t.genderUndisclosed,
+  };
 
   const memberRels = allRelationships.filter(
     (r) => r.fromMemberId === member.id || r.toMemberId === member.id,
@@ -106,13 +112,14 @@ export default function MemberSidePanel({
       if (!res.ok) throw new Error("failed");
       onDeleted();
     } catch {
-      setDeleteError("Failed to delete member. Please try again.");
+      setDeleteError(t.deleteFailed);
     } finally {
       setIsDeleting(false);
     }
   };
 
   const handleRemoveRel = async (relId: string) => {
+    setRemoveError(null);
     setRemovingRelId(relId);
     try {
       const res = await fetch(`/api/trees/${treeId}/relationships/${relId}`, {
@@ -120,6 +127,8 @@ export default function MemberSidePanel({
       });
       if (!res.ok) throw new Error("failed");
       onRelationshipRemoved();
+    } catch {
+      setRemoveError(t.removeFailed);
     } finally {
       setRemovingRelId(null);
     }
@@ -174,7 +183,7 @@ export default function MemberSidePanel({
             {t.gender}
           </p>
           <p className="text-sm text-stone-700">
-            {GENDER_LABELS[member.gender] ?? "—"}
+            {genderLabels[member.gender] ?? t.genderUndisclosed}
           </p>
         </div>
 
@@ -195,6 +204,9 @@ export default function MemberSidePanel({
           <p className="text-xs font-semibold uppercase tracking-wider text-stone-400 mb-2">
             {t.relationships}
           </p>
+          {removeError && (
+            <p className="text-xs text-red-600 mb-2">{removeError}</p>
+          )}
           {memberRels.length === 0 ? (
             <p className="text-sm text-stone-500">{t.noRelationships}</p>
           ) : (

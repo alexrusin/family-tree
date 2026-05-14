@@ -33,7 +33,7 @@ export type TreeFlowNode =
   | Node<MemberNodeData, "member">
   | Node<UnionNodeData, "union">;
 export type TreeFlowEdge =
-  | Edge<{ relationshipId?: string }, "parent">
+  | Edge<{ relationshipId?: string; relationshipIds?: string[] }, "parent">
   | Edge<{ relationshipId: string }, "spouse">;
 
 const NODE_W = 120;
@@ -85,10 +85,12 @@ export function buildTreeGraph(
 
   // ── Parent → children map ─────────────────────────────────────────────
   const childrenOf = new Map<string, Set<string>>();
+  const parentRelIdByPair = new Map<string, string>();
   for (const r of parentRels) {
     if (!childrenOf.has(r.fromMemberId))
       childrenOf.set(r.fromMemberId, new Set());
     childrenOf.get(r.fromMemberId)!.add(r.toMemberId);
+    parentRelIdByPair.set(`${r.fromMemberId}::${r.toMemberId}`, r.id);
   }
 
   // ── Union nodes (spouse pairs with children) ──────────────────────────
@@ -129,12 +131,19 @@ export function buildTreeGraph(
   for (const [key, { spouseA, spouseB, children }] of unionMap) {
     const uid = `union-${key}`;
     for (const cid of children) {
+      const relationshipIds = [
+        parentRelIdByPair.get(`${spouseA}::${cid}`),
+        parentRelIdByPair.get(`${spouseB}::${cid}`),
+      ].filter((id): id is string => Boolean(id));
       edges.push({
         id: `e-${uid}-${cid}`,
         source: uid,
         target: cid,
         type: "parent" as const,
-        data: {},
+        data: {
+          relationshipId: relationshipIds[0],
+          relationshipIds,
+        },
       });
       handledPairs.add(`${spouseA}::${cid}`);
       handledPairs.add(`${spouseB}::${cid}`);
@@ -188,7 +197,7 @@ export function buildTreeGraph(
 
 export function formatMemberDateRange(member: TreeMemberData): string {
   if (!member.birthYear && !member.deathYear) return "";
-  if (member.isLiving && member.birthYear) return `b. ${member.birthYear}`;
+  if (member.isLiving && member.birthYear) return String(member.birthYear);
   const birth = member.birthYear ? String(member.birthYear) : "";
   if (!birth) return "";
   const death = member.deathYear ? String(member.deathYear) : "?";

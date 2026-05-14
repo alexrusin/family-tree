@@ -12,12 +12,14 @@ interface TreeSidebarT {
   viewOnly: string;
   warningBanner: string;
   limitReached: string;
+  memberCount: string;
 }
 
 interface TreeSidebarProps {
   treeName: string;
   memberCount: number;
   canEdit: boolean;
+  canAddMember: boolean;
   onAddMember: () => void;
   onAddRelationship: () => void;
   t: TreeSidebarT;
@@ -27,6 +29,7 @@ export default function TreeSidebar({
   treeName,
   memberCount,
   canEdit,
+  canAddMember,
   onAddMember,
   onAddRelationship,
   t,
@@ -40,7 +43,9 @@ export default function TreeSidebar({
         <h2 className="text-lg font-semibold text-amber-900 truncate">
           {treeName}
         </h2>
-        <p className="text-sm text-stone-500 mt-1">{memberCount} members</p>
+        <p className="text-sm text-stone-500 mt-1">
+          {t.memberCount.replace("{count}", String(memberCount))}
+        </p>
       </div>
 
       {nearLimit && (
@@ -62,7 +67,7 @@ export default function TreeSidebar({
           <>
             <button
               onClick={onAddMember}
-              disabled={atLimit}
+              disabled={!canAddMember}
               className="w-full px-4 py-2.5 bg-amber-900 text-white rounded-lg font-semibold hover:bg-amber-800 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
             >
               <Plus className="w-4 h-4" />

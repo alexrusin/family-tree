@@ -4,7 +4,6 @@
 import { useMemo } from "react";
 import {
   ReactFlow,
-  Background,
   Panel,
   useReactFlow,
   type EdgeMouseHandler,
@@ -31,7 +30,7 @@ const edgeTypes: EdgeTypes = { spouse: SpouseEdge };
 interface TreeCanvasProps {
   members: TreeMemberData[];
   relationships: TreeRelationship[];
-  canEdit: boolean;
+  canAddMember: boolean;
   onNodeClick: (memberId: string) => void;
   onEdgeClick: (event: React.MouseEvent, edge: TreeFlowEdge) => void;
   onAddMember: () => void;
@@ -40,19 +39,27 @@ interface TreeCanvasProps {
     emptyBody: string;
     addFirstMember: string;
     fitToScreen: string;
+    zoomIn: string;
+    zoomOut: string;
+    addMember: string;
     loading?: string;
   };
 }
 
 // Rendered inside <ReactFlow> — can use useReactFlow()
 function CanvasToolbar({
-  canEdit,
+  canAddMember,
   onAddMember,
-  fitLabel,
+  t,
 }: {
-  canEdit: boolean;
+  canAddMember: boolean;
   onAddMember: () => void;
-  fitLabel: string;
+  t: {
+    fitToScreen: string;
+    zoomIn: string;
+    zoomOut: string;
+    addMember: string;
+  };
 }) {
   const { fitView, zoomIn, zoomOut } = useReactFlow();
   return (
@@ -61,14 +68,16 @@ function CanvasToolbar({
         <button
           onClick={() => zoomIn()}
           className="p-2 text-stone-600 hover:bg-stone-100 rounded-lg transition-colors"
-          title="Zoom in"
+          title={t.zoomIn}
+          aria-label={t.zoomIn}
         >
           <ZoomIn className="w-4 h-4" />
         </button>
         <button
           onClick={() => zoomOut()}
           className="p-2 text-stone-600 hover:bg-stone-100 rounded-lg transition-colors"
-          title="Zoom out"
+          title={t.zoomOut}
+          aria-label={t.zoomOut}
         >
           <ZoomOut className="w-4 h-4" />
         </button>
@@ -76,17 +85,19 @@ function CanvasToolbar({
         <button
           onClick={() => fitView({ padding: 0.2, duration: 400 })}
           className="p-2 text-stone-600 hover:bg-stone-100 rounded-lg transition-colors"
-          title={fitLabel}
+          title={t.fitToScreen}
+          aria-label={t.fitToScreen}
         >
           <Maximize2 className="w-4 h-4" />
         </button>
-        {canEdit && (
+        {canAddMember && (
           <>
             <div className="w-px h-5 bg-stone-200 mx-1" />
             <button
               onClick={onAddMember}
               className="p-2 text-stone-600 hover:bg-stone-100 rounded-lg transition-colors"
-              title="Add member"
+              title={t.addMember}
+              aria-label={t.addMember}
             >
               <Plus className="w-4 h-4" />
             </button>
@@ -100,7 +111,7 @@ function CanvasToolbar({
 export default function TreeCanvas({
   members,
   relationships,
-  canEdit,
+  canAddMember,
   onNodeClick,
   onEdgeClick,
   onAddMember,
@@ -132,7 +143,7 @@ export default function TreeCanvas({
         <p className="text-stone-500 text-sm max-w-xs text-center">
           {t.emptyBody}
         </p>
-        {canEdit && (
+        {canAddMember && (
           <button
             onClick={onAddMember}
             className="px-5 py-2.5 bg-amber-900 text-white rounded-lg font-semibold hover:bg-amber-800 transition-colors flex items-center gap-2"
@@ -167,9 +178,9 @@ export default function TreeCanvas({
       }}
     >
       <CanvasToolbar
-        canEdit={canEdit}
+        canAddMember={canAddMember}
         onAddMember={onAddMember}
-        fitLabel={t.fitToScreen}
+        t={t}
       />
     </ReactFlow>
   );

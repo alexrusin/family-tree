@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { X } from "lucide-react";
 
 type RelationshipType = "parent" | "child" | "spouse" | "sibling";
@@ -22,6 +22,8 @@ interface RelationshipT {
   child: string;
   spouse: string;
   sibling: string;
+  needTwoMembers: string;
+  closeModal: string;
   cancel: string;
   saving: string;
   add: string;
@@ -71,16 +73,12 @@ export default function AddRelationshipModal({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!isOpen) {
-      return;
-    }
-
+  const resetForm = () => {
     setFromMemberId("");
     setToMemberId("");
     setRelationshipType("parent");
     setError(null);
-  }, [isOpen]);
+  };
 
   const memberOptions = useMemo(
     () =>
@@ -95,6 +93,7 @@ export default function AddRelationshipModal({
     if (isLoading) {
       return;
     }
+    resetForm();
     onClose();
   };
 
@@ -132,6 +131,7 @@ export default function AddRelationshipModal({
         throw new Error(data?.errorCode || "ERR_UNKNOWN");
       }
 
+      resetForm();
       onClose();
       onRelationshipCreated();
     } catch (submitError) {
@@ -160,7 +160,7 @@ export default function AddRelationshipModal({
           <button
             onClick={handleClose}
             className="p-1 text-stone-400 hover:text-stone-600 transition-colors rounded-lg hover:bg-stone-100"
-            aria-label="Close modal"
+            aria-label={t.closeModal}
           >
             <X className="w-5 h-5" />
           </button>
@@ -226,9 +226,7 @@ export default function AddRelationshipModal({
 
           {members.length < 2 && (
             <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
-              <p className="text-sm text-amber-800">
-                At least two members are required to create a relationship.
-              </p>
+              <p className="text-sm text-amber-800">{t.needTwoMembers}</p>
             </div>
           )}
 

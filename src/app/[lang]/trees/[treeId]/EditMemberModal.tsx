@@ -32,6 +32,9 @@ interface EditMemberT {
   dayLabel: string;
   isLiving: string;
   update: string;
+  closeModal: string;
+  currentPhotoAlt: string;
+  photoEditingSoon: string;
   cancel: string;
   saving: string;
   errors: {
@@ -93,10 +96,8 @@ export default function EditMemberModal({
 
   useEffect(() => {
     if (!isOpen) return;
-    setFormState(memberToFormState(member));
-    setError(null);
     setTimeout(() => firstNameRef.current?.focus(), 100);
-  }, [isOpen, member]);
+  }, [isOpen]);
 
   const handleClose = () => {
     if (isLoading) return;
@@ -180,7 +181,7 @@ export default function EditMemberModal({
           <button
             onClick={handleClose}
             className="p-1 text-stone-400 hover:text-stone-600 transition-colors rounded-lg hover:bg-stone-100"
-            aria-label="Close"
+            aria-label={t.closeModal}
           >
             <X className="w-5 h-5" />
           </button>
@@ -190,12 +191,10 @@ export default function EditMemberModal({
             <div className="flex items-center gap-3">
               <img
                 src={member.photoUrl}
-                alt="Current photo"
+                alt={t.currentPhotoAlt}
                 className="w-12 h-12 rounded-full object-cover border-2 border-stone-200"
               />
-              <p className="text-sm text-stone-500">
-                Photo editing coming soon.
-              </p>
+              <p className="text-sm text-stone-500">{t.photoEditingSoon}</p>
             </div>
           )}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

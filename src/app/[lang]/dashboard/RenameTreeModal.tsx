@@ -24,15 +24,17 @@ export default function RenameTreeModal({
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (isOpen && currentName) {
+    if (!isOpen || !currentName) return;
+
+    const timerId = window.setTimeout(() => {
       setTreeName(currentName);
-      setTimeout(() => {
-        if (inputRef.current) {
-          inputRef.current.focus();
-          inputRef.current.select();
-        }
-      }, 100);
-    }
+      if (inputRef.current) {
+        inputRef.current.focus();
+        inputRef.current.select();
+      }
+    }, 0);
+
+    return () => window.clearTimeout(timerId);
   }, [isOpen, currentName]);
 
   const handleSubmit = async (e: React.FormEvent) => {

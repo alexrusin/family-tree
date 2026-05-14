@@ -2,13 +2,12 @@
 "use client";
 
 import { memo } from "react";
-import { Handle, Position, type NodeProps, type Node } from "@xyflow/react";
+import { Handle, Position, type Node } from "@xyflow/react";
 import type { UnionNodeData } from "@/lib/tree-domain/tree-layout";
 
 export type UnionNodeType = Node<UnionNodeData, "union">;
 
 export const UnionNode = memo(function UnionNode(
-  _props: NodeProps<UnionNodeType>,
 ) {
   return (
     <div

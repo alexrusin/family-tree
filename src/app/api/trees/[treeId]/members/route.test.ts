@@ -80,7 +80,17 @@ describe("POST /api/trees/[treeId]/members", () => {
     vi.clearAllMocks();
 
     getSessionMock.mockResolvedValue({ user: { id: "u1" } });
-    prismaClientMock.familyTree.findUnique.mockResolvedValue({ ownerId: "u1" });
+    prismaClientMock.familyTree.findUnique.mockImplementation(
+      async (args: { select?: { ownerId?: true; memberCount?: true } }) => {
+        if (args.select?.ownerId) {
+          return { ownerId: "u1" };
+        }
+        if (args.select?.memberCount) {
+          return { memberCount: 0 };
+        }
+        return null;
+      },
+    );
     prismaClientMock.collaborator.findUnique.mockResolvedValue(null);
     prismaClientMock.treeMember.create.mockResolvedValue({ id: "m1" });
     prismaClientMock.familyTree.update.mockResolvedValue({ id: "t1" });
@@ -158,5 +168,35 @@ describe("POST /api/trees/[treeId]/members", () => {
       where: { id: "t1" },
       data: { memberCount: { increment: 1 } },
     });
+  });
+
+  it("returns 400 when tree has reached member limit", async () => {
+    prismaClientMock.familyTree.findUnique.mockImplementation(
+      async (args: { select?: { ownerId?: true; memberCount?: true } }) => {
+        if (args.select?.ownerId) {
+          return { ownerId: "u1" };
+        }
+        if (args.select?.memberCount) {
+          return { memberCount: 300 };
+        }
+        return null;
+      },
+    );
+
+    const request = new NextRequest("http://localhost/api/trees/t1/members", {
+      method: "POST",
+      body: makeFormData({ firstName: "Elena", isLiving: "false" }),
+    });
+
+    const response = await POST(request, {
+      params: Promise.resolve({ treeId: "t1" }),
+    });
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({
+      errorCode: "ERR_MEMBER_LIMIT_REACHED",
+    });
+    expect(prismaClientMock.treeMember.create).not.toHaveBeenCalled();
+    expect(prismaClientMock.familyTree.update).not.toHaveBeenCalled();
   });
 });

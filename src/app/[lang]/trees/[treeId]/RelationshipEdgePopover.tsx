@@ -14,8 +14,10 @@ interface RelationshipEdgePopoverProps {
   onRemoved: () => void;
   onClose: () => void;
   t: {
+    close: string;
     remove: string;
     removing: string;
+    removeFailed: string;
   };
 }
 
@@ -58,7 +60,7 @@ export default function RelationshipEdgePopover({
       if (!res.ok) throw new Error("failed");
       onRemoved();
     } catch {
-      setError("Failed to remove. Please try again.");
+      setError(t.removeFailed);
     } finally {
       setIsRemoving(false);
     }
@@ -79,6 +81,7 @@ export default function RelationshipEdgePopover({
         <button
           onClick={onClose}
           className="ml-2 p-0.5 text-stone-400 hover:text-stone-600 rounded"
+          aria-label={t.close}
         >
           <X className="w-4 h-4" />
         </button>

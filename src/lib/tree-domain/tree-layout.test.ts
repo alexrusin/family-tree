@@ -105,6 +105,9 @@ describe("buildTreeGraph", () => {
     const parentEdges = edges.filter((e) => e.type === "parent");
     expect(parentEdges).toHaveLength(1);
     expect(parentEdges[0].target).toBe("child");
+    expect(
+      (parentEdges[0].data as { relationshipIds?: string[] }).relationshipIds,
+    ).toEqual(["rpa", "rpb"]);
   });
 
   it("does NOT create a union node when spouses share no children", () => {
@@ -128,7 +131,7 @@ describe("formatMemberDateRange", () => {
 
   it("returns only birth year for a living member", () => {
     const m = makeMember("x", { isLiving: true, birthYear: 1990 });
-    expect(formatMemberDateRange(m)).toBe("b. 1990");
+    expect(formatMemberDateRange(m)).toBe("1990");
   });
 
   it("returns birth–death range for a deceased member", () => {
