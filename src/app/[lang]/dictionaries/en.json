@@ -111,7 +111,10 @@
       "monthLabel": "Month",
       "dayLabel": "Day",
       "profilePhoto": "Profile Photo (Optional)",
-      "isLiving": "Living member"
+      "isLiving": "Living member",
+      "editTitle": "Edit Member",
+      "editSubtitle": "Update this person's information.",
+      "update": "Save Changes"
     },
     "relationship": {
       "addTitle": "Add Relationship",
@@ -123,7 +126,9 @@
       "parent": "Parent",
       "child": "Child",
       "spouse": "Spouse",
-      "sibling": "Sibling"
+      "sibling": "Sibling",
+      "remove": "Remove",
+      "removing": "Removing..."
     },
     "errors": {
       "ERR_FIRST_NAME_REQUIRED": "First name is required",
@@ -140,6 +145,36 @@
       "loadFailed": "Unable to load members and relationships.",
       "chooseTwoMembers": "Please choose two members.",
       "chooseDifferentMembers": "Please choose two different members."
+    },
+    "canvas": {
+      "emptyTitle": "No members yet",
+      "emptyBody": "Add your first family member to begin building the tree.",
+      "addFirstMember": "Add First Member",
+      "fitToScreen": "Fit to screen",
+      "loading": "Loading tree..."
+    },
+    "panel": {
+      "close": "Close",
+      "born": "Born",
+      "died": "Died",
+      "gender": "Gender",
+      "about": "About",
+      "relationships": "Relationships",
+      "noRelationships": "No relationships yet.",
+      "parentOf": "Parent of",
+      "childOf": "Child of",
+      "spouseOf": "Spouse of",
+      "siblingOf": "Sibling of",
+      "editMember": "Edit Member",
+      "deleteMember": "Delete Member",
+      "deleteConfirmBody": "Are you sure you want to delete this member? All their relationships will also be removed. This cannot be undone.",
+      "deleteConfirm": "Delete",
+      "deleteCancel": "Cancel",
+      "deleting": "Deleting..."
+    },
+    "sidebar": {
+      "warningBanner": "Approaching the 300-member limit ({count}/300).",
+      "limitReached": "300-member limit reached. No more members can be added."
     }
   },
   "auth": {
