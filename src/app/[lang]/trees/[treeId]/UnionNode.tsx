@@ -7,8 +7,7 @@ import type { UnionNodeData } from "@/lib/tree-domain/tree-layout";
 
 export type UnionNodeType = Node<UnionNodeData, "union">;
 
-export const UnionNode = memo(function UnionNode(
-) {
+export const UnionNode = memo(function UnionNode() {
   return (
     <div
       style={{ width: 8, height: 8 }}

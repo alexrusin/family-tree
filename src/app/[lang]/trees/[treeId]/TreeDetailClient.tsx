@@ -151,7 +151,10 @@ function edgeLabel(
   getMemberName: (id: string) => string,
   t: { parentOf: string; spouseOf: string },
 ): { fromName: string; toName: string; typeLabel: string } | null {
-  const data = edge.data as { relationshipId?: string; relationshipIds?: string[] };
+  const data = edge.data as {
+    relationshipId?: string;
+    relationshipIds?: string[];
+  };
   const relationshipId = data.relationshipId ?? data.relationshipIds?.[0];
   if (!relationshipId) return null;
 
