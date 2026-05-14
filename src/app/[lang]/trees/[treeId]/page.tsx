@@ -2,7 +2,6 @@ import { notFound, redirect } from "next/navigation";
 import { PrismaClient } from "@/generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { getCurrentUser } from "@/lib/auth-utils";
-import { formatRelativeTime } from "@/lib/tree-utils";
 import Header from "../../components/Header";
 import { getDictionary, hasLocale } from "../../dictionaries/dictionaries";
 import TreeDetailClient from "./TreeDetailClient";
@@ -69,6 +68,8 @@ export default async function TreeDetailPage({
     notFound();
   }
 
+  const isOwner = tree.ownerId === user.id;
+
   return (
     <>
       <Header
@@ -79,18 +80,17 @@ export default async function TreeDetailPage({
         logoutLabel={t.dashboard.logout}
       />
 
-      <main className="pt-24 pb-20 px-6">
-        <div className="max-w-7xl mx-auto">
-          <TreeDetailClient
-            treeId={tree.id}
-            treeName={tree.name}
-            canEdit={canEdit}
-            initialMemberCount={tree.memberCount}
-            lastEdit={formatRelativeTime(tree.updatedAt)}
-            t={t.tree}
-          />
-        </div>
-      </main>
+      {/* Full-screen canvas below the fixed header (header height ≈ 3.5rem / 56px) */}
+      <div className="fixed inset-0 top-14 overflow-hidden">
+        <TreeDetailClient
+          treeId={tree.id}
+          treeName={tree.name}
+          canEdit={canEdit}
+          isOwner={isOwner}
+          initialMemberCount={tree.memberCount}
+          t={t.tree}
+        />
+      </div>
     </>
   );
 }
