@@ -2,10 +2,10 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import dynamic from "next/dynamic";
 import AddMemberModal from "./AddMemberModal";
 import AddRelationshipModal from "./AddRelationshipModal";
 import EditMemberModal from "./EditMemberModal";
-import TreeCanvas from "./TreeCanvas";
 import TreeSidebar from "./TreeSidebar";
 import MemberSidePanel from "./MemberSidePanel";
 import RelationshipEdgePopover from "./RelationshipEdgePopover";
@@ -16,6 +16,7 @@ import {
 } from "@/lib/tree-domain/tree-layout";
 
 const MEMBER_HARD_LIMIT = 300;
+const TreeCanvas = dynamic(() => import("./TreeCanvas"), { ssr: false });
 
 // ── Localisation shape ────────────────────────────────────────────────────
 interface MemberSubT {
@@ -405,7 +406,7 @@ export default function TreeDetailClient({
 
       {/* Add member modal */}
       <AddMemberModal
-        key={addMemberModalKey}
+        key={`add-member-${addMemberModalKey}`}
         isOpen={isAddMemberOpen}
         treeId={treeId}
         onClose={() => setIsAddMemberOpen(false)}
@@ -421,7 +422,7 @@ export default function TreeDetailClient({
 
       {/* Add relationship modal */}
       <AddRelationshipModal
-        key={addRelationshipModalKey}
+        key={`add-relationship-${addRelationshipModalKey}`}
         isOpen={isAddRelationshipOpen}
         treeId={treeId}
         members={members}
