@@ -8,6 +8,7 @@ import {
   type BirthPrecision,
   validateMemberPhotoSelection,
 } from "./member-form-state";
+import MemberDateSection from "./MemberDateSection";
 
 interface MemberT {
   addTitle: string;
@@ -334,7 +335,7 @@ export default function AddMemberModal({
           </div>
 
           {/* Birth date */}
-          <DateSection
+          <MemberDateSection
             label={t.birthSection}
             precision={formState.birthPrecision}
             year={formState.birthYear}
@@ -358,7 +359,7 @@ export default function AddMemberModal({
 
           {/* Death date (only when not living) */}
           {!formState.isLiving && (
-            <DateSection
+            <MemberDateSection
               label={t.deathSection}
               precision={formState.deathPrecision}
               year={formState.deathYear}
@@ -431,117 +432,6 @@ export default function AddMemberModal({
             </button>
           </div>
         </form>
-      </div>
-    </div>
-  );
-}
-
-interface DateSectionProps {
-  label: string;
-  precision: BirthPrecision;
-  year: string;
-  month: string;
-  day: string;
-  isLoading: boolean;
-  t: Pick<
-    MemberT,
-    | "precision"
-    | "precisionYear"
-    | "precisionMonth"
-    | "precisionDay"
-    | "yearLabel"
-    | "monthLabel"
-    | "dayLabel"
-  >;
-  onPrecisionChange: (v: BirthPrecision) => void;
-  onYearChange: (v: string) => void;
-  onMonthChange: (v: string) => void;
-  onDayChange: (v: string) => void;
-}
-
-function DateSection({
-  label,
-  precision,
-  year,
-  month,
-  day,
-  isLoading,
-  t,
-  onPrecisionChange,
-  onYearChange,
-  onMonthChange,
-  onDayChange,
-}: DateSectionProps) {
-  return (
-    <div>
-      <p className="block text-sm font-semibold text-stone-900 mb-2">{label}</p>
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-        <div>
-          <label className="block text-xs text-stone-500 mb-1">
-            {t.precision}
-          </label>
-          <select
-            value={precision}
-            onChange={(e) =>
-              onPrecisionChange(e.target.value as BirthPrecision)
-            }
-            className="w-full px-3 py-2 bg-stone-50 border border-stone-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-900 text-stone-900 text-sm"
-            disabled={isLoading}
-          >
-            <option value="year">{t.precisionYear}</option>
-            <option value="month">{t.precisionMonth}</option>
-            <option value="day">{t.precisionDay}</option>
-          </select>
-        </div>
-        <div>
-          <label className="block text-xs text-stone-500 mb-1">
-            {t.yearLabel}
-          </label>
-          <input
-            type="number"
-            value={year}
-            onChange={(e) => onYearChange(e.target.value)}
-            min={1}
-            max={new Date().getFullYear()}
-            className="w-full px-3 py-2 bg-stone-50 border border-stone-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-900 text-stone-900 text-sm"
-            placeholder="YYYY"
-            disabled={isLoading}
-          />
-        </div>
-        {(precision === "month" || precision === "day") && (
-          <div>
-            <label className="block text-xs text-stone-500 mb-1">
-              {t.monthLabel}
-            </label>
-            <input
-              type="number"
-              value={month}
-              onChange={(e) => onMonthChange(e.target.value)}
-              min={1}
-              max={12}
-              className="w-full px-3 py-2 bg-stone-50 border border-stone-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-900 text-stone-900 text-sm"
-              placeholder="MM"
-              disabled={isLoading}
-            />
-          </div>
-        )}
-        {precision === "day" && (
-          <div>
-            <label className="block text-xs text-stone-500 mb-1">
-              {t.dayLabel}
-            </label>
-            <input
-              type="number"
-              value={day}
-              onChange={(e) => onDayChange(e.target.value)}
-              min={1}
-              max={31}
-              className="w-full px-3 py-2 bg-stone-50 border border-stone-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-900 text-stone-900 text-sm"
-              placeholder="DD"
-              disabled={isLoading}
-            />
-          </div>
-        )}
       </div>
     </div>
   );
