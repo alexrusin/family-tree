@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@/generated/prisma/client";
+import type { DatePrecision, MemberGender } from "@/generated/prisma/enums";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { auth } from "@/lib/auth";
 import {
@@ -51,13 +52,13 @@ export async function PATCH(
       firstName?: string;
       lastName?: string | null;
       isLiving?: boolean;
-      gender?: string;
+      gender?: MemberGender;
       bio?: string | null;
-      birthPrecision?: string | null;
+      birthPrecision?: DatePrecision | null;
       birthYear?: number | null;
       birthMonth?: number | null;
       birthDay?: number | null;
-      deathPrecision?: string | null;
+      deathPrecision?: DatePrecision | null;
       deathYear?: number | null;
       deathMonth?: number | null;
       deathDay?: number | null;
@@ -79,9 +80,14 @@ export async function PATCH(
       updateData.isLiving = body.isLiving;
     }
 
-    const VALID_GENDERS = new Set(["male", "female", "other", "undisclosed"]);
+    const VALID_GENDERS = new Set<MemberGender>([
+      "male",
+      "female",
+      "other",
+      "undisclosed",
+    ]);
     if (typeof body?.gender === "string" && VALID_GENDERS.has(body.gender)) {
-      updateData.gender = body.gender;
+      updateData.gender = body.gender as MemberGender;
     }
 
     if (body?.bio !== undefined) {
@@ -91,12 +97,12 @@ export async function PATCH(
           : null;
     }
 
-    const VALID_PRECISIONS = new Set(["year", "month", "day"]);
+    const VALID_PRECISIONS = new Set<DatePrecision>(["year", "month", "day"]);
     if (body?.birthPrecision !== undefined) {
       updateData.birthPrecision =
         typeof body.birthPrecision === "string" &&
         VALID_PRECISIONS.has(body.birthPrecision)
-          ? body.birthPrecision
+          ? (body.birthPrecision as DatePrecision)
           : null;
     }
     if (body?.birthYear !== undefined) {
@@ -116,7 +122,7 @@ export async function PATCH(
       updateData.deathPrecision =
         typeof body.deathPrecision === "string" &&
         VALID_PRECISIONS.has(body.deathPrecision)
-          ? body.deathPrecision
+          ? (body.deathPrecision as DatePrecision)
           : null;
     }
     if (body?.deathYear !== undefined) {
