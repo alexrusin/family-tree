@@ -157,6 +157,7 @@ function TreeCard({
           {/* Owner avatar */}
           <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center text-amber-900 font-semibold text-xs flex-shrink-0">
             {tree.ownerImage ? (
+              /* eslint-disable-next-line @next/next/no-img-element */
               <img
                 src={tree.ownerImage}
                 alt={tree.ownerName}
@@ -269,7 +270,6 @@ export default function DashboardClient({
         isOpen={createModalOpen}
         onClose={() => setCreateModalOpen(false)}
         onTreeCreated={handleTreeCreated}
-        lang={lang}
       />
       <RenameTreeModal
         isOpen={renameModalOpen}

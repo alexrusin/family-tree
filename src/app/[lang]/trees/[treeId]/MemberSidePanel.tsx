@@ -155,6 +155,7 @@ export default function MemberSidePanel({
         {/* Photo */}
         <div className="flex justify-center">
           {member.photoUrl ? (
+            /* eslint-disable-next-line @next/next/no-img-element */
             <img
               src={member.photoUrl}
               alt={displayName}

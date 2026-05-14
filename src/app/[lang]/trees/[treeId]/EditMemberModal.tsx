@@ -189,6 +189,7 @@ export default function EditMemberModal({
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           {member.photoUrl && (
             <div className="flex items-center gap-3">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={member.photoUrl}
                 alt={t.currentPhotoAlt}

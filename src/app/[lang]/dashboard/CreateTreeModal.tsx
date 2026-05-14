@@ -7,14 +7,12 @@ interface CreateTreeModalProps {
   isOpen: boolean;
   onClose: () => void;
   onTreeCreated: () => void;
-  lang: string;
 }
 
 export default function CreateTreeModal({
   isOpen,
   onClose,
   onTreeCreated,
-  lang,
 }: CreateTreeModalProps) {
   const [treeName, setTreeName] = useState("");
   const [isLoading, setIsLoading] = useState(false);
