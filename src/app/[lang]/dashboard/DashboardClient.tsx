@@ -45,11 +45,13 @@ interface DashboardClientProps {
 function TreeCard({
   tree,
   t,
+  onOpenTree,
   onRenameClick,
   onDeleteClick,
 }: {
   tree: Tree;
   t: DashboardClientProps["t"];
+  onOpenTree: (treeId: string) => void;
   onRenameClick: (treeId: string, treeName: string) => void;
   onDeleteClick: (treeId: string, treeName: string) => void;
 }) {
@@ -76,12 +78,31 @@ function TreeCard({
     .toUpperCase();
 
   return (
-    <div className="group bg-white rounded-2xl p-6 shadow-sm border border-stone-100 hover:shadow-xl hover:shadow-amber-900/5 transition-all duration-300 relative flex flex-col h-full">
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={() => onOpenTree(tree.id)}
+      onKeyDown={(event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          onOpenTree(tree.id);
+        }
+      }}
+      className="group bg-white rounded-2xl p-6 shadow-sm border border-stone-100 hover:shadow-xl hover:shadow-amber-900/5 transition-all duration-300 relative flex flex-col h-full cursor-pointer"
+      aria-label={`Open ${tree.name}`}
+    >
       {/* ⋮ menu — only show for owned trees */}
       {tree.isOwned && (
-        <div className="absolute top-4 right-4" ref={menuRef}>
+        <div
+          className="absolute top-4 right-4"
+          ref={menuRef}
+          onClick={(event) => event.stopPropagation()}
+        >
           <button
-            onClick={() => setMenuOpen((v) => !v)}
+            onClick={(event) => {
+              event.stopPropagation();
+              setMenuOpen((v) => !v);
+            }}
             className="p-1 text-stone-400 hover:text-amber-900 transition-colors rounded-lg hover:bg-stone-100"
             aria-label="Card options"
           >
@@ -90,7 +111,8 @@ function TreeCard({
           {menuOpen && (
             <div className="absolute right-0 mt-1 w-36 bg-white rounded-xl shadow-lg border border-stone-100 py-1 z-10">
               <button
-                onClick={() => {
+                onClick={(event) => {
+                  event.stopPropagation();
                   onRenameClick(tree.id, tree.name);
                   setMenuOpen(false);
                 }}
@@ -99,7 +121,8 @@ function TreeCard({
                 {t.cardMenuRename}
               </button>
               <button
-                onClick={() => {
+                onClick={(event) => {
+                  event.stopPropagation();
                   onDeleteClick(tree.id, tree.name);
                   setMenuOpen(false);
                 }}
@@ -235,6 +258,10 @@ export default function DashboardClient({
     router.refresh();
   };
 
+  const handleOpenTree = (treeId: string) => {
+    router.push(`/${lang}/trees/${treeId}`);
+  };
+
   return (
     <>
       {/* Modals */}
@@ -303,6 +330,7 @@ export default function DashboardClient({
               key={tree.id}
               tree={tree}
               t={t}
+              onOpenTree={handleOpenTree}
               onRenameClick={handleRenameClick}
               onDeleteClick={handleDeleteClick}
             />
