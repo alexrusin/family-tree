@@ -4,8 +4,13 @@ import { PrismaPg } from "@prisma/adapter-pg";
 import { auth } from "@/lib/auth";
 import {
   canEditMembers,
-  type TreeRole,
-} from "../../../../../../lib/tree-domain/tree-access";
+  canDeleteMembers,
+  getTreeRole,
+} from "@/lib/tree-domain/tree-access";
+import {
+  compareLifeSpan,
+  type PartialDate,
+} from "@/lib/tree-domain/date-precision";
 
 function getPrismaClient() {
   return new PrismaClient({
@@ -13,49 +18,9 @@ function getPrismaClient() {
   });
 }
 
-async function getTreeRole(
-  prisma: PrismaClient,
-  treeId: string,
-  userId: string,
-): Promise<TreeRole> {
-  const tree = await prisma.familyTree.findUnique({
-    where: { id: treeId },
-    select: { ownerId: true },
-  });
-
-  if (!tree) {
-    return "none";
-  }
-
-  if (tree.ownerId === userId) {
-    return "owner";
-  }
-
-  const collaborator = await prisma.collaborator.findUnique({
-    where: {
-      treeId_userId: {
-        treeId,
-        userId,
-      },
-    },
-    select: {
-      role: true,
-      acceptedAt: true,
-    },
-  });
-
-  if (!collaborator || !collaborator.acceptedAt) {
-    return "none";
-  }
-
-  return collaborator.role;
-}
-
 export async function PATCH(
   request: NextRequest,
-  {
-    params,
-  }: { params: Promise<{ treeId: string; memberId: string }> },
+  { params }: { params: Promise<{ treeId: string; memberId: string }> },
 ) {
   try {
     const session = await auth.api.getSession({
@@ -63,7 +28,10 @@ export async function PATCH(
     });
 
     if (!session?.user) {
-      return NextResponse.json({ errorCode: "ERR_UNAUTHORIZED" }, { status: 401 });
+      return NextResponse.json(
+        { errorCode: "ERR_UNAUTHORIZED" },
+        { status: 401 },
+      );
     }
 
     const { treeId, memberId } = await params;
@@ -83,6 +51,16 @@ export async function PATCH(
       firstName?: string;
       lastName?: string | null;
       isLiving?: boolean;
+      gender?: string;
+      bio?: string | null;
+      birthPrecision?: string | null;
+      birthYear?: number | null;
+      birthMonth?: number | null;
+      birthDay?: number | null;
+      deathPrecision?: string | null;
+      deathYear?: number | null;
+      deathMonth?: number | null;
+      deathDay?: number | null;
     } = {};
 
     if (typeof body?.firstName === "string") {
@@ -101,11 +79,92 @@ export async function PATCH(
       updateData.isLiving = body.isLiving;
     }
 
+    const VALID_GENDERS = new Set(["male", "female", "other", "undisclosed"]);
+    if (typeof body?.gender === "string" && VALID_GENDERS.has(body.gender)) {
+      updateData.gender = body.gender;
+    }
+
+    if (body?.bio !== undefined) {
+      updateData.bio =
+        typeof body.bio === "string"
+          ? body.bio.trim().slice(0, 1000) || null
+          : null;
+    }
+
+    const VALID_PRECISIONS = new Set(["year", "month", "day"]);
+    if (body?.birthPrecision !== undefined) {
+      updateData.birthPrecision =
+        typeof body.birthPrecision === "string" &&
+        VALID_PRECISIONS.has(body.birthPrecision)
+          ? body.birthPrecision
+          : null;
+    }
+    if (body?.birthYear !== undefined) {
+      updateData.birthYear =
+        typeof body.birthYear === "number" ? body.birthYear : null;
+    }
+    if (body?.birthMonth !== undefined) {
+      updateData.birthMonth =
+        typeof body.birthMonth === "number" ? body.birthMonth : null;
+    }
+    if (body?.birthDay !== undefined) {
+      updateData.birthDay =
+        typeof body.birthDay === "number" ? body.birthDay : null;
+    }
+
+    if (body?.deathPrecision !== undefined) {
+      updateData.deathPrecision =
+        typeof body.deathPrecision === "string" &&
+        VALID_PRECISIONS.has(body.deathPrecision)
+          ? body.deathPrecision
+          : null;
+    }
+    if (body?.deathYear !== undefined) {
+      updateData.deathYear =
+        typeof body.deathYear === "number" ? body.deathYear : null;
+    }
+    if (body?.deathMonth !== undefined) {
+      updateData.deathMonth =
+        typeof body.deathMonth === "number" ? body.deathMonth : null;
+    }
+    if (body?.deathDay !== undefined) {
+      updateData.deathDay =
+        typeof body.deathDay === "number" ? body.deathDay : null;
+    }
+
     if (Object.keys(updateData).length === 0) {
       return NextResponse.json(
         { errorCode: "ERR_INVALID_MEMBER_UPDATE" },
         { status: 400 },
       );
+    }
+
+    // Validate chronology when both birth and death year are in this request
+    if (
+      typeof body?.birthYear === "number" &&
+      typeof body?.deathYear === "number"
+    ) {
+      const birth: PartialDate = {
+        precision: (updateData.birthPrecision ??
+          "year") as PartialDate["precision"],
+        year: body.birthYear,
+        month: updateData.birthMonth ?? null,
+        day: updateData.birthDay ?? null,
+      };
+      const death: PartialDate = {
+        precision: (updateData.deathPrecision ??
+          "year") as PartialDate["precision"],
+        year: body.deathYear,
+        month: updateData.deathMonth ?? null,
+        day: updateData.deathDay ?? null,
+      };
+      const chronologyError = compareLifeSpan(birth, death);
+      if (chronologyError) {
+        return NextResponse.json(
+          { errorCode: chronologyError },
+          { status: 400 },
+        );
+      }
     }
 
     const prisma = getPrismaClient();
@@ -144,9 +203,7 @@ export async function PATCH(
 
 export async function DELETE(
   request: NextRequest,
-  {
-    params,
-  }: { params: Promise<{ treeId: string; memberId: string }> },
+  { params }: { params: Promise<{ treeId: string; memberId: string }> },
 ) {
   try {
     const session = await auth.api.getSession({
@@ -154,14 +211,17 @@ export async function DELETE(
     });
 
     if (!session?.user) {
-      return NextResponse.json({ errorCode: "ERR_UNAUTHORIZED" }, { status: 401 });
+      return NextResponse.json(
+        { errorCode: "ERR_UNAUTHORIZED" },
+        { status: 401 },
+      );
     }
 
     const { treeId, memberId } = await params;
     const prisma = getPrismaClient();
     const role = await getTreeRole(prisma, treeId, session.user.id);
 
-    if (role !== "owner") {
+    if (!canDeleteMembers(role)) {
       return NextResponse.json({ errorCode: "ERR_FORBIDDEN" }, { status: 403 });
     }
 

@@ -8,6 +8,26 @@ import sharp from "sharp";
 const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 const FIVE_MB = 5 * 1024 * 1024;
 
+export function createS3Client(): S3Client {
+  return new S3Client({
+    region: process.env.S3_REGION ?? "us-east-1",
+    credentials: {
+      accessKeyId: process.env.AWS_ACCESS_KEY_ID ?? "",
+      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY ?? "",
+    },
+  });
+}
+
+export function generatePhotoKey(treeId: string, memberId: string): string {
+  return `trees/${treeId}/members/${memberId}.webp`;
+}
+
+export function photoPublicUrl(key: string): string {
+  const bucket = process.env.S3_BUCKET ?? "";
+  const region = process.env.S3_REGION ?? "us-east-1";
+  return `https://${bucket}.s3.${region}.amazonaws.com/${key}`;
+}
+
 export function validatePhotoFile(input: {
   contentType: string;
   sizeBytes: number;

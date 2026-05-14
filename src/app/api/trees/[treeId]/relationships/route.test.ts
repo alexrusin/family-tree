@@ -135,7 +135,9 @@ describe("/api/trees/[treeId]/relationships", () => {
   });
 
   it("returns 409 for canonical duplicate relationship", async () => {
-    prismaClientMock.relationship.findFirst.mockResolvedValue({ id: "r-existing" });
+    prismaClientMock.relationship.findFirst.mockResolvedValue({
+      id: "r-existing",
+    });
 
     const request = new NextRequest(
       "http://localhost/api/trees/t1/relationships",

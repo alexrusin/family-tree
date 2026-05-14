@@ -2,57 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@/generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { auth } from "@/lib/auth";
-import {
-  canonicalizeRelationship,
-  type RelationshipType,
-} from "../../../../../lib/tree-domain/relationship-canonical";
-import {
-  canEditMembers,
-  type TreeRole,
-} from "../../../../../lib/tree-domain/tree-access";
+import { type RelationshipType } from "@/lib/tree-domain/relationship-canonical";
+import { getTreeRole } from "@/lib/tree-domain/tree-access";
+import { createRelationship } from "@/lib/tree-domain/relationship-service";
 
 function getPrismaClient() {
   return new PrismaClient({
     adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }),
   });
-}
-
-async function getTreeRole(
-  prisma: PrismaClient,
-  treeId: string,
-  userId: string,
-): Promise<TreeRole> {
-  const tree = await prisma.familyTree.findUnique({
-    where: { id: treeId },
-    select: { ownerId: true },
-  });
-
-  if (!tree) {
-    return "none";
-  }
-
-  if (tree.ownerId === userId) {
-    return "owner";
-  }
-
-  const collaborator = await prisma.collaborator.findUnique({
-    where: {
-      treeId_userId: {
-        treeId,
-        userId,
-      },
-    },
-    select: {
-      role: true,
-      acceptedAt: true,
-    },
-  });
-
-  if (!collaborator || !collaborator.acceptedAt) {
-    return "none";
-  }
-
-  return collaborator.role;
 }
 
 function isRelationshipType(value: unknown): value is RelationshipType {
@@ -74,7 +31,10 @@ export async function GET(
     });
 
     if (!session?.user) {
-      return NextResponse.json({ errorCode: "ERR_UNAUTHORIZED" }, { status: 401 });
+      return NextResponse.json(
+        { errorCode: "ERR_UNAUTHORIZED" },
+        { status: 401 },
+      );
     }
 
     const { treeId } = await params;
@@ -107,7 +67,10 @@ export async function POST(
     });
 
     if (!session?.user) {
-      return NextResponse.json({ errorCode: "ERR_UNAUTHORIZED" }, { status: 401 });
+      return NextResponse.json(
+        { errorCode: "ERR_UNAUTHORIZED" },
+        { status: 401 },
+      );
     }
 
     const { treeId } = await params;
@@ -127,55 +90,63 @@ export async function POST(
     }
 
     const prisma = getPrismaClient();
-    const role = await getTreeRole(prisma, treeId, session.user.id);
 
-    if (!canEditMembers(role)) {
-      return NextResponse.json({ errorCode: "ERR_FORBIDDEN" }, { status: 403 });
-    }
-
-    const canonical = canonicalizeRelationship({
-      fromMemberId: body.fromMemberId.trim(),
-      toMemberId: body.toMemberId.trim(),
-      type: body.type,
-    });
-
-    const duplicate = await prisma.relationship.findFirst({
-      where: {
-        treeId,
-        fromMemberId: canonical.fromMemberId,
-        toMemberId: canonical.toMemberId,
-        type: canonical.type,
+    const relationship = await createRelationship({
+      repo: {
+        getRole: (tId, uId) => getTreeRole(prisma, tId, uId),
+        hasRelationship: async (args) =>
+          !!(await prisma.relationship.findFirst({
+            where: {
+              treeId: args.treeId,
+              fromMemberId: args.fromMemberId,
+              toMemberId: args.toMemberId,
+              type: args.type,
+            },
+            select: { id: true },
+          })),
+        createRelationshipRecord: (args) =>
+          prisma.relationship.create({
+            data: {
+              treeId: args.treeId,
+              fromMemberId: args.fromMemberId,
+              toMemberId: args.toMemberId,
+              type: args.type,
+            },
+          }),
       },
-      select: { id: true },
-    });
-
-    if (duplicate) {
-      return NextResponse.json(
-        { errorCode: "ERR_DUPLICATE_RELATIONSHIP" },
-        { status: 409 },
-      );
-    }
-
-    const relationship = await prisma.relationship.create({
-      data: {
-        treeId,
-        fromMemberId: canonical.fromMemberId,
-        toMemberId: canonical.toMemberId,
-        type: canonical.type,
+      actorUserId: session.user.id,
+      treeId,
+      input: {
+        fromMemberId: body.fromMemberId.trim(),
+        toMemberId: body.toMemberId.trim(),
+        type: body.type,
       },
     });
 
     return NextResponse.json({ relationship }, { status: 201 });
   } catch (error) {
-    if (error instanceof Error && error.message === "ERR_SELF_RELATIONSHIP") {
-      return NextResponse.json(
-        { errorCode: "ERR_SELF_RELATIONSHIP" },
-        { status: 400 },
-      );
+    if (error instanceof Error) {
+      if (error.message === "ERR_FORBIDDEN") {
+        return NextResponse.json(
+          { errorCode: "ERR_FORBIDDEN" },
+          { status: 403 },
+        );
+      }
+      if (error.message === "ERR_DUPLICATE_RELATIONSHIP") {
+        return NextResponse.json(
+          { errorCode: "ERR_DUPLICATE_RELATIONSHIP" },
+          { status: 409 },
+        );
+      }
+      if (error.message === "ERR_SELF_RELATIONSHIP") {
+        return NextResponse.json(
+          { errorCode: "ERR_SELF_RELATIONSHIP" },
+          { status: 400 },
+        );
+      }
     }
 
-    const errorCode = (error as { code?: string })?.code;
-    if (errorCode === "P2002") {
+    if ((error as { code?: string })?.code === "P2002") {
       return NextResponse.json(
         { errorCode: "ERR_DUPLICATE_RELATIONSHIP" },
         { status: 409 },

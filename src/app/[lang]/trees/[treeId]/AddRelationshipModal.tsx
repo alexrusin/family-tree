@@ -11,27 +11,49 @@ interface MemberOption {
   lastName: string | null;
 }
 
+interface RelationshipT {
+  addTitle: string;
+  addSubtitle: string;
+  memberA: string;
+  memberB: string;
+  type: string;
+  selectMember: string;
+  parent: string;
+  child: string;
+  spouse: string;
+  sibling: string;
+  cancel: string;
+  saving: string;
+  add: string;
+  errors: {
+    ERR_INVALID_RELATIONSHIP: string;
+    ERR_SELF_RELATIONSHIP: string;
+    ERR_DUPLICATE_RELATIONSHIP: string;
+    ERR_FORBIDDEN: string;
+    relationshipGeneric: string;
+    chooseTwoMembers: string;
+    chooseDifferentMembers: string;
+    [key: string]: string;
+  };
+}
+
 interface AddRelationshipModalProps {
   isOpen: boolean;
   treeId: string;
   members: MemberOption[];
   onClose: () => void;
   onRelationshipCreated: () => void;
+  t: RelationshipT;
 }
 
-function mapRelationshipErrorCode(errorCode: string | null): string {
-  switch (errorCode) {
-    case "ERR_INVALID_RELATIONSHIP":
-      return "Please choose two members and a relationship type.";
-    case "ERR_SELF_RELATIONSHIP":
-      return "A member cannot be in a relationship with themselves.";
-    case "ERR_DUPLICATE_RELATIONSHIP":
-      return "This relationship already exists.";
-    case "ERR_FORBIDDEN":
-      return "You do not have permission to add relationships.";
-    default:
-      return "Unable to add relationship. Please try again.";
+function mapRelationshipErrorCode(
+  errorCode: string | null,
+  errors: RelationshipT["errors"],
+): string {
+  if (errorCode && errorCode in errors) {
+    return errors[errorCode];
   }
+  return errors.relationshipGeneric;
 }
 
 export default function AddRelationshipModal({
@@ -40,6 +62,7 @@ export default function AddRelationshipModal({
   members,
   onClose,
   onRelationshipCreated,
+  t,
 }: AddRelationshipModalProps) {
   const [fromMemberId, setFromMemberId] = useState("");
   const [toMemberId, setToMemberId] = useState("");
@@ -80,12 +103,12 @@ export default function AddRelationshipModal({
     setError(null);
 
     if (!fromMemberId || !toMemberId) {
-      setError("Please choose two members.");
+      setError(t.errors.chooseTwoMembers);
       return;
     }
 
     if (fromMemberId === toMemberId) {
-      setError("Please choose two different members.");
+      setError(t.errors.chooseDifferentMembers);
       return;
     }
 
@@ -103,9 +126,9 @@ export default function AddRelationshipModal({
       });
 
       if (!response.ok) {
-        const data = (await response.json().catch(() => null)) as
-          | { errorCode?: string }
-          | null;
+        const data = (await response.json().catch(() => null)) as {
+          errorCode?: string;
+        } | null;
         throw new Error(data?.errorCode || "ERR_UNKNOWN");
       }
 
@@ -114,7 +137,7 @@ export default function AddRelationshipModal({
     } catch (submitError) {
       const errorCode =
         submitError instanceof Error ? submitError.message : null;
-      setError(mapRelationshipErrorCode(errorCode));
+      setError(mapRelationshipErrorCode(errorCode, t.errors));
     } finally {
       setIsLoading(false);
     }
@@ -130,11 +153,9 @@ export default function AddRelationshipModal({
         <div className="flex items-center justify-between px-6 py-4 border-b border-stone-100">
           <div>
             <h2 className="text-xl font-semibold text-stone-900">
-              Add Relationship
+              {t.addTitle}
             </h2>
-            <p className="text-sm text-stone-500 mt-1">
-              Connect two members in this tree.
-            </p>
+            <p className="text-sm text-stone-500 mt-1">{t.addSubtitle}</p>
           </div>
           <button
             onClick={handleClose}
@@ -148,7 +169,7 @@ export default function AddRelationshipModal({
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           <div>
             <label className="block text-sm font-semibold text-stone-900 mb-2">
-              Member A
+              {t.memberA}
             </label>
             <select
               value={fromMemberId}
@@ -156,7 +177,7 @@ export default function AddRelationshipModal({
               className="w-full px-4 py-2 bg-stone-50 border border-stone-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-900 focus:border-transparent transition-all text-stone-900"
               disabled={isLoading}
             >
-              <option value="">Select member</option>
+              <option value="">{t.selectMember}</option>
               {memberOptions.map((member) => (
                 <option key={member.id} value={member.id}>
                   {member.label}
@@ -167,7 +188,7 @@ export default function AddRelationshipModal({
 
           <div>
             <label className="block text-sm font-semibold text-stone-900 mb-2">
-              Member B
+              {t.memberB}
             </label>
             <select
               value={toMemberId}
@@ -175,7 +196,7 @@ export default function AddRelationshipModal({
               className="w-full px-4 py-2 bg-stone-50 border border-stone-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-900 focus:border-transparent transition-all text-stone-900"
               disabled={isLoading}
             >
-              <option value="">Select member</option>
+              <option value="">{t.selectMember}</option>
               {memberOptions.map((member) => (
                 <option key={member.id} value={member.id}>
                   {member.label}
@@ -186,7 +207,7 @@ export default function AddRelationshipModal({
 
           <div>
             <label className="block text-sm font-semibold text-stone-900 mb-2">
-              Relationship Type
+              {t.type}
             </label>
             <select
               value={relationshipType}
@@ -196,10 +217,10 @@ export default function AddRelationshipModal({
               className="w-full px-4 py-2 bg-stone-50 border border-stone-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-900 focus:border-transparent transition-all text-stone-900"
               disabled={isLoading}
             >
-              <option value="parent">Parent</option>
-              <option value="child">Child</option>
-              <option value="spouse">Spouse</option>
-              <option value="sibling">Sibling</option>
+              <option value="parent">{t.parent}</option>
+              <option value="child">{t.child}</option>
+              <option value="spouse">{t.spouse}</option>
+              <option value="sibling">{t.sibling}</option>
             </select>
           </div>
 
@@ -224,7 +245,7 @@ export default function AddRelationshipModal({
               disabled={isLoading}
               className="flex-1 px-4 py-2 bg-stone-100 text-stone-900 rounded-lg font-semibold hover:bg-stone-200 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
             >
-              Cancel
+              {t.cancel}
             </button>
             <button
               type="submit"
@@ -234,10 +255,10 @@ export default function AddRelationshipModal({
               {isLoading ? (
                 <>
                   <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  Saving...
+                  {t.saving}
                 </>
               ) : (
-                "Add Relationship"
+                t.add
               )}
             </button>
           </div>

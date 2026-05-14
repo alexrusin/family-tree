@@ -96,10 +96,13 @@ describe("/api/trees/[treeId]/members/[memberId]", () => {
   });
 
   it("returns 400 when PATCH firstName is blank", async () => {
-    const request = new NextRequest("http://localhost/api/trees/t1/members/m1", {
-      method: "PATCH",
-      body: JSON.stringify({ firstName: "   " }),
-    });
+    const request = new NextRequest(
+      "http://localhost/api/trees/t1/members/m1",
+      {
+        method: "PATCH",
+        body: JSON.stringify({ firstName: "   " }),
+      },
+    );
 
     const response = await PATCH(request, {
       params: Promise.resolve({ treeId: "t1", memberId: "m1" }),
@@ -115,9 +118,12 @@ describe("/api/trees/[treeId]/members/[memberId]", () => {
   it("returns 401 for unauthenticated DELETE", async () => {
     getSessionMock.mockResolvedValue(null);
 
-    const request = new NextRequest("http://localhost/api/trees/t1/members/m1", {
-      method: "DELETE",
-    });
+    const request = new NextRequest(
+      "http://localhost/api/trees/t1/members/m1",
+      {
+        method: "DELETE",
+      },
+    );
 
     const response = await DELETE(request, {
       params: Promise.resolve({ treeId: "t1", memberId: "m1" }),
@@ -137,9 +143,12 @@ describe("/api/trees/[treeId]/members/[memberId]", () => {
       acceptedAt: new Date(),
     });
 
-    const request = new NextRequest("http://localhost/api/trees/t1/members/m1", {
-      method: "DELETE",
-    });
+    const request = new NextRequest(
+      "http://localhost/api/trees/t1/members/m1",
+      {
+        method: "DELETE",
+      },
+    );
 
     const response = await DELETE(request, {
       params: Promise.resolve({ treeId: "t1", memberId: "m1" }),

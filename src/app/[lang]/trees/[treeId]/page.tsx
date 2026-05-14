@@ -87,6 +87,7 @@ export default async function TreeDetailPage({
             canEdit={canEdit}
             initialMemberCount={tree.memberCount}
             lastEdit={formatRelativeTime(tree.updatedAt)}
+            t={t.tree}
           />
         </div>
       </main>

@@ -20,6 +20,9 @@ const {
       findMany: vi.fn(),
       create: vi.fn(),
     },
+    $transaction: vi.fn(async (callback: (tx: unknown) => Promise<unknown>) => {
+      return callback(prismaClientMock);
+    }),
   };
 
   return {
@@ -50,7 +53,27 @@ vi.mock("@prisma/adapter-pg", () => ({
   PrismaPg: prismaPgMock,
 }));
 
+vi.mock("@/lib/tree-domain/photo-upload", () => ({
+  validatePhotoFile: vi.fn(),
+  processImage: vi.fn(),
+  uploadProcessedPhoto: vi.fn(),
+  createS3Client: vi.fn(() => ({})),
+  generatePhotoKey: vi.fn(() => "trees/t1/members/uuid.webp"),
+  photoPublicUrl: vi.fn(
+    () =>
+      "https://bucket.s3.us-east-1.amazonaws.com/trees/t1/members/uuid.webp",
+  ),
+}));
+
 const { POST } = await import("./route");
+
+function makeFormData(fields: Record<string, string>): FormData {
+  const fd = new FormData();
+  for (const [k, v] of Object.entries(fields)) {
+    fd.append(k, v);
+  }
+  return fd;
+}
 
 describe("POST /api/trees/[treeId]/members", () => {
   beforeEach(() => {
@@ -68,7 +91,7 @@ describe("POST /api/trees/[treeId]/members", () => {
 
     const request = new NextRequest("http://localhost/api/trees/t1/members", {
       method: "POST",
-      body: JSON.stringify({ firstName: "Elena", isLiving: false }),
+      body: makeFormData({ firstName: "Elena", isLiving: "false" }),
     });
 
     const response = await POST(request, {
@@ -84,7 +107,7 @@ describe("POST /api/trees/[treeId]/members", () => {
   it("returns 400 when firstName is missing or blank", async () => {
     const request = new NextRequest("http://localhost/api/trees/t1/members", {
       method: "POST",
-      body: JSON.stringify({ firstName: "   ", isLiving: false }),
+      body: makeFormData({ firstName: "   ", isLiving: "false" }),
     });
 
     const response = await POST(request, {
@@ -108,7 +131,7 @@ describe("POST /api/trees/[treeId]/members", () => {
 
     const request = new NextRequest("http://localhost/api/trees/t1/members", {
       method: "POST",
-      body: JSON.stringify({ firstName: " Elena ", isLiving: false }),
+      body: makeFormData({ firstName: " Elena ", isLiving: "false" }),
     });
 
     const response = await POST(request, {
@@ -125,11 +148,11 @@ describe("POST /api/trees/[treeId]/members", () => {
       },
     });
     expect(prismaClientMock.treeMember.create).toHaveBeenCalledWith({
-      data: {
+      data: expect.objectContaining({
         treeId: "t1",
         firstName: "Elena",
         isLiving: false,
-      },
+      }),
     });
     expect(prismaClientMock.familyTree.update).toHaveBeenCalledWith({
       where: { id: "t1" },

@@ -2,10 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@/generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { auth } from "@/lib/auth";
-import {
-  canEditMembers,
-  type TreeRole,
-} from "../../../../../../lib/tree-domain/tree-access";
+import { canEditMembers, getTreeRole } from "@/lib/tree-domain/tree-access";
 
 function getPrismaClient() {
   return new PrismaClient({
@@ -13,49 +10,9 @@ function getPrismaClient() {
   });
 }
 
-async function getTreeRole(
-  prisma: PrismaClient,
-  treeId: string,
-  userId: string,
-): Promise<TreeRole> {
-  const tree = await prisma.familyTree.findUnique({
-    where: { id: treeId },
-    select: { ownerId: true },
-  });
-
-  if (!tree) {
-    return "none";
-  }
-
-  if (tree.ownerId === userId) {
-    return "owner";
-  }
-
-  const collaborator = await prisma.collaborator.findUnique({
-    where: {
-      treeId_userId: {
-        treeId,
-        userId,
-      },
-    },
-    select: {
-      role: true,
-      acceptedAt: true,
-    },
-  });
-
-  if (!collaborator || !collaborator.acceptedAt) {
-    return "none";
-  }
-
-  return collaborator.role;
-}
-
 export async function DELETE(
   request: NextRequest,
-  {
-    params,
-  }: { params: Promise<{ treeId: string; relationshipId: string }> },
+  { params }: { params: Promise<{ treeId: string; relationshipId: string }> },
 ) {
   try {
     const session = await auth.api.getSession({
@@ -63,7 +20,10 @@ export async function DELETE(
     });
 
     if (!session?.user) {
-      return NextResponse.json({ errorCode: "ERR_UNAUTHORIZED" }, { status: 401 });
+      return NextResponse.json(
+        { errorCode: "ERR_UNAUTHORIZED" },
+        { status: 401 },
+      );
     }
 
     const { treeId, relationshipId } = await params;

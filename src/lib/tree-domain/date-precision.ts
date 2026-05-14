@@ -31,7 +31,14 @@ export function parsePartialDate(input: PartialDateInput): PartialDate {
     };
   }
 
-  if (!input.month || !input.day) {
+  if (
+    !input.month ||
+    input.month < 1 ||
+    input.month > 12 ||
+    !input.day ||
+    input.day < 1 ||
+    input.day > 31
+  ) {
     throw new Error("ERR_INVALID_PARTIAL_DATE");
   }
 
