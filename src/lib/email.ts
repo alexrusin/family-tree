@@ -22,17 +22,18 @@ function validateEmailConfig(): void {
   }
 }
 
-// Validate on module load
-validateEmailConfig();
+function createMailClient(): MailtrapClient {
+  validateEmailConfig();
 
-const mailClient = new MailtrapClient({
-  token: process.env.MAILTRAP_TOKEN!,
-  sandbox: process.env.NODE_ENV !== "production",
-  testInboxId:
-    process.env.NODE_ENV !== "production"
-      ? Number(process.env.MAILTRAP_INBOX_ID)
-      : undefined,
-});
+  return new MailtrapClient({
+    token: process.env.MAILTRAP_TOKEN!,
+    sandbox: process.env.NODE_ENV !== "production",
+    testInboxId:
+      process.env.NODE_ENV !== "production"
+        ? Number(process.env.MAILTRAP_INBOX_ID)
+        : undefined,
+  });
+}
 
 // ============================================================================
 // Email Sending
@@ -50,11 +51,13 @@ export async function sendEmail(
   subject: string,
   html: string
 ): Promise<void> {
-  return sendEmailWithRetry({ to, subject, html });
+  const mailClient = createMailClient();
+  return sendEmailWithRetry({ to, subject, html }, mailClient);
 }
 
 async function sendEmailWithRetry(
   options: EmailOptions,
+  mailClient: MailtrapClient,
   attempt = 1
 ): Promise<void> {
   const maxRetries = options.retries ?? 3;
@@ -67,7 +70,7 @@ async function sendEmailWithRetry(
       html: options.html,
     });
 
-    console.log(`Email sent successfully to ${options.to}`, { messageId: result?.id });
+    console.log(`Email sent successfully to ${options.to}`, { response: result });
   } catch (error) {
     if (attempt < maxRetries) {
       console.warn(
@@ -75,9 +78,11 @@ async function sendEmailWithRetry(
         error
       );
       // Exponential backoff: 1s, 2s, 4s...
-      const delayMs = Math.pow(2, attempt - 1) * 1000;
+      const delayMs = process.env.NODE_ENV === "test"
+        ? 0
+        : Math.pow(2, attempt - 1) * 1000;
       await new Promise((resolve) => setTimeout(resolve, delayMs));
-      return sendEmailWithRetry(options, attempt + 1);
+      return sendEmailWithRetry(options, mailClient, attempt + 1);
     }
 
     console.error(`Failed to send email to ${options.to} after ${maxRetries} attempts:`, error);

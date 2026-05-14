@@ -107,7 +107,6 @@ export default function RegisterClient({ lang, t }: RegisterClientProps) {
         name: name.trim(),
         email: email.trim(),
         password,
-        locale: lang,
       })) as { error?: { message?: string } }
 
       if (response.error) {

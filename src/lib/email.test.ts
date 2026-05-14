@@ -69,7 +69,7 @@ describe("sendEmail", () => {
     for (const [k, v] of Object.entries(BASE_ENV)) vi.stubEnv(k, v);
 
     const error = new Error("Mailtrap API error");
-    mockSend.mockRejectedValueOnce(error);
+    mockSend.mockRejectedValue(error);
 
     await expect(
       sendEmail("user@example.com", "Hello", "<p>Hi</p>")

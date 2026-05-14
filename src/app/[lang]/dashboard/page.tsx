@@ -7,6 +7,8 @@ import DashboardLayout from "./DashboardLayout";
 import { getCurrentUser } from "@/lib/auth-utils";
 import { formatRelativeTime } from "@/lib/tree-utils";
 
+export const dynamic = "force-dynamic";
+
 export default async function DashboardPage({
   params,
 }: PageProps<"/[lang]/dashboard">) {

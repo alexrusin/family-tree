@@ -1,4 +1,5 @@
 import { notFound } from 'next/navigation'
+import { Suspense } from 'react'
 import { getDictionary, hasLocale } from '../dictionaries/dictionaries'
 import ResetPasswordClient from './ResetPasswordClient'
 
@@ -11,5 +12,9 @@ export default async function ResetPasswordPage({ params }: PageProps<'/[lang]/r
 
   const t = await getDictionary(lang)
 
-  return <ResetPasswordClient lang={lang} t={t.auth.resetPassword} />
+  return (
+    <Suspense fallback={null}>
+      <ResetPasswordClient lang={lang} t={t.auth.resetPassword} />
+    </Suspense>
+  )
 }

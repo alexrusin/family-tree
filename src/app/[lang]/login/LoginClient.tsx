@@ -39,6 +39,12 @@ interface LoginClientProps {
   t: LoginTranslations
 }
 
+interface FormErrors {
+  email?: string
+  password?: string
+  form?: string
+}
+
 export default function LoginClient({ lang, t }: LoginClientProps) {
   const router = useRouter();
   const [email, setEmail] = useState('');
