@@ -37,7 +37,9 @@ export default function TreeSidebar({
   return (
     <aside className="w-64 flex-shrink-0 bg-white border-r border-stone-200 flex flex-col h-full shadow-sm">
       <div className="p-5 border-b border-stone-100">
-        <h2 className="text-lg font-semibold text-amber-900 truncate">{treeName}</h2>
+        <h2 className="text-lg font-semibold text-amber-900 truncate">
+          {treeName}
+        </h2>
         <p className="text-sm text-stone-500 mt-1">{memberCount} members</p>
       </div>
 

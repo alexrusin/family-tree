@@ -7,7 +7,10 @@ import {
   type TreeRelationship,
 } from "./tree-layout";
 
-function makeMember(id: string, overrides: Partial<TreeMemberData> = {}): TreeMemberData {
+function makeMember(
+  id: string,
+  overrides: Partial<TreeMemberData> = {},
+): TreeMemberData {
   return {
     id,
     firstName: "Test",

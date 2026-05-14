@@ -181,7 +181,9 @@ export default function TreeDetailClient({
 
   const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
   const [isAddRelationshipOpen, setIsAddRelationshipOpen] = useState(false);
-  const [editingMember, setEditingMember] = useState<TreeMemberData | null>(null);
+  const [editingMember, setEditingMember] = useState<TreeMemberData | null>(
+    null,
+  );
   const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
   const [activeEdgePopover, setActiveEdgePopover] = useState<{
     edge: TreeFlowEdge;
@@ -199,7 +201,9 @@ export default function TreeDetailClient({
       ]);
       if (!mRes.ok || !rRes.ok) throw new Error("load");
       const mData = (await mRes.json()) as { members?: TreeMemberData[] };
-      const rData = (await rRes.json()) as { relationships?: TreeRelationship[] };
+      const rData = (await rRes.json()) as {
+        relationships?: TreeRelationship[];
+      };
       setMembers(mData.members ?? []);
       setRelationships(rData.relationships ?? []);
     } catch {
@@ -330,7 +334,8 @@ export default function TreeDetailClient({
           toName={activeEdgePopover.label.toName}
           typeLabel={activeEdgePopover.label.typeLabel}
           relationshipId={
-            (activeEdgePopover.edge.data as { relationshipId: string }).relationshipId
+            (activeEdgePopover.edge.data as { relationshipId: string })
+              .relationshipId
           }
           treeId={treeId}
           onRemoved={handleRelationshipRemoved}
@@ -392,4 +397,3 @@ export default function TreeDetailClient({
     </div>
   );
 }
-

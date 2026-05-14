@@ -51,7 +51,13 @@ export function buildTreeGraph(
 
   // ── Dagre layout (parent edges only drive the hierarchy) ──────────────
   const g = new Dagre.graphlib.Graph();
-  g.setGraph({ rankdir: "TB", ranksep: 80, nodesep: 40, marginx: 40, marginy: 40 });
+  g.setGraph({
+    rankdir: "TB",
+    ranksep: 80,
+    nodesep: 40,
+    marginx: 40,
+    marginy: 40,
+  });
   g.setDefaultEdgeLabel(() => ({}));
 
   const memberIds = new Set(members.map((m) => m.id));
@@ -80,7 +86,8 @@ export function buildTreeGraph(
   // ── Parent → children map ─────────────────────────────────────────────
   const childrenOf = new Map<string, Set<string>>();
   for (const r of parentRels) {
-    if (!childrenOf.has(r.fromMemberId)) childrenOf.set(r.fromMemberId, new Set());
+    if (!childrenOf.has(r.fromMemberId))
+      childrenOf.set(r.fromMemberId, new Set());
     childrenOf.get(r.fromMemberId)!.add(r.toMemberId);
   }
 

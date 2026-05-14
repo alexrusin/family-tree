@@ -129,7 +129,9 @@ export default function TreeCanvas({
         }}
       >
         <p className="text-xl font-semibold text-stone-700">{t.emptyTitle}</p>
-        <p className="text-stone-500 text-sm max-w-xs text-center">{t.emptyBody}</p>
+        <p className="text-stone-500 text-sm max-w-xs text-center">
+          {t.emptyBody}
+        </p>
         {canEdit && (
           <button
             onClick={onAddMember}
@@ -164,7 +166,11 @@ export default function TreeCanvas({
         backgroundColor: "#fbf9f8",
       }}
     >
-      <CanvasToolbar canEdit={canEdit} onAddMember={onAddMember} fitLabel={t.fitToScreen} />
+      <CanvasToolbar
+        canEdit={canEdit}
+        onAddMember={onAddMember}
+        fitLabel={t.fitToScreen}
+      />
     </ReactFlow>
   );
 }

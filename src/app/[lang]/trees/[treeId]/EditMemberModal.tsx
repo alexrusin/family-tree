@@ -151,7 +151,9 @@ export default function EditMemberModal({
         body: JSON.stringify(body),
       });
       if (!res.ok) {
-        const data = (await res.json().catch(() => null)) as { errorCode?: string } | null;
+        const data = (await res.json().catch(() => null)) as {
+          errorCode?: string;
+        } | null;
         throw new Error(data?.errorCode ?? "ERR_UNKNOWN");
       }
       onClose();
@@ -170,7 +172,9 @@ export default function EditMemberModal({
       <div className="w-full max-w-2xl bg-white rounded-xl shadow-xl border border-stone-100 overflow-hidden max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between px-6 py-4 border-b border-stone-100">
           <div>
-            <h2 className="text-xl font-semibold text-stone-900">{t.editTitle}</h2>
+            <h2 className="text-xl font-semibold text-stone-900">
+              {t.editTitle}
+            </h2>
             <p className="text-sm text-stone-500 mt-1">{t.editSubtitle}</p>
           </div>
           <button
@@ -189,7 +193,9 @@ export default function EditMemberModal({
                 alt="Current photo"
                 className="w-12 h-12 rounded-full object-cover border-2 border-stone-200"
               />
-              <p className="text-sm text-stone-500">Photo editing coming soon.</p>
+              <p className="text-sm text-stone-500">
+                Photo editing coming soon.
+              </p>
             </div>
           )}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -201,7 +207,9 @@ export default function EditMemberModal({
                 ref={firstNameRef}
                 type="text"
                 value={formState.firstName}
-                onChange={(e) => setFormState((p) => ({ ...p, firstName: e.target.value }))}
+                onChange={(e) =>
+                  setFormState((p) => ({ ...p, firstName: e.target.value }))
+                }
                 className="w-full px-4 py-2 bg-stone-50 border border-stone-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-900 focus:border-transparent text-stone-900 placeholder-stone-400"
                 placeholder={t.firstNamePlaceholder}
                 disabled={isLoading}
@@ -214,7 +222,9 @@ export default function EditMemberModal({
               <input
                 type="text"
                 value={formState.lastName}
-                onChange={(e) => setFormState((p) => ({ ...p, lastName: e.target.value }))}
+                onChange={(e) =>
+                  setFormState((p) => ({ ...p, lastName: e.target.value }))
+                }
                 className="w-full px-4 py-2 bg-stone-50 border border-stone-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-900 focus:border-transparent text-stone-900 placeholder-stone-400"
                 placeholder={t.lastNamePlaceholder}
                 disabled={isLoading}
@@ -229,7 +239,10 @@ export default function EditMemberModal({
               <select
                 value={formState.gender}
                 onChange={(e) =>
-                  setFormState((p) => ({ ...p, gender: e.target.value as MemberFormState["gender"] }))
+                  setFormState((p) => ({
+                    ...p,
+                    gender: e.target.value as MemberFormState["gender"],
+                  }))
                 }
                 className="w-full px-4 py-2 bg-stone-50 border border-stone-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-900 text-stone-900"
                 disabled={isLoading}
@@ -245,7 +258,9 @@ export default function EditMemberModal({
                 type="checkbox"
                 id="editIsLiving"
                 checked={formState.isLiving}
-                onChange={(e) => setFormState((p) => ({ ...p, isLiving: e.target.checked }))}
+                onChange={(e) =>
+                  setFormState((p) => ({ ...p, isLiving: e.target.checked }))
+                }
                 className="w-4 h-4 rounded border-stone-300 text-amber-900 focus:ring-amber-900"
                 disabled={isLoading}
               />
@@ -255,11 +270,16 @@ export default function EditMemberModal({
             </div>
           </div>
           <div>
-            <label className="block text-sm font-semibold text-stone-900 mb-2">{t.bio}</label>
+            <label className="block text-sm font-semibold text-stone-900 mb-2">
+              {t.bio}
+            </label>
             <textarea
               value={formState.bio}
               onChange={(e) =>
-                setFormState((p) => ({ ...p, bio: e.target.value.slice(0, 1000) }))
+                setFormState((p) => ({
+                  ...p,
+                  bio: e.target.value.slice(0, 1000),
+                }))
               }
               rows={3}
               className="w-full px-4 py-2 bg-stone-50 border border-stone-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-900 text-stone-900 placeholder-stone-400 resize-none"
@@ -275,9 +295,13 @@ export default function EditMemberModal({
             day={formState.birthDay}
             isLoading={isLoading}
             t={t}
-            onPrecisionChange={(v) => setFormState((p) => ({ ...p, birthPrecision: v }))}
+            onPrecisionChange={(v) =>
+              setFormState((p) => ({ ...p, birthPrecision: v }))
+            }
             onYearChange={(v) => setFormState((p) => ({ ...p, birthYear: v }))}
-            onMonthChange={(v) => setFormState((p) => ({ ...p, birthMonth: v }))}
+            onMonthChange={(v) =>
+              setFormState((p) => ({ ...p, birthMonth: v }))
+            }
             onDayChange={(v) => setFormState((p) => ({ ...p, birthDay: v }))}
           />
           {!formState.isLiving && (
@@ -289,9 +313,15 @@ export default function EditMemberModal({
               day={formState.deathDay}
               isLoading={isLoading}
               t={t}
-              onPrecisionChange={(v) => setFormState((p) => ({ ...p, deathPrecision: v }))}
-              onYearChange={(v) => setFormState((p) => ({ ...p, deathYear: v }))}
-              onMonthChange={(v) => setFormState((p) => ({ ...p, deathMonth: v }))}
+              onPrecisionChange={(v) =>
+                setFormState((p) => ({ ...p, deathPrecision: v }))
+              }
+              onYearChange={(v) =>
+                setFormState((p) => ({ ...p, deathYear: v }))
+              }
+              onMonthChange={(v) =>
+                setFormState((p) => ({ ...p, deathMonth: v }))
+              }
               onDayChange={(v) => setFormState((p) => ({ ...p, deathDay: v }))}
             />
           )}

@@ -77,17 +77,22 @@ export default function MemberSidePanel({
     (r) => r.fromMemberId === member.id || r.toMemberId === member.id,
   );
 
-  function getRelLabel(r: TreeRelationship): { label: string; otherName: string } {
+  function getRelLabel(r: TreeRelationship): {
+    label: string;
+    otherName: string;
+  } {
     if (r.type === "parent") {
       if (r.fromMemberId === member.id)
         return { label: t.parentOf, otherName: getMemberName(r.toMemberId) };
       return { label: t.childOf, otherName: getMemberName(r.fromMemberId) };
     }
     if (r.type === "spouse") {
-      const otherId = r.fromMemberId === member.id ? r.toMemberId : r.fromMemberId;
+      const otherId =
+        r.fromMemberId === member.id ? r.toMemberId : r.fromMemberId;
       return { label: t.spouseOf, otherName: getMemberName(otherId) };
     }
-    const otherId = r.fromMemberId === member.id ? r.toMemberId : r.fromMemberId;
+    const otherId =
+      r.fromMemberId === member.id ? r.toMemberId : r.fromMemberId;
     return { label: t.siblingOf, otherName: getMemberName(otherId) };
   }
 
@@ -124,7 +129,9 @@ export default function MemberSidePanel({
     <div className="fixed right-0 top-14 h-[calc(100vh-3.5rem)] w-80 bg-white border-l border-stone-200 shadow-xl z-40 flex flex-col overflow-hidden">
       {/* Header */}
       <div className="flex items-center justify-between px-5 py-4 border-b border-stone-100">
-        <h2 className="text-base font-semibold text-stone-900 truncate">{displayName}</h2>
+        <h2 className="text-base font-semibold text-stone-900 truncate">
+          {displayName}
+        </h2>
         <button
           onClick={onClose}
           className="p-1 text-stone-400 hover:text-stone-600 rounded-lg hover:bg-stone-100"
@@ -166,7 +173,9 @@ export default function MemberSidePanel({
           <p className="text-xs font-semibold uppercase tracking-wider text-stone-400 mb-1">
             {t.gender}
           </p>
-          <p className="text-sm text-stone-700">{GENDER_LABELS[member.gender] ?? "—"}</p>
+          <p className="text-sm text-stone-700">
+            {GENDER_LABELS[member.gender] ?? "—"}
+          </p>
         </div>
 
         {/* Bio */}
@@ -175,7 +184,9 @@ export default function MemberSidePanel({
             <p className="text-xs font-semibold uppercase tracking-wider text-stone-400 mb-1">
               {t.about}
             </p>
-            <p className="text-sm text-stone-600 leading-relaxed">{member.bio}</p>
+            <p className="text-sm text-stone-600 leading-relaxed">
+              {member.bio}
+            </p>
           </div>
         )}
 
@@ -191,7 +202,10 @@ export default function MemberSidePanel({
               {memberRels.map((r) => {
                 const { label, otherName } = getRelLabel(r);
                 return (
-                  <li key={r.id} className="flex items-center justify-between gap-2 text-sm">
+                  <li
+                    key={r.id}
+                    className="flex items-center justify-between gap-2 text-sm"
+                  >
                     <span className="text-stone-700 min-w-0">
                       <span className="text-stone-400">{label}</span>{" "}
                       <span className="font-medium">{otherName}</span>
@@ -216,7 +230,9 @@ export default function MemberSidePanel({
         {showDeleteConfirm && (
           <div className="p-3 bg-red-50 border border-red-200 rounded-xl">
             <p className="text-sm text-red-700 mb-3">{t.deleteConfirmBody}</p>
-            {deleteError && <p className="text-xs text-red-600 mb-2">{deleteError}</p>}
+            {deleteError && (
+              <p className="text-xs text-red-600 mb-2">{deleteError}</p>
+            )}
             <div className="flex gap-2">
               <button
                 onClick={() => setShowDeleteConfirm(false)}

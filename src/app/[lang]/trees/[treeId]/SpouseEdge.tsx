@@ -19,7 +19,13 @@ export const SpouseEdge = memo(function SpouseEdge({
       {/* Outer thick line */}
       <path id={id} d={edgePath} stroke="#44403C" strokeWidth={6} fill="none" />
       {/* Inner white line — creates double-line effect */}
-      <path d={edgePath} stroke="#fbf9f8" strokeWidth={2} fill="none" pointerEvents="none" />
+      <path
+        d={edgePath}
+        stroke="#fbf9f8"
+        strokeWidth={2}
+        fill="none"
+        pointerEvents="none"
+      />
     </g>
   );
 });

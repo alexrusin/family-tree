@@ -51,7 +51,9 @@ export const MemberNode = memo(function MemberNode({
       </p>
 
       {dateRange && (
-        <p className="text-[10px] text-stone-500 text-center mt-0.5">{dateRange}</p>
+        <p className="text-[10px] text-stone-500 text-center mt-0.5">
+          {dateRange}
+        </p>
       )}
 
       <Handle type="source" position={Position.Bottom} className="opacity-0" />
