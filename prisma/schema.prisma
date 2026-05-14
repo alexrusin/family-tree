@@ -75,6 +75,25 @@ enum CollaboratorRole {
   viewer
 }
 
+enum RelationshipType {
+  parent
+  spouse
+  sibling
+}
+
+enum DatePrecision {
+  year
+  month
+  day
+}
+
+enum MemberGender {
+  male
+  female
+  other
+  undisclosed
+}
+
 model FamilyTree {
   id            String         @id @default(uuid())
   name          String
@@ -86,6 +105,8 @@ model FamilyTree {
   createdAt     DateTime       @default(now()) @map("created_at") @db.Timestamp(6)
   updatedAt     DateTime       @updatedAt @map("updated_at") @db.Timestamp(6)
   collaborators Collaborator[]
+  members       TreeMember[]
+  relationships Relationship[]
 
   @@index([ownerId])
 }
@@ -104,5 +125,47 @@ model Collaborator {
 
   @@unique([treeId, userId])
   @@index([userId])
+  @@index([treeId])
+}
+
+model TreeMember {
+  id                    String           @id @default(uuid())
+  treeId                String           @map("tree_id")
+  tree                  FamilyTree       @relation(fields: [treeId], references: [id], onDelete: Cascade)
+  firstName             String           @map("first_name")
+  lastName              String?          @map("last_name")
+  gender                MemberGender     @default(undisclosed)
+  isLiving              Boolean          @default(false) @map("is_living")
+  bio                   String?          @db.VarChar(1000)
+  photoUrl              String?          @map("photo_url")
+  photoKey              String?          @map("photo_key")
+  birthPrecision        DatePrecision?   @map("birth_precision")
+  birthYear             Int?             @map("birth_year")
+  birthMonth            Int?             @map("birth_month")
+  birthDay              Int?             @map("birth_day")
+  deathPrecision        DatePrecision?   @map("death_precision")
+  deathYear             Int?             @map("death_year")
+  deathMonth            Int?             @map("death_month")
+  deathDay              Int?             @map("death_day")
+  createdAt             DateTime         @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt             DateTime         @updatedAt @map("updated_at") @db.Timestamp(6)
+  outgoingRelationships Relationship[]   @relation("RelationshipFrom")
+  incomingRelationships Relationship[]   @relation("RelationshipTo")
+
+  @@index([treeId])
+}
+
+model Relationship {
+  id           String           @id @default(uuid())
+  treeId       String           @map("tree_id")
+  tree         FamilyTree       @relation(fields: [treeId], references: [id], onDelete: Cascade)
+  fromMemberId String           @map("from_member_id")
+  fromMember   TreeMember       @relation("RelationshipFrom", fields: [fromMemberId], references: [id], onDelete: Cascade)
+  toMemberId   String           @map("to_member_id")
+  toMember     TreeMember       @relation("RelationshipTo", fields: [toMemberId], references: [id], onDelete: Cascade)
+  type         RelationshipType
+  createdAt    DateTime         @default(now()) @map("created_at") @db.Timestamp(6)
+
+  @@unique([treeId, fromMemberId, toMemberId, type])
   @@index([treeId])
 }
