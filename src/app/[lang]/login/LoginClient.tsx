@@ -1,21 +1,13 @@
 'use client'
 
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
-import { FormEvent, useEffect, useMemo, useState } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { FormEvent, useMemo, useState } from 'react'
 import { authClient } from '@/lib/auth-client'
 import { resolvePostAuthRedirect } from '@/lib/auth-callback'
 
 function isValidEmail(email: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
-}
-
-function getCallbackParamFromWindow(): string | null {
-  if (typeof window === 'undefined') {
-    return null
-  }
-
-  return new URLSearchParams(window.location.search).get('callback')
 }
 
 interface LoginTranslations {
@@ -55,15 +47,12 @@ interface FormErrors {
 
 export default function LoginClient({ lang, t }: LoginClientProps) {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [errors, setErrors] = useState<FormErrors>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [rawCallback, setRawCallback] = useState<string | null>(null)
-
-  useEffect(() => {
-    setRawCallback(getCallbackParamFromWindow())
-  }, [])
+  const rawCallback = searchParams.get('callback')
 
   const callbackTarget = useMemo(
     () =>
@@ -116,8 +105,8 @@ export default function LoginClient({ lang, t }: LoginClientProps) {
         setErrors({ form: t.errors.invalidCredentials })
         return
       }
-      const runtimeCallback = getCallbackParamFromWindow() ?? rawCallback
-      router.push(resolvePostAuthRedirect(lang, runtimeCallback))
+
+      router.push(resolvePostAuthRedirect(lang, rawCallback))
     } catch {
       setErrors({ form: t.errors.generic })
     } finally {

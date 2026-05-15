@@ -86,9 +86,6 @@ export default function AcceptInvitationClient({
   const dashboardHref = useMemo(() => `/${lang}/dashboard`, [lang]);
 
   const accept = useCallback(async () => {
-    setState("loading");
-    setErrorCode(null);
-
     try {
       const response = await fetch(
         `/api/invitations/${encodeURIComponent(token)}/accept`,
@@ -115,7 +112,11 @@ export default function AcceptInvitationClient({
   }, [lang, router, token]);
 
   useEffect(() => {
-    void accept();
+    const timerId = window.setTimeout(() => {
+      void accept();
+    }, 0);
+
+    return () => window.clearTimeout(timerId);
   }, [accept]);
 
   if (state === "loading") {
@@ -151,6 +152,8 @@ export default function AcceptInvitationClient({
           <button
             type="button"
             onClick={() => {
+              setState("loading");
+              setErrorCode(null);
               void accept();
             }}
             className="w-full py-3 px-5 bg-primary-container text-on-primary rounded-lg text-label-md hover:bg-primary transition-all"
