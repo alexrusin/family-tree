@@ -2,8 +2,9 @@
 
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { FormEvent, useMemo, useState } from 'react'
+import { FormEvent, useEffect, useMemo, useState } from 'react'
 import { authClient } from '@/lib/auth-client'
+import { resolvePostAuthRedirect } from '@/lib/auth-callback'
 
 interface RegisterTranslations {
   title: string
@@ -54,6 +55,14 @@ function isValidEmail(email: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
 }
 
+function getCallbackParamFromWindow(): string | null {
+  if (typeof window === 'undefined') {
+    return null
+  }
+
+  return new URLSearchParams(window.location.search).get('callback')
+}
+
 export default function RegisterClient({ lang, t }: RegisterClientProps) {
   const router = useRouter()
   const [name, setName] = useState('')
@@ -62,8 +71,28 @@ export default function RegisterClient({ lang, t }: RegisterClientProps) {
   const [confirmPassword, setConfirmPassword] = useState('')
   const [errors, setErrors] = useState<FormErrors>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [rawCallback, setRawCallback] = useState<string | null>(null)
 
-  const loginHref = useMemo(() => `/${lang}/login`, [lang])
+  useEffect(() => {
+    setRawCallback(getCallbackParamFromWindow())
+  }, [])
+
+  const callbackTarget = useMemo(
+    () =>
+      rawCallback
+        ? resolvePostAuthRedirect(lang, rawCallback)
+        : null,
+    [lang, rawCallback],
+  )
+  const callbackQuery = useMemo(
+    () =>
+      callbackTarget
+        ? `?callback=${encodeURIComponent(callbackTarget)}`
+        : '',
+    [callbackTarget],
+  )
+
+  const loginHref = useMemo(() => `/${lang}/login${callbackQuery}`, [lang, callbackQuery])
 
   const validate = (): FormErrors => {
     const nextErrors: FormErrors = {}
@@ -111,6 +140,12 @@ export default function RegisterClient({ lang, t }: RegisterClientProps) {
 
       if (response.error) {
         setErrors({ form: response.error.message ?? t.errors.generic })
+        return
+      }
+
+      const runtimeCallback = getCallbackParamFromWindow() ?? rawCallback
+      if (runtimeCallback) {
+        router.push(resolvePostAuthRedirect(lang, runtimeCallback))
         return
       }
 

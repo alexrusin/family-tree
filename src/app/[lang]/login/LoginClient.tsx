@@ -1,14 +1,22 @@
-
 'use client'
-
-function isValidEmail(email: string): boolean {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-}
 
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { FormEvent, useMemo, useState } from 'react'
+import { FormEvent, useEffect, useMemo, useState } from 'react'
 import { authClient } from '@/lib/auth-client'
+import { resolvePostAuthRedirect } from '@/lib/auth-callback'
+
+function isValidEmail(email: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+}
+
+function getCallbackParamFromWindow(): string | null {
+  if (typeof window === 'undefined') {
+    return null
+  }
+
+  return new URLSearchParams(window.location.search).get('callback')
+}
 
 interface LoginTranslations {
   title: string
@@ -46,52 +54,76 @@ interface FormErrors {
 }
 
 export default function LoginClient({ lang, t }: LoginClientProps) {
-  const router = useRouter();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [errors, setErrors] = useState<FormErrors>({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const router = useRouter()
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [errors, setErrors] = useState<FormErrors>({})
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [rawCallback, setRawCallback] = useState<string | null>(null)
 
-  const signupHref = useMemo(() => `/${lang}/register`, [lang]);
-  const forgotPasswordHref = useMemo(() => `/${lang}/forgot-password`, [lang]);
+  useEffect(() => {
+    setRawCallback(getCallbackParamFromWindow())
+  }, [])
+
+  const callbackTarget = useMemo(
+    () =>
+      rawCallback
+        ? resolvePostAuthRedirect(lang, rawCallback)
+        : null,
+    [lang, rawCallback],
+  )
+  const callbackQuery = useMemo(
+    () =>
+      callbackTarget
+        ? `?callback=${encodeURIComponent(callbackTarget)}`
+        : '',
+    [callbackTarget],
+  )
+
+  const signupHref = useMemo(() => `/${lang}/register${callbackQuery}`, [lang, callbackQuery])
+  const forgotPasswordHref = useMemo(
+    () => `/${lang}/forgot-password${callbackQuery}`,
+    [lang, callbackQuery],
+  )
 
   const validate = (): FormErrors => {
-    const nextErrors: FormErrors = {};
+    const nextErrors: FormErrors = {}
     if (!email.trim()) {
-      nextErrors.email = t.errors.requiredEmail;
+      nextErrors.email = t.errors.requiredEmail
     } else if (!isValidEmail(email)) {
-      nextErrors.email = t.errors.invalidEmail;
+      nextErrors.email = t.errors.invalidEmail
     }
     if (!password) {
-      nextErrors.password = t.errors.requiredPassword;
+      nextErrors.password = t.errors.requiredPassword
     }
-    return nextErrors;
-  };
+    return nextErrors
+  }
 
   const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const nextErrors = validate();
-    setErrors(nextErrors);
+    event.preventDefault()
+    const nextErrors = validate()
+    setErrors(nextErrors)
     if (Object.keys(nextErrors).length > 0) {
-      return;
+      return
     }
-    setIsSubmitting(true);
+    setIsSubmitting(true)
     try {
       const response = (await authClient.signIn.email({
         email: email.trim(),
         password,
-      })) as { error?: { message?: string } };
+      })) as { error?: { message?: string } }
       if (response.error) {
-        setErrors({ form: t.errors.invalidCredentials });
-        return;
+        setErrors({ form: t.errors.invalidCredentials })
+        return
       }
-      router.push(`/${lang}/dashboard`);
+      const runtimeCallback = getCallbackParamFromWindow() ?? rawCallback
+      router.push(resolvePostAuthRedirect(lang, runtimeCallback))
     } catch {
-      setErrors({ form: t.errors.generic });
+      setErrors({ form: t.errors.generic })
     } finally {
-      setIsSubmitting(false);
+      setIsSubmitting(false)
     }
-  };
+  }
 
   return (
     <main className="min-h-screen flex flex-col md:flex-row bg-background text-on-background">
@@ -170,6 +202,5 @@ export default function LoginClient({ lang, t }: LoginClientProps) {
         </div>
       </section>
     </main>
-  );
+  )
 }
-// ...existing code...
