@@ -192,6 +192,19 @@
       "warningBanner": "Approaching the 300-member limit ({count}/300).",
       "limitReached": "300-member limit reached. No more members can be added.",
       "memberCount": "{count} members"
+    },
+    "collaboration": {
+      "email": {
+        "subject": "Invitation to collaborate on {tree}",
+        "intro": "{inviter} invited you to collaborate on the family tree \"{tree}\".",
+        "roleLine": "Your access level: {role}",
+        "roleEditor": "Editor",
+        "roleViewer": "Viewer",
+        "messageLabel": "Message",
+        "cta": "Accept invitation",
+        "expiry": "This invitation expires in 7 days.",
+        "fallback": "If the button does not work, copy and paste this URL into your browser:"
+      }
     }
   },
   "auth": {
