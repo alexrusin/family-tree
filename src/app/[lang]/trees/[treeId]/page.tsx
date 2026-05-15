@@ -83,6 +83,7 @@ export default async function TreeDetailPage({
       {/* Full-screen canvas below the fixed header (header height ≈ 3.5rem / 56px) */}
       <div className="fixed inset-0 top-14 overflow-hidden">
         <TreeDetailClient
+          lang={lang}
           treeId={tree.id}
           treeName={tree.name}
           canEdit={canEdit}

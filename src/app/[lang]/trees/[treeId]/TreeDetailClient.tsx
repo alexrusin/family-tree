@@ -132,12 +132,16 @@ interface TreeT {
     limitReached: string;
     memberCount: string;
   };
+  collaboration: {
+    sidebarLink: string;
+  };
   member: MemberSubT;
   relationship: RelationshipSubT;
   errors: ErrorsSubT;
 }
 
 interface TreeDetailClientProps {
+  lang: string;
   treeId: string;
   treeName: string;
   canEdit: boolean;
@@ -191,6 +195,7 @@ function edgeLabel(
 
 // ── Main component ─────────────────────────────────────────────────────────
 export default function TreeDetailClient({
+  lang,
   treeId,
   treeName,
   canEdit,
@@ -308,11 +313,13 @@ export default function TreeDetailClient({
       <TreeSidebar
         treeName={treeName}
         memberCount={memberCount}
+        collaboratorsHref={`/${lang}/trees/${treeId}/collaborators`}
         canEdit={canEdit}
         canAddMember={canAddMember}
         onAddMember={openAddMemberModal}
         onAddRelationship={openAddRelationshipModal}
         t={{
+          collaborators: t.collaboration.sidebarLink,
           addMember: t.addMember,
           addRelationship: t.addRelationship,
           viewOnly: t.viewOnly,

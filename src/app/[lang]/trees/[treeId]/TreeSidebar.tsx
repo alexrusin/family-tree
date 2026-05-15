@@ -1,7 +1,8 @@
 // src/app/[lang]/trees/[treeId]/TreeSidebar.tsx
 "use client";
 
-import { Plus, Link2, AlertTriangle } from "lucide-react";
+import Link from "next/link";
+import { Plus, Link2, AlertTriangle, Users } from "lucide-react";
 
 const MEMBER_WARN_THRESHOLD = 250;
 const MEMBER_HARD_LIMIT = 300;
@@ -9,6 +10,7 @@ const MEMBER_HARD_LIMIT = 300;
 interface TreeSidebarT {
   addMember: string;
   addRelationship: string;
+  collaborators: string;
   viewOnly: string;
   warningBanner: string;
   limitReached: string;
@@ -18,6 +20,7 @@ interface TreeSidebarT {
 interface TreeSidebarProps {
   treeName: string;
   memberCount: number;
+  collaboratorsHref: string;
   canEdit: boolean;
   canAddMember: boolean;
   onAddMember: () => void;
@@ -28,6 +31,7 @@ interface TreeSidebarProps {
 export default function TreeSidebar({
   treeName,
   memberCount,
+  collaboratorsHref,
   canEdit,
   canAddMember,
   onAddMember,
@@ -63,6 +67,14 @@ export default function TreeSidebar({
       )}
 
       <div className="p-4 space-y-2 mt-2">
+        <Link
+          href={collaboratorsHref}
+          className="w-full px-4 py-2.5 bg-stone-100 text-stone-900 rounded-lg font-semibold hover:bg-stone-200 transition-colors flex items-center justify-center gap-2 text-sm"
+        >
+          <Users className="w-4 h-4" />
+          {t.collaborators}
+        </Link>
+
         {canEdit ? (
           <>
             <button
