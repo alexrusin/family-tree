@@ -12,7 +12,6 @@ describe("createOrRefreshInvitation", () => {
     const repo = {
       getActorRole: vi.fn().mockResolvedValue("owner"),
       findAcceptedCollaboratorByEmail: vi.fn().mockResolvedValue(null),
-      findPendingInvitationByEmail: vi.fn().mockResolvedValue({ id: "i1" }),
       upsertPendingInvitation: vi
         .fn()
         .mockResolvedValue({ id: "i1", status: "pending" }),
@@ -31,10 +30,6 @@ describe("createOrRefreshInvitation", () => {
     });
 
     expect(result.status).toBe("pending");
-    expect(repo.findPendingInvitationByEmail).toHaveBeenCalledWith(
-      "t1",
-      "cousin@example.com",
-    );
     expect(repo.upsertPendingInvitation).toHaveBeenCalledWith({
       treeId: "t1",
       invitedEmail: "cousin@example.com",
@@ -50,7 +45,6 @@ describe("createOrRefreshInvitation", () => {
     const repo = {
       getActorRole: vi.fn().mockResolvedValue("owner"),
       findAcceptedCollaboratorByEmail: vi.fn().mockResolvedValue({ id: "c1" }),
-      findPendingInvitationByEmail: vi.fn(),
       upsertPendingInvitation: vi.fn(),
     };
 
@@ -280,13 +274,6 @@ describe("collaboration lifecycle", () => {
           (item) => item.userId === userId,
         );
         return collaborator ? { id: collaborator.id } : null;
-      },
-      findPendingInvitationByEmail: async (_treeId: string, email: string) => {
-        const invitation = state.invitations.find(
-          (item) => item.invitedEmail === email && item.status === "pending",
-        );
-
-        return invitation ? { id: invitation.id } : null;
       },
       upsertPendingInvitation: async (args: {
         treeId: string;

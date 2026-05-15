@@ -186,6 +186,16 @@ export async function POST(
       );
     }
 
+    if (
+      session.user.email &&
+      payload.email === session.user.email.trim().toLowerCase()
+    ) {
+      return NextResponse.json(
+        { errorCode: "ERR_CANNOT_INVITE_SELF" },
+        { status: 409 },
+      );
+    }
+
     const { treeId } = await params;
     const prisma = getPrismaClient();
     const token = generateInvitationToken();
@@ -246,17 +256,6 @@ export async function POST(
 
           return { id: collaborator.id };
         },
-        findPendingInvitationByEmail: (tId, invitedEmail) =>
-          prisma.invitation.findFirst({
-            where: {
-              treeId: tId,
-              invitedEmail,
-              status: "pending",
-            },
-            select: {
-              id: true,
-            },
-          }),
         upsertPendingInvitation: async (args) => {
           const existing = await prisma.invitation.findFirst({
             where: {

@@ -3,6 +3,14 @@ import ruDictionary from "@/app/[lang]/dictionaries/ru.json";
 import type { CollaboratorRole, Locale } from "@/generated/prisma/enums";
 import { sendEmail } from "@/lib/email";
 
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
 type InvitationEmailInput = {
   locale: Locale;
   inviterName: string;
@@ -26,12 +34,13 @@ export function buildInvitationEmail(input: Omit<InvitationEmailInput, "to">) {
   const copy = getInvitationCopy(input.locale);
   const roleLabel = input.role === "editor" ? copy.roleEditor : copy.roleViewer;
   const intro = copy.intro
-    .replace("{inviter}", input.inviterName)
-    .replace("{tree}", input.treeName);
-  const roleLine = copy.roleLine.replace("{role}", roleLabel);
-  const subject = copy.subject.replace("{tree}", input.treeName);
+    .replace("{inviter}", escapeHtml(input.inviterName))
+    .replace("{tree}", escapeHtml(input.treeName));
+  const roleLine = copy.roleLine.replace("{role}", escapeHtml(roleLabel));
+  const subject = copy.subject.replace("{tree}", escapeHtml(input.treeName));
+  const safeAcceptUrl = encodeURI(input.acceptUrl);
   const messageBlock = input.message
-    ? `<p>${copy.messageLabel}: ${input.message}</p>`
+    ? `<p>${escapeHtml(copy.messageLabel)}: ${escapeHtml(input.message)}</p>`
     : "";
 
   return {
@@ -39,10 +48,10 @@ export function buildInvitationEmail(input: Omit<InvitationEmailInput, "to">) {
     html: `<p>${intro}</p>
 <p>${roleLine}</p>
 ${messageBlock}
-<p><a href="${input.acceptUrl}">${copy.cta}</a></p>
+<p><a href="${safeAcceptUrl}">${copy.cta}</a></p>
 <p>${copy.expiry}</p>
 <p>${copy.fallback}</p>
-<p>${input.acceptUrl}</p>`,
+<p>${safeAcceptUrl}</p>`,
   };
 }
 

@@ -9,10 +9,6 @@ export async function createOrRefreshInvitation(params: {
       treeId: string,
       email: string,
     ) => Promise<{ id: string } | null>;
-    findPendingInvitationByEmail: (
-      treeId: string,
-      email: string,
-    ) => Promise<{ id: string } | null>;
     upsertPendingInvitation: (args: {
       treeId: string;
       invitedEmail: string;
@@ -49,11 +45,6 @@ export async function createOrRefreshInvitation(params: {
   if (existingCollaborator) {
     throw new Error("ERR_ALREADY_COLLABORATOR");
   }
-
-  await params.repo.findPendingInvitationByEmail(
-    params.treeId,
-    normalizedEmail,
-  );
 
   return params.repo.upsertPendingInvitation({
     treeId: params.treeId,
@@ -111,14 +102,14 @@ export async function acceptInvitation(params: {
     throw new Error("ERR_INVITATION_EMAIL_MISMATCH");
   }
 
+  await params.repo.markInvitationAccepted(invitation.id, now);
+
   const collaborator = await params.repo.upsertCollaborator({
     treeId: invitation.treeId,
     userId: params.actorUserId,
     role: invitation.role,
     acceptedAt: now,
   });
-
-  await params.repo.markInvitationAccepted(invitation.id, now);
 
   return {
     treeId: collaborator.treeId,
