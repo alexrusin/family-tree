@@ -75,6 +75,12 @@ enum CollaboratorRole {
   viewer
 }
 
+enum InvitationStatus {
+  pending
+  accepted
+  cancelled
+}
+
 enum RelationshipType {
   parent
   spouse
@@ -105,10 +111,31 @@ model FamilyTree {
   createdAt     DateTime       @default(now()) @map("created_at") @db.Timestamp(6)
   updatedAt     DateTime       @updatedAt @map("updated_at") @db.Timestamp(6)
   collaborators Collaborator[]
+  invitations   Invitation[]
   members       TreeMember[]
   relationships Relationship[]
 
   @@index([ownerId])
+}
+
+model Invitation {
+  id           String           @id @default(uuid())
+  treeId       String           @map("tree_id")
+  tree         FamilyTree       @relation(fields: [treeId], references: [id], onDelete: Cascade)
+  invitedEmail String           @map("invited_email")
+  role         CollaboratorRole
+  tokenHash    String           @unique @map("token_hash")
+  message      String?          @db.VarChar(500)
+  locale       Locale           @default(en)
+  status       InvitationStatus @default(pending)
+  expiresAt    DateTime         @map("expires_at") @db.Timestamp(6)
+  acceptedAt   DateTime?        @map("accepted_at") @db.Timestamp(6)
+  cancelledAt  DateTime?        @map("cancelled_at") @db.Timestamp(6)
+  createdAt    DateTime         @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt    DateTime         @updatedAt @map("updated_at") @db.Timestamp(6)
+
+  @@index([treeId, status])
+  @@index([invitedEmail, status])
 }
 
 model Collaborator {

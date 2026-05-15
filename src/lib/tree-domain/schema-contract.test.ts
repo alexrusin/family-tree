@@ -31,4 +31,14 @@ describe("schema contract", () => {
     `;
     expect(result[0]?.exists).toBe(true);
   });
+
+  it("has Invitation table", async () => {
+    const result = await prisma.$queryRaw<Array<{ exists: boolean }>>`
+      SELECT EXISTS (
+        SELECT FROM information_schema.tables
+        WHERE table_name = 'Invitation'
+      )
+    `;
+    expect(result[0]?.exists).toBe(true);
+  });
 });
