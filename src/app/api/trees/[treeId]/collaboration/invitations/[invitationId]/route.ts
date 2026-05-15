@@ -18,9 +18,7 @@ function getPrismaClient() {
 
 export async function PATCH(
   request: NextRequest,
-  {
-    params,
-  }: { params: Promise<{ treeId: string; invitationId: string }> },
+  { params }: { params: Promise<{ treeId: string; invitationId: string }> },
 ) {
   try {
     const session = await auth.api.getSession({
@@ -116,9 +114,7 @@ export async function PATCH(
 
 export async function DELETE(
   request: NextRequest,
-  {
-    params,
-  }: { params: Promise<{ treeId: string; invitationId: string }> },
+  { params }: { params: Promise<{ treeId: string; invitationId: string }> },
 ) {
   try {
     const session = await auth.api.getSession({

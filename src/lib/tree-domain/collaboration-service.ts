@@ -50,7 +50,10 @@ export async function createOrRefreshInvitation(params: {
     throw new Error("ERR_ALREADY_COLLABORATOR");
   }
 
-  await params.repo.findPendingInvitationByEmail(params.treeId, normalizedEmail);
+  await params.repo.findPendingInvitationByEmail(
+    params.treeId,
+    normalizedEmail,
+  );
 
   return params.repo.upsertPendingInvitation({
     treeId: params.treeId,
@@ -78,7 +81,10 @@ export async function acceptInvitation(params: {
       role: CollaboratorRole;
       acceptedAt: Date;
     }) => Promise<{ id: string; treeId: string; role: CollaboratorRole }>;
-    markInvitationAccepted: (invitationId: string, acceptedAt: Date) => Promise<void>;
+    markInvitationAccepted: (
+      invitationId: string,
+      acceptedAt: Date,
+    ) => Promise<void>;
   };
   tokenHash: string;
   actorUserId: string;
@@ -152,7 +158,10 @@ export async function changeCollaboratorRole(params: {
 export async function removeCollaborator(params: {
   repo: {
     getActorRole: (treeId: string, userId: string) => Promise<TreeRole>;
-    deleteCollaborator: (treeId: string, collaboratorId: string) => Promise<void>;
+    deleteCollaborator: (
+      treeId: string,
+      collaboratorId: string,
+    ) => Promise<void>;
   };
   actorUserId: string;
   treeId: string;
@@ -177,7 +186,10 @@ export async function leaveTree(params: {
   actorUserId: string;
   treeId: string;
 }): Promise<void> {
-  const role = await params.repo.getActorRole(params.treeId, params.actorUserId);
+  const role = await params.repo.getActorRole(
+    params.treeId,
+    params.actorUserId,
+  );
   if (role === "owner") {
     throw new Error("ERR_OWNER_CANNOT_LEAVE");
   }

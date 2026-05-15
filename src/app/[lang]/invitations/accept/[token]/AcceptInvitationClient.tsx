@@ -46,7 +46,9 @@ function getCopy(lang: string, errorCode: string | null) {
   }
 
   return {
-    title: isRu ? "Не удалось принять приглашение" : "Could not accept invitation",
+    title: isRu
+      ? "Не удалось принять приглашение"
+      : "Could not accept invitation",
     body: isRu
       ? "Произошла ошибка. Попробуйте еще раз через несколько секунд."
       : "Something went wrong. Please try again in a few seconds.",
@@ -94,9 +96,11 @@ export default function AcceptInvitationClient({
         },
       );
 
-      const payload = (await response.json().catch(() => null)) as
-        | { success?: boolean; treeId?: string; errorCode?: string }
-        | null;
+      const payload = (await response.json().catch(() => null)) as {
+        success?: boolean;
+        treeId?: string;
+        errorCode?: string;
+      } | null;
 
       if (response.ok && payload?.success && payload.treeId) {
         router.replace(`/${lang}/trees/${payload.treeId}`);
@@ -142,7 +146,10 @@ export default function AcceptInvitationClient({
   return (
     <main className="min-h-screen flex items-center justify-center px-4 py-12 bg-background text-on-background">
       <div className="w-full max-w-md bg-surface-container-lowest rounded-xl border border-outline-variant/40 shadow-xl p-8 text-center">
-        <span className="material-symbols-outlined text-error text-4xl" aria-hidden="true">
+        <span
+          className="material-symbols-outlined text-error text-4xl"
+          aria-hidden="true"
+        >
           error
         </span>
         <h1 className="text-headline-lg text-primary mt-4">{copy.title}</h1>

@@ -33,9 +33,7 @@ function parseRole(value: unknown): CollaboratorRole | null {
 
 export async function PATCH(
   request: NextRequest,
-  {
-    params,
-  }: { params: Promise<{ treeId: string; collaboratorId: string }> },
+  { params }: { params: Promise<{ treeId: string; collaboratorId: string }> },
 ) {
   try {
     const session = await auth.api.getSession({
@@ -53,7 +51,10 @@ export async function PATCH(
     const nextRole = parseRole(body);
 
     if (!nextRole) {
-      return NextResponse.json({ errorCode: "ERR_INVALID_ROLE" }, { status: 400 });
+      return NextResponse.json(
+        { errorCode: "ERR_INVALID_ROLE" },
+        { status: 400 },
+      );
     }
 
     const { treeId, collaboratorId } = await params;
@@ -118,9 +119,7 @@ export async function PATCH(
 
 export async function DELETE(
   request: NextRequest,
-  {
-    params,
-  }: { params: Promise<{ treeId: string; collaboratorId: string }> },
+  { params }: { params: Promise<{ treeId: string; collaboratorId: string }> },
 ) {
   try {
     const session = await auth.api.getSession({

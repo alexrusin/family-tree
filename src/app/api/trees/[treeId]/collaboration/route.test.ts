@@ -131,9 +131,12 @@ describe("/api/trees/[treeId]/collaboration", () => {
   it("returns 401 for unauthenticated GET", async () => {
     getSessionMock.mockResolvedValue(null);
 
-    const request = new NextRequest("http://localhost/api/trees/t1/collaboration", {
-      method: "GET",
-    });
+    const request = new NextRequest(
+      "http://localhost/api/trees/t1/collaboration",
+      {
+        method: "GET",
+      },
+    );
 
     const response = await GET(request, {
       params: Promise.resolve({ treeId: "t1" }),
@@ -152,9 +155,12 @@ describe("/api/trees/[treeId]/collaboration", () => {
     });
     prismaClientMock.collaborator.findUnique.mockResolvedValue(null);
 
-    const request = new NextRequest("http://localhost/api/trees/t1/collaboration", {
-      method: "GET",
-    });
+    const request = new NextRequest(
+      "http://localhost/api/trees/t1/collaboration",
+      {
+        method: "GET",
+      },
+    );
 
     const response = await GET(request, {
       params: Promise.resolve({ treeId: "t1" }),
@@ -184,9 +190,12 @@ describe("/api/trees/[treeId]/collaboration", () => {
       },
     ]);
 
-    const request = new NextRequest("http://localhost/api/trees/t1/collaboration", {
-      method: "GET",
-    });
+    const request = new NextRequest(
+      "http://localhost/api/trees/t1/collaboration",
+      {
+        method: "GET",
+      },
+    );
 
     const response = await GET(request, {
       params: Promise.resolve({ treeId: "t1" }),
@@ -231,9 +240,12 @@ describe("/api/trees/[treeId]/collaboration", () => {
       },
     ]);
 
-    const request = new NextRequest("http://localhost/api/trees/t1/collaboration", {
-      method: "GET",
-    });
+    const request = new NextRequest(
+      "http://localhost/api/trees/t1/collaboration",
+      {
+        method: "GET",
+      },
+    );
 
     const response = await GET(request, {
       params: Promise.resolve({ treeId: "t1" }),
@@ -257,13 +269,16 @@ describe("/api/trees/[treeId]/collaboration", () => {
   it("returns 401 for unauthenticated POST", async () => {
     getSessionMock.mockResolvedValue(null);
 
-    const request = new NextRequest("http://localhost/api/trees/t1/collaboration", {
-      method: "POST",
-      body: JSON.stringify({
-        email: "invitee@example.com",
-        role: "editor",
-      }),
-    });
+    const request = new NextRequest(
+      "http://localhost/api/trees/t1/collaboration",
+      {
+        method: "POST",
+        body: JSON.stringify({
+          email: "invitee@example.com",
+          role: "editor",
+        }),
+      },
+    );
 
     const response = await POST(request, {
       params: Promise.resolve({ treeId: "t1" }),
@@ -284,13 +299,16 @@ describe("/api/trees/[treeId]/collaboration", () => {
     });
     prismaClientMock.collaborator.findUnique.mockResolvedValue(null);
 
-    const request = new NextRequest("http://localhost/api/trees/t1/collaboration", {
-      method: "POST",
-      body: JSON.stringify({
-        email: "invitee@example.com",
-        role: "viewer",
-      }),
-    });
+    const request = new NextRequest(
+      "http://localhost/api/trees/t1/collaboration",
+      {
+        method: "POST",
+        body: JSON.stringify({
+          email: "invitee@example.com",
+          role: "viewer",
+        }),
+      },
+    );
 
     const response = await POST(request, {
       params: Promise.resolve({ treeId: "t1" }),
@@ -314,13 +332,16 @@ describe("/api/trees/[treeId]/collaboration", () => {
       acceptedAt: new Date("2026-05-14T00:00:00.000Z"),
     });
 
-    const request = new NextRequest("http://localhost/api/trees/t1/collaboration", {
-      method: "POST",
-      body: JSON.stringify({
-        email: "invitee@example.com",
-        role: "viewer",
-      }),
-    });
+    const request = new NextRequest(
+      "http://localhost/api/trees/t1/collaboration",
+      {
+        method: "POST",
+        body: JSON.stringify({
+          email: "invitee@example.com",
+          role: "viewer",
+        }),
+      },
+    );
 
     const response = await POST(request, {
       params: Promise.resolve({ treeId: "t1" }),
@@ -333,13 +354,16 @@ describe("/api/trees/[treeId]/collaboration", () => {
   });
 
   it("returns 400 for invalid invitation payload", async () => {
-    const request = new NextRequest("http://localhost/api/trees/t1/collaboration", {
-      method: "POST",
-      body: JSON.stringify({
-        email: "not-an-email",
-        role: "editor",
-      }),
-    });
+    const request = new NextRequest(
+      "http://localhost/api/trees/t1/collaboration",
+      {
+        method: "POST",
+        body: JSON.stringify({
+          email: "not-an-email",
+          role: "editor",
+        }),
+      },
+    );
 
     const response = await POST(request, {
       params: Promise.resolve({ treeId: "t1" }),
@@ -358,7 +382,9 @@ describe("/api/trees/[treeId]/collaboration", () => {
       locale: "ru",
     });
     prismaClientMock.collaborator.findUnique.mockImplementation(
-      async (args: { where: { treeId_userId: { treeId: string; userId: string } } }) => {
+      async (args: {
+        where: { treeId_userId: { treeId: string; userId: string } };
+      }) => {
         if (args.where.treeId_userId.userId === "u-invitee") {
           return {
             id: "c-existing",
@@ -369,13 +395,16 @@ describe("/api/trees/[treeId]/collaboration", () => {
       },
     );
 
-    const request = new NextRequest("http://localhost/api/trees/t1/collaboration", {
-      method: "POST",
-      body: JSON.stringify({
-        email: "invitee@example.com",
-        role: "editor",
-      }),
-    });
+    const request = new NextRequest(
+      "http://localhost/api/trees/t1/collaboration",
+      {
+        method: "POST",
+        body: JSON.stringify({
+          email: "invitee@example.com",
+          role: "editor",
+        }),
+      },
+    );
 
     const response = await POST(request, {
       params: Promise.resolve({ treeId: "t1" }),
@@ -394,7 +423,9 @@ describe("/api/trees/[treeId]/collaboration", () => {
       locale: "ru",
     });
     prismaClientMock.collaborator.findUnique.mockImplementation(
-      async (args: { where: { treeId_userId: { treeId: string; userId: string } } }) => {
+      async (args: {
+        where: { treeId_userId: { treeId: string; userId: string } };
+      }) => {
         if (args.where.treeId_userId.userId === "u-invitee") {
           return null;
         }
@@ -402,14 +433,17 @@ describe("/api/trees/[treeId]/collaboration", () => {
       },
     );
 
-    const request = new NextRequest("http://localhost/api/trees/t1/collaboration", {
-      method: "POST",
-      body: JSON.stringify({
-        email: " INVITEE@EXAMPLE.COM ",
-        role: "editor",
-        message: " Please join us ",
-      }),
-    });
+    const request = new NextRequest(
+      "http://localhost/api/trees/t1/collaboration",
+      {
+        method: "POST",
+        body: JSON.stringify({
+          email: " INVITEE@EXAMPLE.COM ",
+          role: "editor",
+          message: " Please join us ",
+        }),
+      },
+    );
 
     const response = await POST(request, {
       params: Promise.resolve({ treeId: "t1" }),

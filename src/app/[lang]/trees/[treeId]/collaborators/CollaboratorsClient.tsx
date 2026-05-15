@@ -159,13 +159,11 @@ export default function CollaboratorsClient({
         cache: "no-store",
       });
 
-      const payload = (await response.json().catch(() => null)) as
-        | {
-            collaborators?: CollaboratorRecord[];
-            invitations?: InvitationRecord[];
-            errorCode?: string;
-          }
-        | null;
+      const payload = (await response.json().catch(() => null)) as {
+        collaborators?: CollaboratorRecord[];
+        invitations?: InvitationRecord[];
+        errorCode?: string;
+      } | null;
 
       if (!response.ok) {
         setActionError(mapErrorCode(payload?.errorCode, t.errors));
@@ -193,11 +191,9 @@ export default function CollaboratorsClient({
         },
       );
 
-      const payload = (await response.json().catch(() => null)) as
-        | {
-            errorCode?: string;
-          }
-        | null;
+      const payload = (await response.json().catch(() => null)) as {
+        errorCode?: string;
+      } | null;
 
       if (!response.ok) {
         setActionError(mapErrorCode(payload?.errorCode, t.errors));
@@ -226,11 +222,9 @@ export default function CollaboratorsClient({
         },
       );
 
-      const payload = (await response.json().catch(() => null)) as
-        | {
-            errorCode?: string;
-          }
-        | null;
+      const payload = (await response.json().catch(() => null)) as {
+        errorCode?: string;
+      } | null;
 
       if (!response.ok) {
         setActionError(mapErrorCode(payload?.errorCode, t.errors));
@@ -258,11 +252,9 @@ export default function CollaboratorsClient({
         method: "POST",
       });
 
-      const payload = (await response.json().catch(() => null)) as
-        | {
-            errorCode?: string;
-          }
-        | null;
+      const payload = (await response.json().catch(() => null)) as {
+        errorCode?: string;
+      } | null;
 
       if (!response.ok) {
         setActionError(mapErrorCode(payload?.errorCode, t.errors));
@@ -292,7 +284,9 @@ export default function CollaboratorsClient({
         <section className="bg-white border border-stone-200 rounded-2xl p-6 md:p-8 shadow-sm shadow-amber-900/5">
           <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-5">
             <div>
-              <h1 className="text-3xl font-semibold text-amber-900">{t.title}</h1>
+              <h1 className="text-3xl font-semibold text-amber-900">
+                {t.title}
+              </h1>
               <p className="text-stone-600 mt-2 max-w-2xl">
                 {isOwner ? t.subtitleOwner : t.subtitleCollaborator}
               </p>
@@ -331,7 +325,9 @@ export default function CollaboratorsClient({
         <section className="bg-white border border-stone-200 rounded-2xl p-6 shadow-sm shadow-amber-900/5">
           <div className="flex items-center gap-2 mb-4">
             <Users className="w-5 h-5 text-amber-900" />
-            <h2 className="text-xl font-semibold text-stone-900">{t.activeTitle}</h2>
+            <h2 className="text-xl font-semibold text-stone-900">
+              {t.activeTitle}
+            </h2>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
@@ -343,7 +339,9 @@ export default function CollaboratorsClient({
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
                         src={currentUser.image}
-                        alt={currentUser.name || currentUser.email || t.roles.owner}
+                        alt={
+                          currentUser.name || currentUser.email || t.roles.owner
+                        }
                         className="w-full h-full object-cover"
                       />
                     ) : (
@@ -497,9 +495,7 @@ export default function CollaboratorsClient({
             <h2 className="text-lg font-semibold text-stone-900 mb-2">
               {t.leaveTree}
             </h2>
-            <p className="text-sm text-stone-500 mb-4">
-              {treeName}
-            </p>
+            <p className="text-sm text-stone-500 mb-4">{treeName}</p>
             <button
               type="button"
               onClick={() => {

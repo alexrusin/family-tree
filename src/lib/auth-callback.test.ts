@@ -32,9 +32,7 @@ describe("resolvePostAuthRedirect", () => {
     expect(resolvePostAuthRedirect("en", "//evil.com/path")).toBe(
       "/en/dashboard",
     );
-    expect(resolvePostAuthRedirect("en", "/dashboard")).toBe(
-      "/en/dashboard",
-    );
+    expect(resolvePostAuthRedirect("en", "/dashboard")).toBe("/en/dashboard");
     expect(resolvePostAuthRedirect("en", "/en\\n/dashboard")).toBe(
       "/en/dashboard",
     );

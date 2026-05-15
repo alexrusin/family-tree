@@ -123,9 +123,9 @@ export default function InviteCollaboratorModal({
         }),
       });
 
-      const body = (await response.json().catch(() => null)) as
-        | { errorCode?: string }
-        | null;
+      const body = (await response.json().catch(() => null)) as {
+        errorCode?: string;
+      } | null;
 
       if (!response.ok) {
         setError(mapErrorCode(body?.errorCode, t.errors));
@@ -160,7 +160,9 @@ export default function InviteCollaboratorModal({
             <h2 className="text-xl font-semibold text-stone-900">
               {t.inviteModal.title}
             </h2>
-            <p className="text-sm text-stone-500 mt-1">{t.inviteModal.subtitle}</p>
+            <p className="text-sm text-stone-500 mt-1">
+              {t.inviteModal.subtitle}
+            </p>
           </div>
           <button
             type="button"

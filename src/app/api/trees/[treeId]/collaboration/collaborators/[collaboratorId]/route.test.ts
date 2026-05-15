@@ -55,7 +55,9 @@ describe("/api/trees/[treeId]/collaboration/collaborators/[collaboratorId]", () 
     vi.clearAllMocks();
 
     getSessionMock.mockResolvedValue({ user: { id: "u-owner" } });
-    prismaClientMock.familyTree.findUnique.mockResolvedValue({ ownerId: "u-owner" });
+    prismaClientMock.familyTree.findUnique.mockResolvedValue({
+      ownerId: "u-owner",
+    });
     prismaClientMock.collaborator.findUnique.mockResolvedValue(null);
     prismaClientMock.collaborator.findFirst.mockResolvedValue({ id: "c1" });
     prismaClientMock.collaborator.update.mockResolvedValue({ id: "c1" });

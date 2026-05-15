@@ -262,16 +262,23 @@ describe("collaboration lifecycle", () => {
           return "owner" as const;
         }
 
-        const collaborator = state.collaborators.find((item) => item.userId === userId);
+        const collaborator = state.collaborators.find(
+          (item) => item.userId === userId,
+        );
         return collaborator?.role ?? "none";
       },
-      findAcceptedCollaboratorByEmail: async (_treeId: string, email: string) => {
+      findAcceptedCollaboratorByEmail: async (
+        _treeId: string,
+        email: string,
+      ) => {
         const userId = userByEmail[email];
         if (!userId) {
           return null;
         }
 
-        const collaborator = state.collaborators.find((item) => item.userId === userId);
+        const collaborator = state.collaborators.find(
+          (item) => item.userId === userId,
+        );
         return collaborator ? { id: collaborator.id } : null;
       },
       findPendingInvitationByEmail: async (_treeId: string, email: string) => {
@@ -291,7 +298,9 @@ describe("collaboration lifecycle", () => {
         expiresAt: Date;
       }) => {
         const existing = state.invitations.find(
-          (item) => item.treeId === args.treeId && item.invitedEmail === args.invitedEmail,
+          (item) =>
+            item.treeId === args.treeId &&
+            item.invitedEmail === args.invitedEmail,
         );
 
         if (existing) {
@@ -344,7 +353,11 @@ describe("collaboration lifecycle", () => {
 
         if (existing) {
           existing.role = args.role;
-          return { id: existing.id, treeId: existing.treeId, role: existing.role };
+          return {
+            id: existing.id,
+            treeId: existing.treeId,
+            role: existing.role,
+          };
         }
 
         const next = {
@@ -359,7 +372,9 @@ describe("collaboration lifecycle", () => {
       },
       markInvitationAccepted: async (invitationId: string) => {
         state.invitations = state.invitations.map((item) =>
-          item.id === invitationId ? { ...item, status: "accepted" as const } : item,
+          item.id === invitationId
+            ? { ...item, status: "accepted" as const }
+            : item,
         );
       },
       updateCollaboratorRole: async (

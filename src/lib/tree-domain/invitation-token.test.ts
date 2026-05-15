@@ -25,6 +25,8 @@ describe("invitation-token", () => {
     const expiresAt = invitationExpiresAt(now);
     expect(expiresAt.toISOString()).toBe("2026-05-21T00:00:00.000Z");
     expect(isInvitationExpired(expiresAt, now)).toBe(false);
-    expect(isInvitationExpired(expiresAt, new Date("2026-05-22T00:00:00.000Z"))).toBe(true);
+    expect(
+      isInvitationExpired(expiresAt, new Date("2026-05-22T00:00:00.000Z")),
+    ).toBe(true);
   });
 });
