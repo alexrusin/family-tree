@@ -22,10 +22,11 @@ import {
 import { MemberNode } from "./MemberNode";
 import { UnionNode } from "./UnionNode";
 import { SpouseEdge } from "./SpouseEdge";
+import { ParentEdge } from "./ParentEdge";
 import { Plus, ZoomIn, ZoomOut, Maximize2 } from "lucide-react";
 
 const nodeTypes: NodeTypes = { member: MemberNode, union: UnionNode };
-const edgeTypes: EdgeTypes = { spouse: SpouseEdge };
+const edgeTypes: EdgeTypes = { spouse: SpouseEdge, parent: ParentEdge };
 
 interface TreeCanvasProps {
   members: TreeMemberData[];
