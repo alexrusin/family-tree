@@ -41,4 +41,14 @@ describe("schema contract", () => {
     `;
     expect(result[0]?.exists).toBe(true);
   });
+
+  it("has PublicShareTokenHistory table", async () => {
+    const result = await prisma.$queryRaw<Array<{ exists: boolean }>>`
+      SELECT EXISTS (
+        SELECT FROM information_schema.tables
+        WHERE table_name = 'PublicShareTokenHistory'
+      )
+    `;
+    expect(result[0]?.exists).toBe(true);
+  });
 });
