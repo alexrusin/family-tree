@@ -6,9 +6,11 @@ import dynamic from "next/dynamic";
 import AddMemberModal from "./AddMemberModal";
 import AddRelationshipModal from "./AddRelationshipModal";
 import EditMemberModal from "./EditMemberModal";
+import ShareLinkSettingsModal from "./ShareLinkSettingsModal";
 import TreeSidebar from "./TreeSidebar";
 import MemberSidePanel from "./MemberSidePanel";
 import RelationshipEdgePopover from "./RelationshipEdgePopover";
+import { buildPublicUrl } from "./share-link-form-state";
 import {
   type TreeMemberData,
   type TreeRelationship,
@@ -135,6 +137,15 @@ interface TreeT {
   collaboration: {
     sidebarLink: string;
   };
+  publicShare: {
+    sidebarAction: string;
+    modalTitle: string;
+    enable: string;
+    description: string;
+    copy: string;
+    regenerate: string;
+    regenerateConfirm: string;
+  };
   member: MemberSubT;
   relationship: RelationshipSubT;
   errors: ErrorsSubT;
@@ -219,6 +230,9 @@ export default function TreeDetailClient({
     position: { x: number; y: number };
     label: { fromName: string; toName: string; typeLabel: string };
   } | null>(null);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [shareEnabled, setShareEnabled] = useState(false);
+  const [publicUrl, setPublicUrl] = useState("");
   const [addMemberModalKey, setAddMemberModalKey] = useState(0);
   const [addRelationshipModalKey, setAddRelationshipModalKey] = useState(0);
 
@@ -250,6 +264,35 @@ export default function TreeDetailClient({
     }, 0);
     return () => window.clearTimeout(timerId);
   }, [loadTreeData]);
+
+  const loadShareState = useCallback(async () => {
+    if (!isOwner) return;
+
+    const response = await fetch(`/api/trees/${treeId}/share-link`, {
+      cache: "no-store",
+    });
+    if (!response.ok) return;
+
+    const payload = (await response.json()) as {
+      shareEnabled: boolean;
+      shareToken: string;
+      publicUrl?: string;
+    };
+
+    setShareEnabled(payload.shareEnabled);
+    setPublicUrl(
+      payload.publicUrl ??
+        buildPublicUrl(window.location.origin, payload.shareToken),
+    );
+  }, [isOwner, treeId]);
+
+  useEffect(() => {
+    const timerId = window.setTimeout(() => {
+      void loadShareState();
+    }, 0);
+
+    return () => window.clearTimeout(timerId);
+  }, [loadShareState]);
 
   const memberCount = isLoading ? initialMemberCount : members.length;
   const canAddMember = canEdit && memberCount < MEMBER_HARD_LIMIT;
@@ -315,11 +358,14 @@ export default function TreeDetailClient({
         memberCount={memberCount}
         collaboratorsHref={`/${lang}/trees/${treeId}/collaborators`}
         canEdit={canEdit}
+        canManageShare={isOwner}
         canAddMember={canAddMember}
         onAddMember={openAddMemberModal}
         onAddRelationship={openAddRelationshipModal}
+        onOpenShareSettings={() => setIsShareModalOpen(true)}
         t={{
           collaborators: t.collaboration.sidebarLink,
+          shareLink: t.publicShare.sidebarAction,
           addMember: t.addMember,
           addRelationship: t.addRelationship,
           viewOnly: t.viewOnly,
@@ -410,6 +456,47 @@ export default function TreeDetailClient({
           }}
         />
       )}
+
+      <ShareLinkSettingsModal
+        isOpen={isShareModalOpen}
+        shareEnabled={shareEnabled}
+        publicUrl={publicUrl}
+        onClose={() => setIsShareModalOpen(false)}
+        onToggle={async (enabled) => {
+          const response = await fetch(`/api/trees/${treeId}/share-link`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ action: "setEnabled", enabled }),
+          });
+
+          if (response.ok) {
+            setShareEnabled(enabled);
+          }
+        }}
+        onRegenerate={async () => {
+          const response = await fetch(`/api/trees/${treeId}/share-link`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ action: "regenerate" }),
+          });
+          if (!response.ok) return;
+
+          const payload = (await response.json()) as { shareToken?: string };
+          const nextToken = payload.shareToken ?? "";
+          if (!nextToken) return;
+
+          setPublicUrl(buildPublicUrl(window.location.origin, nextToken));
+        }}
+        t={{
+          title: t.publicShare.modalTitle,
+          enable: t.publicShare.enable,
+          description: t.publicShare.description,
+          copy: t.publicShare.copy,
+          regenerate: t.publicShare.regenerate,
+          regenerateConfirm: t.publicShare.regenerateConfirm,
+          close: t.panel.close,
+        }}
+      />
 
       {/* Add member modal */}
       <AddMemberModal

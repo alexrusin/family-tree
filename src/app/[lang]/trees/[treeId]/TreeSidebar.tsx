@@ -2,7 +2,7 @@
 "use client";
 
 import Link from "next/link";
-import { Plus, Link2, AlertTriangle, Users } from "lucide-react";
+import { Plus, Link2, AlertTriangle, Users, Share2 } from "lucide-react";
 
 const MEMBER_WARN_THRESHOLD = 250;
 const MEMBER_HARD_LIMIT = 300;
@@ -15,6 +15,7 @@ interface TreeSidebarT {
   warningBanner: string;
   limitReached: string;
   memberCount: string;
+  shareLink: string;
 }
 
 interface TreeSidebarProps {
@@ -23,8 +24,10 @@ interface TreeSidebarProps {
   collaboratorsHref: string;
   canEdit: boolean;
   canAddMember: boolean;
+  canManageShare: boolean;
   onAddMember: () => void;
   onAddRelationship: () => void;
+  onOpenShareSettings: () => void;
   t: TreeSidebarT;
 }
 
@@ -33,9 +36,11 @@ export default function TreeSidebar({
   memberCount,
   collaboratorsHref,
   canEdit,
+  canManageShare,
   canAddMember,
   onAddMember,
   onAddRelationship,
+  onOpenShareSettings,
   t,
 }: TreeSidebarProps) {
   const atLimit = memberCount >= MEMBER_HARD_LIMIT;
@@ -67,6 +72,15 @@ export default function TreeSidebar({
       )}
 
       <div className="p-4 space-y-2 mt-2">
+        {canManageShare && (
+          <button
+            onClick={onOpenShareSettings}
+            className="w-full px-4 py-2.5 bg-stone-100 text-stone-900 rounded-lg font-semibold hover:bg-stone-200 transition-colors flex items-center justify-center gap-2 text-sm"
+          >
+            <Share2 className="w-4 h-4" />
+            {t.shareLink}
+          </button>
+        )}
         <Link
           href={collaboratorsHref}
           className="w-full px-4 py-2.5 bg-stone-100 text-stone-900 rounded-lg font-semibold hover:bg-stone-200 transition-colors flex items-center justify-center gap-2 text-sm"
