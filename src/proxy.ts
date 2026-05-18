@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { auth } from '@/lib/auth'
+import { isPublicSharePath } from '@/lib/public-route'
 
 const LOCALES = ['en', 'ru'] as const
 const DEFAULT_LOCALE = 'en'
@@ -27,6 +28,13 @@ function startsWithPath(pathname: string, basePath: string): boolean {
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
+
+  if (isPublicSharePath(pathname)) {
+    const response = NextResponse.next()
+    response.headers.set('X-Robots-Tag', 'noindex, nofollow')
+    response.headers.set('Cache-Control', 'no-store')
+    return response
+  }
 
   // Check if pathname already has a supported locale prefix
   const pathnameHasLocale = LOCALES.some(
