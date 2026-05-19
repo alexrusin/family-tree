@@ -50,16 +50,19 @@ describe("GET /api/public-tree/[shareToken]", () => {
       shareEnabled: true,
       shareToken: "token-active",
       name: "Miller Family",
+      owner: { locale: "ru" },
     });
-    prismaMock.user.findUnique.mockResolvedValue({ locale: "ru" });
     prismaMock.treeMember.findMany.mockResolvedValue([
       { id: "m1", isLiving: true, birthYear: 1984 },
     ]);
     prismaMock.relationship.findMany.mockResolvedValue([]);
 
-    const request = new NextRequest("http://localhost/api/public-tree/token-active", {
-      method: "GET",
-    });
+    const request = new NextRequest(
+      "http://localhost/api/public-tree/token-active",
+      {
+        method: "GET",
+      },
+    );
     const response = await GET(request, {
       params: Promise.resolve({ shareToken: "token-active" }),
     });
@@ -67,6 +70,8 @@ describe("GET /api/public-tree/[shareToken]", () => {
     expect(response.status).toBe(200);
     expect(response.headers.get("X-Robots-Tag")).toBe("noindex, nofollow");
     expect(response.headers.get("Cache-Control")).toBe("no-store");
+    const body = await response.json();
+    expect(body.members[0].birthYear).toBeNull();
   });
 
   it("returns 410 when active token exists but sharing disabled", async () => {
@@ -99,9 +104,12 @@ describe("GET /api/public-tree/[shareToken]", () => {
       treeId: "t1",
     });
 
-    const request = new NextRequest("http://localhost/api/public-tree/token-old", {
-      method: "GET",
-    });
+    const request = new NextRequest(
+      "http://localhost/api/public-tree/token-old",
+      {
+        method: "GET",
+      },
+    );
     const response = await GET(request, {
       params: Promise.resolve({ shareToken: "token-old" }),
     });

@@ -77,8 +77,7 @@ describe("public-share-service", () => {
     const repo = {
       getTreeRole: vi.fn().mockResolvedValue("owner"),
       getCurrentShareToken: vi.fn().mockResolvedValue("old-token"),
-      createTokenHistory: vi.fn().mockResolvedValue(undefined),
-      updateShareToken: vi.fn().mockResolvedValue({
+      atomicRegenerateToken: vi.fn().mockResolvedValue({
         treeId: "t1",
         shareToken: "new-token",
       }),
@@ -91,11 +90,11 @@ describe("public-share-service", () => {
       nextTokenFactory: () => "new-token",
     });
 
-    expect(repo.createTokenHistory).toHaveBeenCalledWith({
-      treeId: "t1",
-      tokenHash: hashPublicShareToken("old-token"),
-      status: "regenerated",
-    });
+    expect(repo.atomicRegenerateToken).toHaveBeenCalledWith(
+      "t1",
+      hashPublicShareToken("old-token"),
+      "new-token",
+    );
     expect(result.shareToken).toBe("new-token");
   });
 });

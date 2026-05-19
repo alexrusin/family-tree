@@ -47,7 +47,9 @@ export async function resolvePublicShareToken(
     };
   }
 
-  const historical = await repo.findHistoricalToken(hashPublicShareToken(token));
+  const historical = await repo.findHistoricalToken(
+    hashPublicShareToken(token),
+  );
   if (historical) {
     return { status: "regenerated", treeId: historical.treeId };
   }
@@ -76,13 +78,9 @@ export async function regeneratePublicShareToken(params: {
   repo: {
     getTreeRole: (treeId: string, actorUserId: string) => Promise<TreeRole>;
     getCurrentShareToken: (treeId: string) => Promise<string>;
-    createTokenHistory: (args: {
-      treeId: string;
-      tokenHash: string;
-      status: "regenerated";
-    }) => Promise<void>;
-    updateShareToken: (
+    atomicRegenerateToken: (
       treeId: string,
+      oldTokenHash: string,
       nextToken: string,
     ) => Promise<{ treeId: string; shareToken: string }>;
   };
@@ -96,12 +94,10 @@ export async function regeneratePublicShareToken(params: {
   }
 
   const current = await params.repo.getCurrentShareToken(params.treeId);
-  await params.repo.createTokenHistory({
-    treeId: params.treeId,
-    tokenHash: hashPublicShareToken(current),
-    status: "regenerated",
-  });
-
   const nextToken = (params.nextTokenFactory ?? generateShareToken)();
-  return params.repo.updateShareToken(params.treeId, nextToken);
+  return params.repo.atomicRegenerateToken(
+    params.treeId,
+    hashPublicShareToken(current),
+    nextToken,
+  );
 }

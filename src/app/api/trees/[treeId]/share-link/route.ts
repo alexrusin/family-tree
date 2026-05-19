@@ -25,7 +25,10 @@ export async function GET(
   try {
     const session = await auth.api.getSession({ headers: request.headers });
     if (!session?.user) {
-      return NextResponse.json({ errorCode: "ERR_UNAUTHORIZED" }, { status: 401 });
+      return NextResponse.json(
+        { errorCode: "ERR_UNAUTHORIZED" },
+        { status: 401 },
+      );
     }
 
     const { treeId } = await params;
@@ -62,7 +65,10 @@ export async function PATCH(
   try {
     const session = await auth.api.getSession({ headers: request.headers });
     if (!session?.user) {
-      return NextResponse.json({ errorCode: "ERR_UNAUTHORIZED" }, { status: 401 });
+      return NextResponse.json(
+        { errorCode: "ERR_UNAUTHORIZED" },
+        { status: 401 },
+      );
     }
 
     const { treeId } = await params;
@@ -102,22 +108,22 @@ export async function PATCH(
             }
             return tree.shareToken;
           },
-          createTokenHistory: async (args) => {
-            await prisma.publicShareTokenHistory.create({
-              data: {
-                treeId: args.treeId,
-                tokenHash: args.tokenHash,
-                status: args.status,
-              },
+          atomicRegenerateToken: async (id, oldTokenHash, nextToken) => {
+            return prisma.$transaction(async (tx) => {
+              await tx.publicShareTokenHistory.create({
+                data: {
+                  treeId: id,
+                  tokenHash: oldTokenHash,
+                  status: "regenerated",
+                },
+              });
+              const updated = await tx.familyTree.update({
+                where: { id },
+                data: { shareToken: nextToken },
+                select: { id: true, shareToken: true },
+              });
+              return { treeId: updated.id, shareToken: updated.shareToken };
             });
-          },
-          updateShareToken: async (id, nextToken) => {
-            const updated = await prisma.familyTree.update({
-              where: { id },
-              data: { shareToken: nextToken },
-              select: { id: true, shareToken: true },
-            });
-            return { treeId: updated.id, shareToken: updated.shareToken };
           },
         },
         treeId,
@@ -130,14 +136,23 @@ export async function PATCH(
       );
     }
 
-    return NextResponse.json({ errorCode: "ERR_INVALID_ACTION" }, { status: 400 });
+    return NextResponse.json(
+      { errorCode: "ERR_INVALID_ACTION" },
+      { status: 400 },
+    );
   } catch (error) {
     if (error instanceof Error) {
       if (error.message === "ERR_FORBIDDEN") {
-        return NextResponse.json({ errorCode: "ERR_FORBIDDEN" }, { status: 403 });
+        return NextResponse.json(
+          { errorCode: "ERR_FORBIDDEN" },
+          { status: 403 },
+        );
       }
       if (error.message === "ERR_NOT_FOUND") {
-        return NextResponse.json({ errorCode: "ERR_NOT_FOUND" }, { status: 404 });
+        return NextResponse.json(
+          { errorCode: "ERR_NOT_FOUND" },
+          { status: 404 },
+        );
       }
     }
 

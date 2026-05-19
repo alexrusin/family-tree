@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { NextRequest } from "next/server";
+import { hashPublicShareToken } from "@/lib/tree-domain/public-share-service";
 
 const { getSessionMock, prismaMock, prismaClientCtorMock, prismaPgMock } =
   vi.hoisted(() => {
@@ -16,6 +17,7 @@ const { getSessionMock, prismaMock, prismaClientCtorMock, prismaPgMock } =
         create: vi.fn(),
         findUnique: vi.fn(),
       },
+      $transaction: vi.fn(),
     };
 
     return {
@@ -72,14 +74,20 @@ describe("/api/trees/[treeId]/share-link", () => {
       shareToken: "token-2",
       shareEnabled: true,
     });
+    prismaMock.$transaction.mockImplementation(
+      async (fn: (tx: typeof prismaMock) => Promise<unknown>) => fn(prismaMock),
+    );
   });
 
   it("returns 401 for unauthenticated GET", async () => {
     getSessionMock.mockResolvedValue(null);
 
-    const request = new NextRequest("http://localhost/api/trees/t1/share-link", {
-      method: "GET",
-    });
+    const request = new NextRequest(
+      "http://localhost/api/trees/t1/share-link",
+      {
+        method: "GET",
+      },
+    );
     const response = await GET(request, {
       params: Promise.resolve({ treeId: "t1" }),
     });
@@ -88,9 +96,12 @@ describe("/api/trees/[treeId]/share-link", () => {
   });
 
   it("returns share state for owner GET", async () => {
-    const request = new NextRequest("http://localhost/api/trees/t1/share-link", {
-      method: "GET",
-    });
+    const request = new NextRequest(
+      "http://localhost/api/trees/t1/share-link",
+      {
+        method: "GET",
+      },
+    );
     const response = await GET(request, {
       params: Promise.resolve({ treeId: "t1" }),
     });
@@ -111,10 +122,13 @@ describe("/api/trees/[treeId]/share-link", () => {
       acceptedAt: new Date(),
     });
 
-    const request = new NextRequest("http://localhost/api/trees/t1/share-link", {
-      method: "PATCH",
-      body: JSON.stringify({ action: "setEnabled", enabled: true }),
-    });
+    const request = new NextRequest(
+      "http://localhost/api/trees/t1/share-link",
+      {
+        method: "PATCH",
+        body: JSON.stringify({ action: "setEnabled", enabled: true }),
+      },
+    );
 
     const response = await PATCH(request, {
       params: Promise.resolve({ treeId: "t1" }),
@@ -123,15 +137,45 @@ describe("/api/trees/[treeId]/share-link", () => {
   });
 
   it("toggles enabled state for owner PATCH", async () => {
-    const request = new NextRequest("http://localhost/api/trees/t1/share-link", {
-      method: "PATCH",
-      body: JSON.stringify({ action: "setEnabled", enabled: true }),
-    });
+    const request = new NextRequest(
+      "http://localhost/api/trees/t1/share-link",
+      {
+        method: "PATCH",
+        body: JSON.stringify({ action: "setEnabled", enabled: true }),
+      },
+    );
 
     const response = await PATCH(request, {
       params: Promise.resolve({ treeId: "t1" }),
     });
     expect(response.status).toBe(200);
     expect(prismaMock.familyTree.update).toHaveBeenCalled();
+  });
+
+  it("regenerates token for owner PATCH", async () => {
+    prismaMock.publicShareTokenHistory.create.mockResolvedValue(undefined);
+
+    const request = new NextRequest(
+      "http://localhost/api/trees/t1/share-link",
+      {
+        method: "PATCH",
+        body: JSON.stringify({ action: "regenerate" }),
+      },
+    );
+
+    const response = await PATCH(request, {
+      params: Promise.resolve({ treeId: "t1" }),
+    });
+
+    expect(response.status).toBe(200);
+    expect(prismaMock.publicShareTokenHistory.create).toHaveBeenCalledWith({
+      data: {
+        treeId: "t1",
+        tokenHash: hashPublicShareToken("token-1"),
+        status: "regenerated",
+      },
+    });
+    const body = await response.json();
+    expect(body.shareToken).toBe("token-2");
   });
 });
