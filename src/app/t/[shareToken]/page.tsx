@@ -20,12 +20,12 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-function getBaseUrl(): string {
+async function getBaseUrl(): Promise<string> {
   if (process.env.NEXT_PUBLIC_APP_URL) {
     return process.env.NEXT_PUBLIC_APP_URL;
   }
 
-  const headerStore = headers();
+  const headerStore = await headers();
   const host = headerStore.get("host") ?? "localhost:3000";
   const proto = headerStore.get("x-forwarded-proto") ?? "http";
   return `${proto}://${host}`;
@@ -39,7 +39,7 @@ export default async function PublicTreePage({
   const { shareToken } = await params;
 
   const response = await fetch(
-    `${getBaseUrl()}/api/public-tree/${encodeURIComponent(shareToken)}`,
+    `${await getBaseUrl()}/api/public-tree/${encodeURIComponent(shareToken)}`,
     {
       cache: "no-store",
     },

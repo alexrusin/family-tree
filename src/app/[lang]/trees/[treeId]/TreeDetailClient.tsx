@@ -492,6 +492,7 @@ export default function TreeDetailClient({
           enable: t.publicShare.enable,
           description: t.publicShare.description,
           copy: t.publicShare.copy,
+          copySuccess: t.publicShare.copySuccess,
           regenerate: t.publicShare.regenerate,
           regenerateConfirm: t.publicShare.regenerateConfirm,
           close: t.panel.close,

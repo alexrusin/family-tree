@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { X } from "lucide-react";
 
 export default function ShareLinkSettingsModal({
   isOpen,
@@ -22,12 +23,29 @@ export default function ShareLinkSettingsModal({
     enable: string;
     description: string;
     copy: string;
+    copySuccess: string;
     regenerate: string;
     regenerateConfirm: string;
     close: string;
   };
 }) {
   const [busy, setBusy] = useState<"toggle" | "regenerate" | null>(null);
+  const [copySuccessVisible, setCopySuccessVisible] = useState(false);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        onClose();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isOpen, onClose]);
 
   if (!isOpen) return null;
 
@@ -36,8 +54,12 @@ export default function ShareLinkSettingsModal({
       <div className="w-full max-w-lg bg-white rounded-2xl border border-stone-200 shadow-xl">
         <div className="p-5 border-b border-stone-100 flex items-center justify-between">
           <h2 className="text-lg font-semibold text-amber-900">{t.title}</h2>
-          <button onClick={onClose} className="text-stone-500">
-            {t.close}
+          <button
+            onClick={onClose}
+            className="p-1 text-stone-400 hover:text-stone-600 transition-colors rounded-lg hover:bg-stone-100 cursor-pointer"
+            aria-label={t.close}
+          >
+            <X className="w-5 h-5" />
           </button>
         </div>
 
@@ -65,17 +87,31 @@ export default function ShareLinkSettingsModal({
               className="flex-1 border border-stone-200 rounded-lg px-3 py-2 text-sm"
             />
             <button
-              className="px-3 py-2 rounded-lg bg-amber-900 text-white text-sm"
+              className="px-3 py-2 rounded-lg bg-amber-900 text-white text-sm cursor-pointer"
               onClick={async () => {
                 await navigator.clipboard.writeText(publicUrl);
+                setCopySuccessVisible(true);
+                setTimeout(() => {
+                  setCopySuccessVisible(false);
+                }, 2000);
               }}
             >
               {t.copy}
             </button>
           </div>
 
+          {copySuccessVisible && (
+            <p
+              className="text-xs text-green-700"
+              role="status"
+              aria-live="polite"
+            >
+              {t.copySuccess}
+            </p>
+          )}
+
           <button
-            className="text-red-700 text-sm font-semibold"
+            className="text-red-700 text-sm font-semibold cursor-pointer disabled:cursor-not-allowed"
             disabled={busy !== null}
             onClick={async () => {
               if (!window.confirm(t.regenerateConfirm)) return;

@@ -270,6 +270,7 @@
       "enable": "Enable public link",
       "description": "Anyone with the link can view this tree in read-only mode.",
       "copy": "Copy",
+      "copySuccess": "Link copied to clipboard.",
       "regenerate": "Regenerate link",
       "regenerateConfirm": "Regenerate link? The old public link will stop working.",
       "disabledTitle": "Link disabled",
