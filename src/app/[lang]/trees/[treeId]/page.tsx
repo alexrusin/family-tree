@@ -75,8 +75,10 @@ export default async function TreeDetailPage({
       <Header
         lang={lang}
         langToggleLabel={t.nav.langToggle}
+        langToggleErrors={t.settings.language.errors}
         navFamilyTree={t.dashboard.navFamilyTree}
         navGallery={t.dashboard.navGallery}
+        navSettings={t.dashboard.navSettings}
         logoutLabel={t.dashboard.logout}
       />
 

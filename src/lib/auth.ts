@@ -52,7 +52,10 @@ function getBaseURL(): string {
   return baseURL;
 }
 
-function buildFrontendResetLink(rawUrl: string, locale: SupportedLocale): string {
+function buildFrontendResetLink(
+  rawUrl: string,
+  locale: SupportedLocale,
+): string {
   const baseURL = getBaseURL();
   const parsedUrl = new URL(rawUrl, baseURL);
   const token = parsedUrl.pathname.split("/").filter(Boolean).pop() ?? "";
@@ -62,9 +65,11 @@ function buildFrontendResetLink(rawUrl: string, locale: SupportedLocale): string
     ? new URL(callbackURL, baseURL)
     : new URL(`/${locale}/reset-password`, baseURL);
 
-  const targetPath = callbackTarget.pathname.startsWith("/en/") || callbackTarget.pathname.startsWith("/ru/")
-    ? callbackTarget.pathname
-    : `/${locale}${callbackTarget.pathname}`;
+  const targetPath =
+    callbackTarget.pathname.startsWith("/en/") ||
+    callbackTarget.pathname.startsWith("/ru/")
+      ? callbackTarget.pathname
+      : `/${locale}${callbackTarget.pathname}`;
 
   const resetLink = new URL(targetPath, callbackTarget.origin);
   if (token) {
@@ -90,7 +95,7 @@ export const auth = betterAuth({
   secret: process.env.BETTER_AUTH_SECRET,
   baseURL: process.env.BETTER_AUTH_URL,
   database: prismaAdapter(prisma, { provider: "postgresql" }),
-  
+
   // ========== Email & Password Auth ==========
   emailAndPassword: {
     enabled: true,
@@ -100,11 +105,11 @@ export const auth = betterAuth({
         const locale = getUserLocale((user as { locale?: string }).locale);
         const resetLink = buildFrontendResetLink(url, locale);
         const content = RESET_EMAIL_CONTENT[locale];
-        
+
         await sendEmail(
           user.email,
           EMAIL_SUBJECTS[locale].reset,
-          `<p>${content.intro}</p><p><a href="${resetLink}">${content.cta}</a></p><p>${content.expiry}</p><p>${content.fallback}</p><p>${resetLink}</p>`
+          `<p>${content.intro}</p><p><a href="${resetLink}">${content.cta}</a></p><p>${content.expiry}</p><p>${content.fallback}</p><p>${resetLink}</p>`,
         );
       } catch (error) {
         console.error("Failed to send password reset email:", error);
@@ -113,7 +118,7 @@ export const auth = betterAuth({
     },
     resetPasswordTokenExpiresIn: TIME.PASSWORD_RESET_TOKEN_EXPIRY,
   },
-  
+
   // ========== Email Verification ==========
   emailVerification: {
     sendVerificationEmail: async ({ user, url }) => {
@@ -124,13 +129,13 @@ export const auth = betterAuth({
         verificationUrl.searchParams.set("locale", locale);
         verificationUrl.searchParams.set(
           "callbackURL",
-          new URL(`/${locale}/dashboard`, baseURL).toString()
+          new URL(`/${locale}/dashboard`, baseURL).toString(),
         );
 
         await sendEmail(
           user.email,
           EMAIL_SUBJECTS[locale].verify,
-          `<p>Click the link below to verify your email address.</p><p><a href="${verificationUrl.toString()}">Verify email</a></p>`
+          `<p>Click the link below to verify your email address.</p><p><a href="${verificationUrl.toString()}">Verify email</a></p>`,
         );
       } catch (error) {
         console.error("Failed to send verification email:", error);
@@ -138,13 +143,13 @@ export const auth = betterAuth({
       }
     },
   },
-  
+
   // ========== Session Management ==========
   session: {
     expiresIn: TIME.SESSION_EXPIRY,
     updateAge: TIME.SESSION_UPDATE_AGE,
   },
-  
+
   // ========== User Schema ==========
   user: {
     additionalFields: {
@@ -153,12 +158,17 @@ export const auth = betterAuth({
         defaultValue: "en",
       },
     },
+    deleteUser: {
+      enabled: true,
+    },
   },
-  
+
   // ========== Advanced Options ==========
   logger: {
     disabled: process.env.NODE_ENV === "production",
   },
   appName: "Family Tree",
-  trustedOrigins: (process.env.TRUSTED_ORIGINS || "").split(",").filter(Boolean),
+  trustedOrigins: (process.env.TRUSTED_ORIGINS || "")
+    .split(",")
+    .filter(Boolean),
 });

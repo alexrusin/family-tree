@@ -18,18 +18,19 @@ enum Locale {
 }
 
 model User {
-  id                String         @id
-  email             String         @unique
-  name              String
-  image             String?
-  locale            Locale         @default(en)
-  emailVerified     Boolean        @default(false) @map("email_verified")
-  createdAt         DateTime       @map("created_at") @db.Timestamp(6)
-  updatedAt         DateTime       @map("updated_at") @db.Timestamp(6)
-  sessions          Session[]
-  accounts          Account[]
-  ownedTrees        FamilyTree[]   @relation(name: "OwnedTrees")
-  collaboratedTrees Collaborator[] @relation(name: "CollaboratedTrees")
+  id                 String              @id
+  email              String              @unique
+  name               String
+  image              String?
+  locale             Locale              @default(en)
+  emailVerified      Boolean             @default(false) @map("email_verified")
+  createdAt          DateTime            @map("created_at") @db.Timestamp(6)
+  updatedAt          DateTime            @map("updated_at") @db.Timestamp(6)
+  sessions           Session[]
+  accounts           Account[]
+  pendingEmailChange PendingEmailChange?
+  ownedTrees         FamilyTree[]        @relation(name: "OwnedTrees")
+  collaboratedTrees  Collaborator[]      @relation(name: "CollaboratedTrees")
 }
 
 model Session {
@@ -68,6 +69,20 @@ model Verification {
   expiresAt  DateTime  @map("expires_at") @db.Timestamp(6)
   createdAt  DateTime? @map("created_at") @db.Timestamp(6)
   updatedAt  DateTime? @map("updated_at") @db.Timestamp(6)
+}
+
+model PendingEmailChange {
+  id        String   @id @default(uuid())
+  userId    String   @unique @map("user_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  newEmail  String   @map("new_email")
+  tokenHash String   @unique @map("token_hash")
+  locale    Locale   @default(en)
+  expiresAt DateTime @map("expires_at") @db.Timestamp(6)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamp(6)
+
+  @@index([newEmail])
 }
 
 enum CollaboratorRole {

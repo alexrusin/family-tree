@@ -5,7 +5,7 @@ import { isPublicSharePath } from "@/lib/public-route";
 
 const LOCALES = ["en", "ru"] as const;
 const DEFAULT_LOCALE = "en";
-const PROTECTED_PATHS = ["/dashboard"] as const;
+const PROTECTED_PATHS = ["/dashboard", "/settings"] as const;
 const AUTH_PATHS = ["/login", "/register"] as const;
 
 function getLocale(request: NextRequest): string {
@@ -43,7 +43,10 @@ export async function proxy(request: NextRequest) {
 
   if (!pathnameHasLocale) {
     // Redirect to locale-prefixed path
-    const locale = getLocale(request);
+    const session = await auth.api.getSession({ headers: request.headers });
+    const sessionLocale = (session?.user as { locale?: string } | undefined)
+      ?.locale;
+    const locale = sessionLocale === "ru" ? "ru" : getLocale(request);
     const url = request.nextUrl.clone();
     url.pathname = `/${locale}${pathname}`;
     return NextResponse.redirect(url);
