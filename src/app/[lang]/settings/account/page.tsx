@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth-utils";
 import { getDictionary, hasLocale } from "../../dictionaries/dictionaries";
+import { prisma } from "@/lib/prisma";
 import AccountSettingsClient from "./AccountSettingsClient";
 
 export default async function AccountSettingsPage({
@@ -18,7 +19,13 @@ export default async function AccountSettingsPage({
     redirect(`/${lang}/login`);
   }
 
-  const t = await getDictionary(lang);
+  const [t, pendingEmailChange] = await Promise.all([
+    getDictionary(lang),
+    prisma.pendingEmailChange.findUnique({
+      where: { userId: user.id },
+      select: { newEmail: true, expiresAt: true },
+    }),
+  ]);
 
   return (
     <AccountSettingsClient
@@ -29,7 +36,12 @@ export default async function AccountSettingsPage({
         displayName: user.name,
         email: user.email,
         avatarUrl: user.image,
-        pendingEmailChange: null,
+        pendingEmailChange: pendingEmailChange
+          ? {
+              email: pendingEmailChange.newEmail,
+              expiresAt: pendingEmailChange.expiresAt.toISOString(),
+            }
+          : null,
       }}
       t={t.settings.account}
     />

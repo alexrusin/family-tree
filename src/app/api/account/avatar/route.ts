@@ -1,6 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { PrismaClient } from "@/generated/prisma/client";
-import { PrismaPg } from "@prisma/adapter-pg";
 import { auth } from "@/lib/auth";
 import {
   createS3Client,
@@ -9,12 +7,7 @@ import {
   uploadProcessedPhoto,
   validatePhotoFile,
 } from "@/lib/tree-domain/photo-upload";
-
-function getPrismaClient() {
-  return new PrismaClient({
-    adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }),
-  });
-}
+import { prisma } from "@/lib/prisma";
 
 function avatarKeyForUser(userId: string): string {
   return `users/${userId}/avatar.webp`;
@@ -97,7 +90,6 @@ export async function PATCH(request: NextRequest) {
       buffer: outputBuffer,
     });
 
-    const prisma = getPrismaClient();
     const user = await prisma.user.update({
       where: { id: session.user.id },
       data: { image: photoPublicUrl(key) },

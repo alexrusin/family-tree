@@ -1,14 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { PrismaClient } from "@/generated/prisma/client";
 import type { Locale } from "@/generated/prisma/enums";
-import { PrismaPg } from "@prisma/adapter-pg";
 import { auth } from "@/lib/auth";
-
-function getPrismaClient() {
-  return new PrismaClient({
-    adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }),
-  });
-}
+import { prisma } from "@/lib/prisma";
 
 function toLocale(value: unknown): Locale | null {
   if (value === "en" || value === "ru") {
@@ -43,7 +36,6 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
-    const prisma = getPrismaClient();
     const existingUser = await prisma.user.findUnique({
       where: { id: session.user.id },
       select: { id: true },

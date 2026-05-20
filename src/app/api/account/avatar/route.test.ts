@@ -4,8 +4,6 @@ import { NextRequest } from "next/server";
 const {
   getSessionMock,
   prismaClientMock,
-  prismaClientConstructorMock,
-  prismaPgMock,
   validatePhotoFileMock,
   processImageMock,
   uploadProcessedPhotoMock,
@@ -28,12 +26,6 @@ const {
   return {
     getSessionMock,
     prismaClientMock,
-    prismaClientConstructorMock: vi.fn(function PrismaClientMock() {
-      return prismaClientMock;
-    }),
-    prismaPgMock: vi.fn(function PrismaPgMock() {
-      return {};
-    }),
     validatePhotoFileMock,
     processImageMock,
     uploadProcessedPhotoMock,
@@ -50,13 +42,7 @@ vi.mock("@/lib/auth", () => ({
   },
 }));
 
-vi.mock("@/generated/prisma/client", () => ({
-  PrismaClient: prismaClientConstructorMock,
-}));
-
-vi.mock("@prisma/adapter-pg", () => ({
-  PrismaPg: prismaPgMock,
-}));
+vi.mock("@/lib/prisma", () => ({ prisma: prismaClientMock }));
 
 vi.mock("@/lib/tree-domain/photo-upload", () => ({
   validatePhotoFile: validatePhotoFileMock,

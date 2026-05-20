@@ -4,8 +4,6 @@ import { NextRequest } from "next/server";
 const {
   getSessionMock,
   prismaClientMock,
-  prismaClientConstructorMock,
-  prismaPgMock,
   sendPendingEmailChangeEmailMock,
   generatePendingEmailChangeTokenMock,
   hashPendingEmailChangeTokenMock,
@@ -31,12 +29,6 @@ const {
   return {
     getSessionMock,
     prismaClientMock,
-    prismaClientConstructorMock: vi.fn(function PrismaClientMock() {
-      return prismaClientMock;
-    }),
-    prismaPgMock: vi.fn(function PrismaPgMock() {
-      return {};
-    }),
     sendPendingEmailChangeEmailMock,
     generatePendingEmailChangeTokenMock,
     hashPendingEmailChangeTokenMock,
@@ -52,13 +44,7 @@ vi.mock("@/lib/auth", () => ({
   },
 }));
 
-vi.mock("@/generated/prisma/client", () => ({
-  PrismaClient: prismaClientConstructorMock,
-}));
-
-vi.mock("@prisma/adapter-pg", () => ({
-  PrismaPg: prismaPgMock,
-}));
+vi.mock("@/lib/prisma", () => ({ prisma: prismaClientMock }));
 
 vi.mock("@/lib/pending-email-change-email", () => ({
   sendPendingEmailChangeEmail: sendPendingEmailChangeEmailMock,
@@ -116,6 +102,7 @@ describe("/api/account/email-change", () => {
       userId: "u1",
       newEmail: "new@example.com",
       locale: "en",
+      updatedAt: new Date(0),
     });
     prismaClientMock.pendingEmailChange.update.mockResolvedValue({
       id: "pec1",
@@ -249,6 +236,30 @@ describe("/api/account/email-change", () => {
       verifyUrl: "http://localhost:3000/ru/verify-email-change/raw-token",
       nextEmail: "new@example.com",
       to: "new@example.com",
+    });
+  });
+
+  it("returns 429 when resend is within 5-minute cooldown", async () => {
+    prismaClientMock.pendingEmailChange.findUnique.mockResolvedValue({
+      id: "pec1",
+      userId: "u1",
+      newEmail: "new@example.com",
+      locale: "en",
+      updatedAt: new Date(),
+    });
+
+    const request = new NextRequest(
+      "http://localhost/api/account/email-change",
+      {
+        method: "PATCH",
+      },
+    );
+
+    const response = await PATCH(request);
+
+    expect(response.status).toBe(429);
+    await expect(response.json()).resolves.toEqual({
+      errorCode: "ERR_RESEND_COOLDOWN",
     });
   });
 

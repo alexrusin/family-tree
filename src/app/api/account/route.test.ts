@@ -1,12 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { NextRequest } from "next/server";
 
-const {
-  getSessionMock,
-  prismaClientMock,
-  prismaClientConstructorMock,
-  prismaPgMock,
-} = vi.hoisted(() => {
+const { getSessionMock, prismaClientMock } = vi.hoisted(() => {
   const getSessionMock = vi.fn();
   const prismaClientMock = {
     user: {
@@ -18,12 +13,6 @@ const {
   return {
     getSessionMock,
     prismaClientMock,
-    prismaClientConstructorMock: vi.fn(function PrismaClientMock() {
-      return prismaClientMock;
-    }),
-    prismaPgMock: vi.fn(function PrismaPgMock() {
-      return {};
-    }),
   };
 });
 
@@ -35,13 +24,7 @@ vi.mock("@/lib/auth", () => ({
   },
 }));
 
-vi.mock("@/generated/prisma/client", () => ({
-  PrismaClient: prismaClientConstructorMock,
-}));
-
-vi.mock("@prisma/adapter-pg", () => ({
-  PrismaPg: prismaPgMock,
-}));
+vi.mock("@/lib/prisma", () => ({ prisma: prismaClientMock }));
 
 const { GET, PATCH } = await import("./route");
 

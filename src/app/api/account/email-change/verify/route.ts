@@ -1,16 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { Prisma, PrismaClient } from "@/generated/prisma/client";
-import { PrismaPg } from "@prisma/adapter-pg";
+import { Prisma } from "@/generated/prisma/client";
 import {
   hashPendingEmailChangeToken,
   isPendingEmailChangeExpired,
 } from "@/lib/pending-email-change-token";
-
-function getPrismaClient() {
-  return new PrismaClient({
-    adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }),
-  });
-}
+import { prisma } from "@/lib/prisma";
 
 export async function POST(request: NextRequest) {
   try {
@@ -30,7 +24,6 @@ export async function POST(request: NextRequest) {
     }
 
     const tokenHash = hashPendingEmailChangeToken(body.token);
-    const prisma = getPrismaClient();
 
     const pending = await prisma.pendingEmailChange.findUnique({
       where: { tokenHash },

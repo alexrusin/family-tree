@@ -1,13 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { PrismaClient } from "@/generated/prisma/client";
-import { PrismaPg } from "@prisma/adapter-pg";
 import { auth } from "@/lib/auth";
-
-function getPrismaClient() {
-  return new PrismaClient({
-    adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }),
-  });
-}
+import { prisma } from "@/lib/prisma";
 
 function toProfile(user: {
   id: string;
@@ -46,7 +39,6 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const prisma = getPrismaClient();
     const user = await prisma.user.findUnique({
       where: { id: session.user.id },
       select: {
@@ -105,7 +97,6 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
-    const prisma = getPrismaClient();
     const user = await prisma.user.update({
       where: { id: session.user.id },
       data: { name: body.displayName.trim() },

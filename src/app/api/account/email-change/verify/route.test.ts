@@ -3,8 +3,6 @@ import { NextRequest } from "next/server";
 
 const {
   prismaClientMock,
-  prismaClientConstructorMock,
-  prismaPgMock,
   hashPendingEmailChangeTokenMock,
   isPendingEmailChangeExpiredMock,
   knownRequestErrorCtor,
@@ -44,12 +42,6 @@ const {
 
   return {
     prismaClientMock,
-    prismaClientConstructorMock: vi.fn(function PrismaClientMock() {
-      return prismaClientMock;
-    }),
-    prismaPgMock: vi.fn(function PrismaPgMock() {
-      return {};
-    }),
     hashPendingEmailChangeTokenMock,
     isPendingEmailChangeExpiredMock,
     knownRequestErrorCtor: KnownRequestError,
@@ -57,15 +49,12 @@ const {
 });
 
 vi.mock("@/generated/prisma/client", () => ({
-  PrismaClient: prismaClientConstructorMock,
   Prisma: {
     PrismaClientKnownRequestError: knownRequestErrorCtor,
   },
 }));
 
-vi.mock("@prisma/adapter-pg", () => ({
-  PrismaPg: prismaPgMock,
-}));
+vi.mock("@/lib/prisma", () => ({ prisma: prismaClientMock }));
 
 vi.mock("@/lib/pending-email-change-token", () => ({
   hashPendingEmailChangeToken: hashPendingEmailChangeTokenMock,

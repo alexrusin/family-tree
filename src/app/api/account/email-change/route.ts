@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { PrismaClient } from "@/generated/prisma/client";
 import type { Locale } from "@/generated/prisma/enums";
-import { PrismaPg } from "@prisma/adapter-pg";
 import { auth } from "@/lib/auth";
 import { sendPendingEmailChangeEmail } from "@/lib/pending-email-change-email";
 import {
@@ -9,14 +7,10 @@ import {
   hashPendingEmailChangeToken,
   pendingEmailChangeExpiresAt,
 } from "@/lib/pending-email-change-token";
+import { prisma } from "@/lib/prisma";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-function getPrismaClient() {
-  return new PrismaClient({
-    adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }),
-  });
-}
+const RESEND_COOLDOWN_MS = 5 * 60 * 1000;
 
 function toLocale(value: unknown): Locale {
   return value === "ru" ? "ru" : "en";
@@ -76,7 +70,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const prisma = getPrismaClient();
     const user = await prisma.user.findUnique({
       where: { id: session.user.id },
       select: {
@@ -171,7 +164,6 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
-    const prisma = getPrismaClient();
     const pending = await prisma.pendingEmailChange.findUnique({
       where: { userId: session.user.id },
       select: {
@@ -179,6 +171,7 @@ export async function PATCH(request: NextRequest) {
         userId: true,
         newEmail: true,
         locale: true,
+        updatedAt: true,
       },
     });
 
@@ -186,6 +179,16 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json(
         { errorCode: "ERR_PENDING_EMAIL_CHANGE_NOT_FOUND" },
         { status: 404 },
+      );
+    }
+
+    if (
+      pending.updatedAt &&
+      Date.now() - pending.updatedAt.getTime() < RESEND_COOLDOWN_MS
+    ) {
+      return NextResponse.json(
+        { errorCode: "ERR_RESEND_COOLDOWN" },
+        { status: 429 },
       );
     }
 
