@@ -1,6 +1,6 @@
 import Link from "next/link";
 import LanguageToggle from "./LanguageToggle";
-import LogoutButton from "./LogoutButton";
+import UserMenu from "./UserMenu";
 import { getCurrentUser } from "@/lib/auth-utils";
 
 interface HeaderProps {
@@ -26,7 +26,6 @@ export default async function Header({
   langToggleLabel,
   langToggleErrors,
   navFamilyTree,
-  navGallery,
   navSettings,
   logoutLabel,
 }: HeaderProps) {
@@ -45,46 +44,29 @@ export default async function Header({
         </Link>
         <nav className="hidden md:flex gap-1 items-center">
           <Link
-            href="#"
+            href={`/${lang}/dashboard`}
             className="text-amber-900 font-semibold px-3 py-1.5 rounded-lg hover:bg-stone-100 transition-colors active:scale-95 duration-200"
           >
             {navFamilyTree}
-          </Link>
-          <Link
-            href="#"
-            className="text-stone-500 px-3 py-1.5 rounded-lg hover:bg-stone-100 transition-colors active:scale-95 duration-200"
-          >
-            {navGallery}
           </Link>
         </nav>
       </div>
 
       <div className="flex items-center gap-3">
-        <Link
-          href={`/${lang}/settings/account`}
-          className="text-stone-600 px-3 py-1.5 rounded-lg hover:bg-stone-100 transition-colors active:scale-95 duration-200"
-        >
-          {navSettings}
-        </Link>
         <LanguageToggle
           label={langToggleLabel}
           currentLang={lang}
           persistLocalePreference={Boolean(user)}
           errorMessages={langToggleErrors}
         />
-        <LogoutButton lang={lang} label={logoutLabel} />
-        <div className="w-9 h-9 rounded-full bg-amber-100 border-2 border-primary-container flex items-center justify-center text-amber-900 font-semibold text-sm select-none">
-          {user?.image ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={user.image}
-              alt={avatarLabel}
-              className="w-full h-full rounded-full object-cover"
-            />
-          ) : (
-            avatarFallback
-          )}
-        </div>
+        <UserMenu
+          lang={lang}
+          navSettings={navSettings}
+          logoutLabel={logoutLabel}
+          avatarLabel={avatarLabel}
+          avatarFallback={avatarFallback}
+          avatarImage={user?.image}
+        />
       </div>
     </header>
   );

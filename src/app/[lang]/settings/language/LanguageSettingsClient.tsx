@@ -137,17 +137,19 @@ export default function LanguageSettingsClient({
             Aa
           </div>
           <div>
-            <h3 className="text-3xl font-semibold tracking-tight text-stone-900">
+            <h3 className="text-xl font-semibold tracking-tight text-stone-900 sm:text-2xl">
               {t.cardTitle}
             </h3>
-            <p className="mt-1 text-base text-stone-600">{t.cardBody}</p>
+            <p className="mt-1 text-sm text-stone-600 sm:text-base">
+              {t.cardBody}
+            </p>
           </div>
         </div>
 
         <div className="mt-8 max-w-xl">
           <label
             htmlFor="locale"
-            className="mb-2 block text-2xl font-medium text-stone-900"
+            className="mb-2 block text-sm font-medium text-stone-900 sm:text-base"
           >
             {t.selectLabel}
           </label>
@@ -162,7 +164,7 @@ export default function LanguageSettingsClient({
                 setActionError(null);
               }
             }}
-            className="w-full rounded-xl border border-stone-300 bg-stone-50 px-5 py-4 text-3xl text-stone-800 outline-none transition-colors focus:border-amber-400"
+            className="w-full rounded-xl border border-stone-300 bg-stone-50 px-4 py-3 text-base text-stone-800 outline-none transition-colors focus:border-amber-400"
             aria-invalid={Boolean(actionError)}
           >
             {localeOptions.map((option) => (
@@ -184,7 +186,7 @@ export default function LanguageSettingsClient({
             type="button"
             onClick={discardChanges}
             disabled={!hasChanges || isSaving}
-            className="rounded-lg px-5 py-3 text-lg font-medium text-stone-700 transition-colors hover:bg-stone-100 disabled:cursor-not-allowed disabled:opacity-50"
+            className="rounded-lg px-4 py-2 text-sm font-medium text-stone-700 transition-colors hover:bg-stone-100 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {t.discard}
           </button>
@@ -192,7 +194,7 @@ export default function LanguageSettingsClient({
             type="button"
             onClick={saveChanges}
             disabled={!hasChanges || isSaving}
-            className="rounded-xl bg-amber-800 px-7 py-3 text-lg font-semibold text-white shadow-sm transition-colors hover:bg-amber-900 disabled:cursor-not-allowed disabled:opacity-60"
+            className="rounded-xl bg-amber-800 px-5 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-amber-900 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {isSaving ? t.saving : t.save}
           </button>
