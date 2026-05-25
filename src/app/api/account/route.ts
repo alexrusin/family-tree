@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { resolveAvatarUrlForUser } from "@/lib/avatar-storage";
 
 function toProfile(user: {
   id: string;
@@ -16,7 +17,7 @@ function toProfile(user: {
     id: user.id,
     displayName: user.name,
     email: user.email,
-    avatarUrl: user.image,
+    avatarUrl: resolveAvatarUrlForUser(user.id, user.image),
     pendingEmailChange: user.pendingEmailChange
       ? {
           email: user.pendingEmailChange.newEmail,

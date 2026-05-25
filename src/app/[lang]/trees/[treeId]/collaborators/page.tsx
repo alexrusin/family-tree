@@ -5,6 +5,7 @@ import { getCurrentUser } from "@/lib/auth-utils";
 import Header from "../../../components/Header";
 import { getDictionary, hasLocale } from "../../../dictionaries/dictionaries";
 import CollaboratorsClient from "./CollaboratorsClient";
+import { resolveAvatarUrlForUser } from "@/lib/avatar-storage";
 
 export const dynamic = "force-dynamic";
 
@@ -136,10 +137,17 @@ export default async function CollaboratorsPage({
         currentUser={{
           name: user.name,
           email: user.email,
-          image: user.image,
+          image: resolveAvatarUrlForUser(user.id, user.image),
         }}
         initialCollaborators={collaborators.map((collaborator) => ({
           ...collaborator,
+          user: {
+            ...collaborator.user,
+            image: resolveAvatarUrlForUser(
+              collaborator.user.id,
+              collaborator.user.image,
+            ),
+          },
           acceptedAt: collaborator.acceptedAt?.toISOString() ?? null,
         }))}
         initialInvitations={invitations.map((invitation) => ({

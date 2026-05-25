@@ -299,7 +299,7 @@ export default function DashboardClient({
         <div className="inline-flex p-1 bg-stone-100 rounded-xl">
           <button
             onClick={() => setActiveTab("mine")}
-            className={`px-8 py-2.5 rounded-lg text-sm font-semibold tracking-wide transition-all ${
+            className={`px-8 py-2.5 rounded-lg text-sm font-semibold tracking-wide transition-all cursor-pointer ${
               activeTab === "mine"
                 ? "bg-amber-900 text-white shadow-sm"
                 : "text-stone-600 hover:bg-stone-200/50"
@@ -309,7 +309,7 @@ export default function DashboardClient({
           </button>
           <button
             onClick={() => setActiveTab("shared")}
-            className={`px-8 py-2.5 rounded-lg text-sm font-semibold tracking-wide transition-all ${
+            className={`px-8 py-2.5 rounded-lg text-sm font-semibold tracking-wide transition-all cursor-pointer ${
               activeTab === "shared"
                 ? "bg-amber-900 text-white shadow-sm"
                 : "text-stone-600 hover:bg-stone-200/50"

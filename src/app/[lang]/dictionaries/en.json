@@ -22,7 +22,7 @@
     "sectionBody": "We treat your family history with the same care you do—safeguarding your memories for the next generation.",
     "security": {
       "title": "Vault-Grade Security",
-      "body": "Your data is encrypted and private by default. You control exactly who sees your tree and what information is shared with others."
+      "body": "Your data is encrypted at rest and private by default. You control exactly who sees your tree and what information is shared with others."
     },
     "collaboration": {
       "title": "Collaborative Research",

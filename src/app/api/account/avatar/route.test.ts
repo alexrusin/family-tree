@@ -8,14 +8,12 @@ const {
   processImageMock,
   uploadProcessedPhotoMock,
   createS3ClientMock,
-  photoPublicUrlMock,
 } = vi.hoisted(() => {
   const getSessionMock = vi.fn();
   const validatePhotoFileMock = vi.fn();
   const processImageMock = vi.fn();
   const uploadProcessedPhotoMock = vi.fn();
   const createS3ClientMock = vi.fn();
-  const photoPublicUrlMock = vi.fn();
 
   const prismaClientMock = {
     user: {
@@ -30,7 +28,6 @@ const {
     processImageMock,
     uploadProcessedPhotoMock,
     createS3ClientMock,
-    photoPublicUrlMock,
   };
 });
 
@@ -49,7 +46,6 @@ vi.mock("@/lib/tree-domain/photo-upload", () => ({
   processImage: processImageMock,
   uploadProcessedPhoto: uploadProcessedPhotoMock,
   createS3Client: createS3ClientMock,
-  photoPublicUrl: photoPublicUrlMock,
 }));
 
 const { PATCH } = await import("./route");
@@ -76,15 +72,12 @@ describe("PATCH /api/account/avatar", () => {
     validatePhotoFileMock.mockImplementation(() => undefined);
     processImageMock.mockResolvedValue(Buffer.from("webp"));
     createS3ClientMock.mockReturnValue({});
-    photoPublicUrlMock.mockReturnValue(
-      "https://bucket.s3.us-east-1.amazonaws.com/users/u1/avatar.webp",
-    );
 
     prismaClientMock.user.update.mockResolvedValue({
       id: "u1",
       name: "Alex",
       email: "alex@example.com",
-      image: "https://bucket.s3.us-east-1.amazonaws.com/users/u1/avatar.webp",
+      image: "/api/users/u1/avatar",
       pendingEmailChange: null,
     });
   });
@@ -133,8 +126,7 @@ describe("PATCH /api/account/avatar", () => {
         id: "u1",
         displayName: "Alex",
         email: "alex@example.com",
-        avatarUrl:
-          "https://bucket.s3.us-east-1.amazonaws.com/users/u1/avatar.webp",
+        avatarUrl: "/api/users/u1/avatar",
         pendingEmailChange: null,
       },
     });
@@ -147,7 +139,7 @@ describe("PATCH /api/account/avatar", () => {
     expect(prismaClientMock.user.update).toHaveBeenCalledWith({
       where: { id: "u1" },
       data: {
-        image: "https://bucket.s3.us-east-1.amazonaws.com/users/u1/avatar.webp",
+        image: "/api/users/u1/avatar",
       },
       select: {
         id: true,

@@ -78,7 +78,7 @@ export default function UserMenu({
         aria-expanded={isOpen}
         aria-label="Open user menu"
         onClick={() => setIsOpen((previous) => !previous)}
-        className="w-9 h-9 rounded-full bg-amber-100 border-2 border-primary-container flex items-center justify-center text-amber-900 font-semibold text-sm select-none overflow-hidden"
+        className="w-9 h-9 rounded-full bg-amber-100 border-2 border-primary-container flex items-center justify-center text-amber-900 font-semibold text-sm select-none overflow-hidden cursor-pointer"
       >
         {avatarImage ? (
           // eslint-disable-next-line @next/next/no-img-element

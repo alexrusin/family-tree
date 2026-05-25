@@ -2,16 +2,16 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import {
   createS3Client,
-  photoPublicUrl,
   processImage,
   uploadProcessedPhoto,
   validatePhotoFile,
 } from "@/lib/tree-domain/photo-upload";
 import { prisma } from "@/lib/prisma";
-
-function avatarKeyForUser(userId: string): string {
-  return `users/${userId}/avatar.webp`;
-}
+import {
+  avatarApiPath,
+  avatarKeyForUser,
+  resolveAvatarUrlForUser,
+} from "@/lib/avatar-storage";
 
 function toProfile(user: {
   id: string;
@@ -27,7 +27,7 @@ function toProfile(user: {
     id: user.id,
     displayName: user.name,
     email: user.email,
-    avatarUrl: user.image,
+    avatarUrl: resolveAvatarUrlForUser(user.id, user.image),
     pendingEmailChange: user.pendingEmailChange
       ? {
           email: user.pendingEmailChange.newEmail,
@@ -92,7 +92,7 @@ export async function PATCH(request: NextRequest) {
 
     const user = await prisma.user.update({
       where: { id: session.user.id },
-      data: { image: photoPublicUrl(key) },
+      data: { image: avatarApiPath(session.user.id) },
       select: {
         id: true,
         name: true,

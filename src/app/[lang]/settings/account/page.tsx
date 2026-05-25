@@ -4,6 +4,7 @@ import { getCurrentUser } from "@/lib/auth-utils";
 import { getDictionary, hasLocale } from "../../dictionaries/dictionaries";
 import { prisma } from "@/lib/prisma";
 import AccountSettingsClient from "./AccountSettingsClient";
+import { resolveAvatarUrlForUser } from "@/lib/avatar-storage";
 
 export default async function AccountSettingsPage({
   params,
@@ -35,7 +36,7 @@ export default async function AccountSettingsPage({
         id: user.id,
         displayName: user.name,
         email: user.email,
-        avatarUrl: user.image,
+        avatarUrl: resolveAvatarUrlForUser(user.id, user.image),
         pendingEmailChange: pendingEmailChange
           ? {
               email: pendingEmailChange.newEmail,

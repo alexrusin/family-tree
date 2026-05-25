@@ -6,6 +6,7 @@ import Header from "../components/Header";
 import DashboardLayout from "./DashboardLayout";
 import { getCurrentUser } from "@/lib/auth-utils";
 import { formatRelativeTime } from "@/lib/tree-utils";
+import { resolveAvatarUrlForUser } from "@/lib/avatar-storage";
 
 export const dynamic = "force-dynamic";
 
@@ -47,7 +48,7 @@ export default async function DashboardPage({
     name: tree.name,
     memberCount: tree.memberCount,
     ownerName: user.name || user.email,
-    ownerImage: user.image,
+    ownerImage: resolveAvatarUrlForUser(user.id, user.image),
     lastEdit: formatRelativeTime(tree.updatedAt),
     isOwned: true,
     shareEnabled: tree.shareEnabled,

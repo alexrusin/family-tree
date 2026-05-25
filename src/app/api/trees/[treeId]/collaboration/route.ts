@@ -11,6 +11,7 @@ import {
   invitationExpiresAt,
 } from "@/lib/tree-domain/invitation-token";
 import { getTreeRole } from "@/lib/tree-domain/tree-access";
+import { resolveAvatarUrlForUser } from "@/lib/avatar-storage";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -153,7 +154,24 @@ export async function GET(
           })
         : [];
 
-    return NextResponse.json({ collaborators, invitations }, { status: 200 });
+    return NextResponse.json(
+      {
+        collaborators: collaborators.map((collaborator) => ({
+          ...collaborator,
+          user: collaborator.user
+            ? {
+                ...collaborator.user,
+                image: resolveAvatarUrlForUser(
+                  collaborator.user.id,
+                  collaborator.user.image,
+                ),
+              }
+            : collaborator.user,
+        })),
+        invitations,
+      },
+      { status: 200 },
+    );
   } catch (error) {
     console.error("Error listing collaborators:", error);
     return NextResponse.json({ errorCode: "ERR_INTERNAL" }, { status: 500 });
