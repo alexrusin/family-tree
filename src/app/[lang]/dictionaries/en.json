@@ -49,6 +49,33 @@
       "support": "Support"
     }
   },
+  "informationalPages": {
+    "backToHome": "Back to home",
+    "pages": {
+      "privacy": {
+        "eyebrow": "Privacy",
+        "title": "A calm, private place for family history",
+        "description": "Generations is designed to help families document and share their history with clear expectations around access, visibility, and account control.",
+        "sectionOneTitle": "Private by default",
+        "sectionOneBody": "Trees are intended for invited access, giving families space to add names, dates, stories, and photos without publishing them broadly.",
+        "sectionTwoTitle": "Sharing stays intentional",
+        "sectionTwoBody": "When a tree owner collaborates or shares a public view, that access is a deliberate action they control and can revisit later.",
+        "sectionThreeTitle": "Account controls stay clear",
+        "sectionThreeBody": "Language preferences, sign-in flows, and account settings are part of the product so users can manage access and keep their records up to date."
+      },
+      "support": {
+        "eyebrow": "Support",
+        "title": "Support for using Generations",
+        "description": "Generations offers a straightforward product experience for creating trees, inviting collaborators, and viewing shared family history.",
+        "sectionOneTitle": "Getting started guidance",
+        "sectionOneBody": "New users can create an account, start a tree, and return to the dashboard to continue adding members and relationships at their own pace.",
+        "sectionTwoTitle": "Account and access help",
+        "sectionTwoBody": "Sign-in, language preference, password, and email-verification flows are available in-product so people can recover access and manage their accounts.",
+        "sectionThreeTitle": "Collaboration expectations",
+        "sectionThreeBody": "Support is focused on helping users understand the current product experience; this page does not open tickets, provide live chat, or promise custom workflows."
+      }
+    }
+  },
   "treeDemo": {
     "you": "You",
     "grandparent1": "Grandparent",
@@ -136,7 +163,8 @@
         "genericBody": "Something went wrong. Try again in a few seconds.",
         "retry": "Try again",
         "goToLogin": "Go to log in",
-        "goToSettings": "Go to Settings"
+        "goToSettings": "Go to Settings",
+        "goToDashboard": "Go to Dashboard"
       },
       "errors": {
         "ERR_INVALID_DISPLAY_NAME": "Display name is required",
@@ -515,7 +543,7 @@
     },
     "verifyEmail": {
       "title": "Verify your email",
-      "body": "To begin preserving your family's legacy, please confirm your email address. We've sent a secure link to your inbox.",
+      "body": "To begin preserving your family's legacy, please confirm your email address. We've sent a secure link to your inbox. Check your spam folder if you don't see it.",
       "resend": "Resend Email",
       "resending": "Sending...",
       "resendSuccess": "Verification email sent again.",

@@ -19,6 +19,7 @@ interface VerifyEmailChangeTranslations {
   retry: string;
   goToLogin: string;
   goToSettings: string;
+  goToDashboard: string;
 }
 
 type VerifyState = "loading" | "success" | "error";
@@ -68,7 +69,7 @@ export default function VerifyEmailChangeClient({
   const [state, setState] = useState<VerifyState>("loading");
   const [errorCode, setErrorCode] = useState<string | null>(null);
 
-  const loginHref = useMemo(() => `/${lang}/login`, [lang]);
+  const dashboardHref = useMemo(() => `/${lang}/dashboard`, [lang]);
   const settingsHref = useMemo(() => `/${lang}/settings/account`, [lang]);
 
   const verify = async () => {
@@ -130,12 +131,6 @@ export default function VerifyEmailChangeClient({
     return (
       <main className="min-h-screen flex items-center justify-center px-4 py-12 bg-background text-on-background">
         <div className="w-full max-w-md bg-surface-container-lowest rounded-xl border border-outline-variant/40 shadow-xl p-8 text-center">
-          <span
-            className="material-symbols-outlined text-primary text-4xl"
-            aria-hidden="true"
-          >
-            check_circle
-          </span>
           <h1 className="text-headline-lg text-primary mt-4">
             {t.successTitle}
           </h1>
@@ -149,10 +144,10 @@ export default function VerifyEmailChangeClient({
               {t.goToSettings}
             </Link>
             <Link
-              href={loginHref}
+              href={dashboardHref}
               className="w-full py-3 px-5 rounded-lg border border-outline-variant text-on-surface hover:bg-surface-bright transition-all"
             >
-              {t.goToLogin}
+              {t.goToDashboard}
             </Link>
           </div>
         </div>
