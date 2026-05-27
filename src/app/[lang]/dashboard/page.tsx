@@ -12,14 +12,35 @@ export const dynamic = "force-dynamic";
 
 export default async function DashboardPage({
   params,
+  searchParams,
 }: PageProps<"/[lang]/dashboard">) {
   const { lang } = await params;
+  const resolvedSearchParams = await searchParams;
   if (!hasLocale(lang)) notFound();
 
   // Get current user from session
   const user = await getCurrentUser();
   if (!user) {
-    redirect(`/${lang}/login`);
+    const callbackSearchParams = new URLSearchParams();
+    for (const [key, value] of Object.entries(resolvedSearchParams)) {
+      if (typeof value === "string") {
+        callbackSearchParams.set(key, value);
+        continue;
+      }
+
+      if (Array.isArray(value)) {
+        for (const item of value) {
+          callbackSearchParams.append(key, item);
+        }
+      }
+    }
+
+    const callbackQuery = callbackSearchParams.toString();
+    const callbackPath = callbackQuery
+      ? `/${lang}/dashboard?${callbackQuery}`
+      : `/${lang}/dashboard`;
+
+    redirect(`/${lang}/login?callback=${encodeURIComponent(callbackPath)}`);
   }
 
   const t = await getDictionary(lang);
@@ -48,7 +69,7 @@ export default async function DashboardPage({
     name: tree.name,
     memberCount: tree.memberCount,
     ownerName: user.name || user.email,
-    ownerImage: resolveAvatarUrlForUser(user.id, user.image),
+    ownerImage: resolveAvatarUrlForUser(user.id, user.image ?? null),
     lastEdit: formatRelativeTime(tree.updatedAt),
     isOwned: true,
     shareEnabled: tree.shareEnabled,
@@ -78,6 +99,7 @@ export default async function DashboardPage({
         langToggleLabel={t.nav.langToggle}
         langToggleErrors={t.settings.language.errors}
         navFamilyTree={t.dashboard.navFamilyTree}
+        navGallery={t.dashboard.navGallery}
         navSettings={t.dashboard.navSettings}
         logoutLabel={t.dashboard.logout}
       />
@@ -94,6 +116,9 @@ export default async function DashboardPage({
             lastEdit: t.dashboard.lastEdit,
             emptyTitle: t.dashboard.emptyTitle,
             emptyBody: t.dashboard.emptyBody,
+            emailVerifiedTitle: t.dashboard.emailVerifiedTitle,
+            emailVerifiedBody: t.dashboard.emailVerifiedBody,
+            createFirstTreePrompt: t.dashboard.createFirstTreePrompt,
             cardMenuRename: t.dashboard.cardMenuRename,
             cardMenuDelete: t.dashboard.cardMenuDelete,
           }}

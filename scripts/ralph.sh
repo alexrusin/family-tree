@@ -39,6 +39,8 @@ fi
 IFS=$'\n' issues=($(printf '%s\n' "${issues[@]}" | sort))
 unset IFS
 
+repo_root=$(git rev-parse --show-toplevel)
+
 for issue in "${issues[@]}"; do
   name=$(basename "$issue")
   log="$LOG_DIR/${name%.md}.log"
@@ -46,29 +48,29 @@ for issue in "${issues[@]}"; do
   before_head=$(git rev-parse HEAD)
   before_status=$(git status --porcelain=v1 --untracked-files=all)
 
+  # Path relative to repo root for the prompt (avoids embedding absolute paths
+  # and keeps the single-line prompt portable).
+  issue_rel=${issue#"$repo_root"/}
+
   echo
   echo "==================================================================="
   echo ">>> $(date -Iseconds)  $name"
   echo "==================================================================="
 
-  prompt=$(cat <<EOF
-You are implementing one vertical-slice issue end-to-end. The issue spec is
-attached as "$name". Read that attachment first, implement it, then run
-\`npm test\` and \`npm run lint\`. Only commit when both are green. Follow the
-repository instruction files, especially \`.github/copilot-instructions.md\`.
-Work autonomously; if you hit a blocker you cannot resolve, stop with a clear
-summary instead of committing broken state. If the attachment is missing or
-unreadable, treat that as a blocker and stop instead of guessing.
-EOF
-)
+  # IMPORTANT: keep the prompt on a single line. Passing multi-line strings
+  # via `-p` through `gh copilot --` (or `copilot` directly) on Windows gets
+  # truncated at the first newline — see issues/.ralph-logs/issue-01-*.log
+  # where the model only received "The issue spec from" before the rest was
+  # lost. Reference the spec by path and let the agent read it from disk.
+  prompt="You are implementing one vertical-slice issue end-to-end. Read the spec at $issue_rel (relative to repo root), implement it, then run npm test and npm run lint. Only commit when both are green. Follow the repository instruction files, especially .github/copilot-instructions.md. Work autonomously; if you hit a blocker you cannot resolve, stop with a clear summary instead of committing broken state."
 
-  copilot_args=(-p "$prompt" --attachment "$issue" --allow-all --no-ask-user --silent)
+  copilot_args=(-p "$prompt" --allow-all --no-ask-user --silent)
   if [[ -n "$MODEL" ]]; then
     copilot_args+=(--model "$MODEL")
   fi
 
   set +e
-  gh copilot -- "${copilot_args[@]}" 2>&1 | tee "$log"
+  (cd "$repo_root" && gh copilot -- "${copilot_args[@]}") 2>&1 | tee "$log"
   status=${PIPESTATUS[0]}
   set -e
 

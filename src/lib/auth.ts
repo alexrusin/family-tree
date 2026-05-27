@@ -3,6 +3,7 @@ import { prismaAdapter } from "better-auth/adapters/prisma";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "@/generated/prisma/client";
 import { sendEmail } from "@/lib/email";
+import { buildPostVerificationRedirect } from "@/lib/auth-callback";
 import enDictionary from "@/app/[lang]/dictionaries/en.json";
 import ruDictionary from "@/app/[lang]/dictionaries/ru.json";
 
@@ -126,10 +127,11 @@ export const auth = betterAuth({
         const locale = getUserLocale((user as { locale?: string }).locale);
         const baseURL = getBaseURL();
         const verificationUrl = new URL(url, baseURL);
+        const callbackURL = verificationUrl.searchParams.get("callbackURL");
         verificationUrl.searchParams.set("locale", locale);
         verificationUrl.searchParams.set(
           "callbackURL",
-          new URL(`/${locale}/dashboard`, baseURL).toString(),
+          buildPostVerificationRedirect(locale, callbackURL),
         );
 
         await sendEmail(

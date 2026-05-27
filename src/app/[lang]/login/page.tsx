@@ -1,4 +1,5 @@
 import { notFound } from 'next/navigation'
+import { Suspense } from 'react'
 import { getDictionary, hasLocale } from '../dictionaries/dictionaries'
 import LoginClient from './LoginClient'
 
@@ -11,5 +12,9 @@ export default async function LoginPage({ params }: PageProps<'/[lang]/login'>) 
 
   const t = await getDictionary(lang)
 
-  return <LoginClient lang={lang} t={t.auth.login} />
+  return (
+    <Suspense fallback={null}>
+      <LoginClient lang={lang} t={t.auth.login} />
+    </Suspense>
+  )
 }

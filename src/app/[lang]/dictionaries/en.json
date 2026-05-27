@@ -95,6 +95,9 @@
     "lastEdit": "Last Edit",
     "emptyTitle": "No trees here yet",
     "emptyBody": "Trees shared with you by collaborators will appear here.",
+    "emailVerifiedTitle": "Email verified successfully",
+    "emailVerifiedBody": "Your account is ready.",
+    "createFirstTreePrompt": "Create your first family tree to get started.",
     "cardMenuRename": "Rename",
     "cardMenuDelete": "Delete",
     "navFamilyTree": "Family Tree",
@@ -363,6 +366,11 @@
       "warningBanner": "Approaching the 300-member limit ({count}/300).",
       "limitReached": "300-member limit reached. No more members can be added.",
       "memberCount": "{count} members"
+    },
+    "treeMenu": {
+      "trigger": "Tree Menu",
+      "close": "Close Tree Menu",
+      "dialogLabel": "Tree Menu"
     },
     "collaboration": {
       "sidebarLink": "Collaborators",

@@ -287,7 +287,7 @@ export async function POST(
           });
 
           if (existing) {
-            return prisma.invitation.update({
+            const invitation = await prisma.invitation.update({
               where: { id: existing.id },
               data: {
                 role: args.role,
@@ -301,12 +301,16 @@ export async function POST(
               },
               select: {
                 id: true,
-                status: true,
               },
             });
+
+            return {
+              id: invitation.id,
+              status: "pending" as const,
+            };
           }
 
-          return prisma.invitation.create({
+          const invitation = await prisma.invitation.create({
             data: {
               treeId: args.treeId,
               invitedEmail: args.invitedEmail,
@@ -318,9 +322,13 @@ export async function POST(
             },
             select: {
               id: true,
-              status: true,
             },
           });
+
+          return {
+            id: invitation.id,
+            status: "pending" as const,
+          };
         },
       },
       actorUserId: session.user.id,

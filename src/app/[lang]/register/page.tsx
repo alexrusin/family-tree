@@ -1,4 +1,5 @@
 import { notFound } from 'next/navigation'
+import { Suspense } from 'react'
 import { getDictionary, hasLocale } from '../dictionaries/dictionaries'
 import RegisterClient from './RegisterClient'
 
@@ -11,5 +12,9 @@ export default async function RegisterPage({ params }: PageProps<'/[lang]/regist
 
   const t = await getDictionary(lang)
 
-  return <RegisterClient lang={lang} t={t.auth.register} />
+  return (
+    <Suspense fallback={null}>
+      <RegisterClient lang={lang} t={t.auth.register} />
+    </Suspense>
+  )
 }

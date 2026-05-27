@@ -307,7 +307,7 @@ export default function MemberSidePanel({
 
   if (presentation === "tablet") {
     return (
-      <div className="fixed inset-0 z-40" role="dialog" aria-modal="true">
+      <div className="absolute inset-0 z-40" role="dialog" aria-modal="true">
         <button
           type="button"
           className="absolute inset-0 bg-black/30"
@@ -325,7 +325,7 @@ export default function MemberSidePanel({
   if (presentation === "mobile") {
     return (
       <div
-        className="fixed inset-0 z-40 flex flex-col overflow-hidden bg-white"
+        className="absolute inset-0 z-40 flex flex-col overflow-hidden bg-white"
         role="dialog"
         aria-modal="true"
       >
@@ -335,7 +335,7 @@ export default function MemberSidePanel({
   }
 
   return (
-    <div className="fixed right-0 top-14 h-[calc(100vh-3.5rem)] w-80 bg-white border-l border-stone-200 shadow-xl z-40 flex flex-col overflow-hidden">
+    <div className="absolute inset-y-0 right-0 z-40 flex w-80 flex-col overflow-hidden border-l border-stone-200 bg-white shadow-xl">
       {panelContent}
     </div>
   );

@@ -3,6 +3,8 @@ import Header from "../components/Header";
 import { getDictionary, hasLocale } from "../dictionaries/dictionaries";
 import SettingsSectionNav from "./SettingsSectionNav";
 
+export const dynamic = "force-dynamic";
+
 export default async function SettingsLayout({
   children,
   params,

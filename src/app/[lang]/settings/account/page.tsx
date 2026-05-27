@@ -36,7 +36,7 @@ export default async function AccountSettingsPage({
         id: user.id,
         displayName: user.name,
         email: user.email,
-        avatarUrl: resolveAvatarUrlForUser(user.id, user.image),
+        avatarUrl: resolveAvatarUrlForUser(user.id, user.image ?? null),
         pendingEmailChange: pendingEmailChange
           ? {
               email: pendingEmailChange.newEmail,

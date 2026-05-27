@@ -95,6 +95,9 @@
     "lastEdit": "Изменено",
     "emptyTitle": "Пока нет деревьев",
     "emptyBody": "Здесь появятся деревья, к которым вас пригласили соавторы.",
+    "emailVerifiedTitle": "Email подтвержден",
+    "emailVerifiedBody": "Ваш аккаунт готов.",
+    "createFirstTreePrompt": "Создайте своё первое семейное дерево, чтобы начать.",
     "cardMenuRename": "Переименовать",
     "cardMenuDelete": "Удалить",
     "navFamilyTree": "Семейное дерево",
@@ -363,6 +366,11 @@
       "warningBanner": "Приближается лимит 300 участников ({count}/300).",
       "limitReached": "Достигнут лимит 300 участников. Добавить больше нельзя.",
       "memberCount": "{count} участников"
+    },
+    "treeMenu": {
+      "trigger": "Tree Menu",
+      "close": "Закрыть Tree Menu",
+      "dialogLabel": "Tree Menu"
     },
     "collaboration": {
       "sidebarLink": "Соавторы",

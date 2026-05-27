@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { NextRequest } from "next/server";
 
 const {
@@ -51,6 +51,8 @@ const { POST } = await import("./route");
 describe("/api/invitations/[token]/accept", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-05-20T00:00:00.000Z"));
 
     getSessionMock.mockResolvedValue({
       user: {
@@ -75,6 +77,10 @@ describe("/api/invitations/[token]/accept", () => {
     });
 
     prismaClientMock.invitation.update.mockResolvedValue({ id: "i1" });
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   it("returns 401 for unauthenticated accept POST", async () => {

@@ -137,7 +137,7 @@ export default async function CollaboratorsPage({
         currentUser={{
           name: user.name,
           email: user.email,
-          image: resolveAvatarUrlForUser(user.id, user.image),
+          image: resolveAvatarUrlForUser(user.id, user.image ?? null),
         }}
         initialCollaborators={collaborators.map((collaborator) => ({
           ...collaborator,

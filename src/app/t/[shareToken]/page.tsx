@@ -86,7 +86,11 @@ export default async function PublicTreePage({
       relationships={payload.relationships}
       t={{
         canvas: t.tree.canvas,
-        panel: t.tree.panel,
+        panel: {
+          ...t.tree.panel,
+          remove: t.tree.relationship.remove,
+          removing: t.tree.relationship.removing,
+        },
       }}
     />
   );

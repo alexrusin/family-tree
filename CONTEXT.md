@@ -60,6 +60,14 @@ The Settings Section for credential and account-lifecycle actions, including pas
 
 A state where a User has requested a new email address but the current email remains active until the new address is verified.
 
+## Post-Auth Redirect
+
+A validated in-product destination preserved across sign-in, sign-up, and verification flows when a User began from a specific route.
+
+## Verification Welcome
+
+A post-verification confirmation shown when a newly verified User lands on the default dashboard path. It confirms success and may invite the User to create a first Family Tree.
+
 ## Danger Zone
 
 A visually isolated area in the Security Section that contains irreversible account-lifecycle actions.
@@ -71,3 +79,13 @@ A dual-confirmation gate requiring current password and the phrase DELETE before
 ## Account Deletion Boundary
 
 The rule that deleting a User removes owned-tree data and collaborator access while preserving trees owned by other Users.
+
+## Tree Menu
+
+A tree-scoped navigation and action entry point for the tree workspace. It exposes actions such as collaboration, sharing, and editing without implying the tree is owned by the current viewer.
+_Avoid_: My Tree, tree sidebar
+
+## Member Details Panel
+
+A tree-workspace panel that shows the currently selected member's profile details, relationships, and permitted actions. Its presentation can vary by viewport without changing what it represents.
+_Avoid_: member sidebar, side panel

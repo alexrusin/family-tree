@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
 import { authClient } from "@/lib/auth-client";
+import { buildPostVerificationRedirect } from "@/lib/auth-callback";
 
 interface VerifyEmailTranslations {
   title: string;
@@ -28,10 +29,15 @@ type VerifyEmailStatus = "idle" | "success" | "error";
 export default function VerifyEmailClient({ lang, t }: VerifyEmailClientProps) {
   const searchParams = useSearchParams();
   const email = searchParams.get("email")?.trim() ?? "";
+  const rawCallback = searchParams.get("callback");
   const [isResending, setIsResending] = useState(false);
   const [status, setStatus] = useState<VerifyEmailStatus>("idle");
 
   const registerHref = useMemo(() => `/${lang}/register`, [lang]);
+  const verificationCallback = useMemo(
+    () => buildPostVerificationRedirect(lang, rawCallback),
+    [lang, rawCallback],
+  );
 
   let statusCopy: { body: string; className: string } | null = null;
 
@@ -57,17 +63,9 @@ export default function VerifyEmailClient({ lang, t }: VerifyEmailClientProps) {
     setStatus("idle");
 
     try {
-      const callbackBase =
-        process.env.NEXT_PUBLIC_BETTER_AUTH_URL ||
-        (typeof window !== "undefined" ? window.location.origin : "");
-
-      const callbackURL = callbackBase
-        ? new URL(`/${lang}/dashboard`, callbackBase).toString()
-        : `/${lang}/dashboard`;
-
       const response = (await authClient.sendVerificationEmail({
         email,
-        callbackURL,
+        callbackURL: verificationCallback,
       })) as { error?: { message?: string } };
 
       if (response.error) {
@@ -129,6 +127,12 @@ export default function VerifyEmailClient({ lang, t }: VerifyEmailClientProps) {
                 </Link>
               </p>
             </div>
+
+            {statusCopy ? (
+              <div className={`rounded-lg border px-4 py-4 text-sm ${statusCopy.className}`}>
+                {statusCopy.body}
+              </div>
+            ) : null}
 
             <button
               type="button"

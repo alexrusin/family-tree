@@ -41,7 +41,9 @@ export async function GET(
       key,
     });
 
-    return new NextResponse(photo.body, {
+    const body = Uint8Array.from(photo.body);
+
+    return new Response(body.buffer, {
       status: 200,
       headers: {
         "Content-Type": photo.contentType ?? "image/webp",

@@ -25,9 +25,11 @@ interface TreeSidebarProps {
   canEdit: boolean;
   canAddMember: boolean;
   canManageShare: boolean;
+  onCollaboratorsNavigate: () => void;
   onAddMember: () => void;
   onAddRelationship: () => void;
   onOpenShareSettings: () => void;
+  className?: string;
   t: TreeSidebarT;
 }
 
@@ -38,16 +40,23 @@ export default function TreeSidebar({
   canEdit,
   canManageShare,
   canAddMember,
+  onCollaboratorsNavigate,
   onAddMember,
   onAddRelationship,
   onOpenShareSettings,
+  className,
   t,
 }: TreeSidebarProps) {
   const atLimit = memberCount >= MEMBER_HARD_LIMIT;
   const nearLimit = memberCount >= MEMBER_WARN_THRESHOLD && !atLimit;
 
   return (
-    <aside className="w-64 flex-shrink-0 bg-white border-r border-stone-200 flex flex-col h-full shadow-sm">
+    <aside
+      className={[
+        "flex-shrink-0 bg-white border-r border-stone-200 flex flex-col h-full shadow-sm",
+        className ?? "w-64",
+      ].join(" ")}
+    >
       <div className="p-5 border-b border-stone-100">
         <h2 className="text-lg font-semibold text-amber-900 truncate">
           {treeName}
@@ -83,6 +92,7 @@ export default function TreeSidebar({
         )}
         <Link
           href={collaboratorsHref}
+          onClick={onCollaboratorsNavigate}
           className="w-full px-4 py-2.5 bg-stone-100 text-stone-900 rounded-lg font-semibold hover:bg-stone-200 transition-colors flex items-center justify-center gap-2 text-sm"
         >
           <Users className="w-4 h-4" />

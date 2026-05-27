@@ -262,10 +262,11 @@ export default function AccountSettingsClient({
         return;
       }
 
+      const nextProfile = payload.profile;
       setProfile((previous) => ({
-        ...payload.profile,
+        ...nextProfile,
         pendingEmailChange:
-          payload.profile.pendingEmailChange ?? previous.pendingEmailChange,
+          nextProfile.pendingEmailChange ?? previous.pendingEmailChange,
       }));
       setSelectedAvatarFile(null);
     } catch {
@@ -330,9 +331,10 @@ export default function AccountSettingsClient({
         return;
       }
 
+      const nextPendingEmailChange = payload.pendingEmailChange;
       setProfile((previous) => ({
         ...previous,
-        pendingEmailChange: payload.pendingEmailChange,
+        pendingEmailChange: nextPendingEmailChange,
       }));
       setIsEmailDialogOpen(false);
       setEmailActionMessage(t.emailChangeRequested);
@@ -367,9 +369,10 @@ export default function AccountSettingsClient({
         return;
       }
 
+      const nextPendingEmailChange = payload.pendingEmailChange;
       setProfile((previous) => ({
         ...previous,
-        pendingEmailChange: payload.pendingEmailChange,
+        pendingEmailChange: nextPendingEmailChange,
       }));
       setEmailActionMessage(t.emailChangeResent);
     } catch {

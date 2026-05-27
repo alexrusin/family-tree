@@ -4,7 +4,10 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { FormEvent, useMemo, useState } from "react";
 import { authClient } from "@/lib/auth-client";
-import { resolvePostAuthRedirect } from "@/lib/auth-callback";
+import {
+  buildPostVerificationRedirect,
+  resolvePostAuthRedirect,
+} from "@/lib/auth-callback";
 
 function isValidEmail(email: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -63,6 +66,10 @@ export default function LoginClient({ lang, t }: LoginClientProps) {
       callbackTarget ? `?callback=${encodeURIComponent(callbackTarget)}` : "",
     [callbackTarget],
   );
+  const verificationCallback = useMemo(
+    () => buildPostVerificationRedirect(lang, rawCallback),
+    [lang, rawCallback],
+  );
 
   const signupHref = useMemo(
     () => `/${lang}/register${callbackQuery}`,
@@ -98,6 +105,7 @@ export default function LoginClient({ lang, t }: LoginClientProps) {
       const response = (await authClient.signIn.email({
         email: email.trim(),
         password,
+        callbackURL: verificationCallback,
       })) as { error?: { message?: string } };
       if (response.error) {
         setErrors({ form: t.errors.invalidCredentials });

@@ -61,14 +61,6 @@ describe('VerifyEmailClient', () => {
     expect(screen.getAllByText(translations.title).length).toBeGreaterThan(0)
     expect(screen.getAllByText('person@example.com').length).toBeGreaterThan(0)
 
-    const languageLinks = screen.getAllByRole('link', {
-      name: 'English / Русский',
-    })
-
-    expect(languageLinks[0]?.getAttribute('href')).toBe(
-      '/ru/verify-email?email=person%40example.com',
-    )
-
     expect(
       screen.getByRole('link', { name: translations.changeEmail }).getAttribute(
         'href',
@@ -87,7 +79,7 @@ describe('VerifyEmailClient', () => {
     await waitFor(() => {
       expect(sendVerificationEmailMock).toHaveBeenCalledWith({
         email: 'person@example.com',
-        callbackURL: 'https://app.generations.test/en/dashboard',
+        callbackURL: '/en/dashboard?emailVerified=1&welcome=create-tree',
       })
     })
 

@@ -4,7 +4,10 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { FormEvent, useMemo, useState } from "react";
 import { authClient } from "@/lib/auth-client";
-import { resolvePostAuthRedirect } from "@/lib/auth-callback";
+import {
+  buildPostVerificationRedirect,
+  resolvePostAuthRedirect,
+} from "@/lib/auth-callback";
 
 interface RegisterTranslations {
   title: string;
@@ -75,6 +78,10 @@ export default function RegisterClient({ lang, t }: RegisterClientProps) {
       callbackTarget ? `?callback=${encodeURIComponent(callbackTarget)}` : "",
     [callbackTarget],
   );
+  const verificationCallback = useMemo(
+    () => buildPostVerificationRedirect(lang, rawCallback),
+    [lang, rawCallback],
+  );
 
   const loginHref = useMemo(
     () => `/${lang}/login${callbackQuery}`,
@@ -123,6 +130,7 @@ export default function RegisterClient({ lang, t }: RegisterClientProps) {
         name: name.trim(),
         email: email.trim(),
         password,
+        callbackURL: verificationCallback,
       })) as { error?: { message?: string } };
 
       if (response.error) {
