@@ -3,12 +3,15 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
+import { Menu, X } from "lucide-react";
 import AddMemberModal from "./AddMemberModal";
 import AddRelationshipModal from "./AddRelationshipModal";
 import EditMemberModal from "./EditMemberModal";
 import ShareLinkSettingsModal from "./ShareLinkSettingsModal";
 import TreeSidebar from "./TreeSidebar";
-import MemberSidePanel from "./MemberSidePanel";
+import MemberSidePanel, {
+  type MemberSidePanelPresentation,
+} from "./MemberSidePanel";
 import RelationshipEdgePopover from "./RelationshipEdgePopover";
 import { buildPublicUrl } from "./share-link-form-state";
 import {
@@ -18,7 +21,17 @@ import {
 } from "@/lib/tree-domain/tree-layout";
 
 const MEMBER_HARD_LIMIT = 300;
+const TABLET_VIEWPORT_QUERY = "(min-width: 768px)";
+const DESKTOP_VIEWPORT_QUERY = "(min-width: 1024px)";
 const TreeCanvas = dynamic(() => import("./TreeCanvas"), { ssr: false });
+
+function getMemberPanelPresentation(): MemberSidePanelPresentation {
+  if (typeof window === "undefined") return "desktop";
+  if (typeof window.matchMedia !== "function") return "desktop";
+  if (window.matchMedia(DESKTOP_VIEWPORT_QUERY).matches) return "desktop";
+  if (window.matchMedia(TABLET_VIEWPORT_QUERY).matches) return "tablet";
+  return "mobile";
+}
 
 // ── Localisation shape ────────────────────────────────────────────────────
 interface MemberSubT {
@@ -134,6 +147,11 @@ interface TreeT {
     limitReached: string;
     memberCount: string;
   };
+  treeMenu: {
+    trigger: string;
+    close: string;
+    dialogLabel: string;
+  };
   collaboration: {
     sidebarLink: string;
   };
@@ -143,6 +161,7 @@ interface TreeT {
     enable: string;
     description: string;
     copy: string;
+    copySuccess: string;
     regenerate: string;
     regenerateConfirm: string;
   };
@@ -235,6 +254,10 @@ export default function TreeDetailClient({
   const [publicUrl, setPublicUrl] = useState("");
   const [addMemberModalKey, setAddMemberModalKey] = useState(0);
   const [addRelationshipModalKey, setAddRelationshipModalKey] = useState(0);
+  const [isTreeMenuOpen, setIsTreeMenuOpen] = useState(false);
+  const [memberPanelPresentation, setMemberPanelPresentation] =
+    useState<MemberSidePanelPresentation>(() => getMemberPanelPresentation());
+  const isDesktopViewport = memberPanelPresentation === "desktop";
 
   const loadTreeData = useCallback(async () => {
     setIsLoading(true);
@@ -294,6 +317,46 @@ export default function TreeDetailClient({
     return () => window.clearTimeout(timerId);
   }, [loadShareState]);
 
+  useEffect(() => {
+    if (typeof window.matchMedia !== "function") return;
+
+    const desktopMediaQueryList = window.matchMedia(DESKTOP_VIEWPORT_QUERY);
+    const tabletMediaQueryList = window.matchMedia(TABLET_VIEWPORT_QUERY);
+
+    const syncViewport = () => {
+      const nextPresentation = desktopMediaQueryList.matches
+        ? "desktop"
+        : tabletMediaQueryList.matches
+          ? "tablet"
+          : "mobile";
+      setMemberPanelPresentation(nextPresentation);
+      if (nextPresentation === "desktop") {
+        setIsTreeMenuOpen(false);
+      }
+    };
+
+    desktopMediaQueryList.addEventListener("change", syncViewport);
+    tabletMediaQueryList.addEventListener("change", syncViewport);
+
+    return () => {
+      desktopMediaQueryList.removeEventListener("change", syncViewport);
+      tabletMediaQueryList.removeEventListener("change", syncViewport);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (isDesktopViewport || !isTreeMenuOpen) return;
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setIsTreeMenuOpen(false);
+      }
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [isDesktopViewport, isTreeMenuOpen]);
+
   const memberCount = isLoading ? initialMemberCount : members.length;
   const canAddMember = canEdit && memberCount < MEMBER_HARD_LIMIT;
 
@@ -308,6 +371,25 @@ export default function TreeDetailClient({
     setAddRelationshipModalKey((prev) => prev + 1);
     setIsAddRelationshipOpen(true);
   }, [canEdit]);
+  const closeTreeMenu = useCallback(() => {
+    setIsTreeMenuOpen(false);
+  }, []);
+  const openAddMemberFromTreeMenu = useCallback(() => {
+    closeTreeMenu();
+    openAddMemberModal();
+  }, [closeTreeMenu, openAddMemberModal]);
+  const openAddRelationshipFromTreeMenu = useCallback(() => {
+    closeTreeMenu();
+    openAddRelationshipModal();
+  }, [closeTreeMenu, openAddRelationshipModal]);
+  const openShareSettingsFromTreeMenu = useCallback(() => {
+    closeTreeMenu();
+    setIsShareModalOpen(true);
+  }, [closeTreeMenu]);
+  const handleCollaboratorsNavigate = useCallback(() => {
+    closeTreeMenu();
+  }, [closeTreeMenu]);
+  const collaboratorsHref = `/${lang}/trees/${treeId}/collaborators`;
 
   const getMemberName = useCallback(
     (id: string) => {
@@ -350,30 +432,105 @@ export default function TreeDetailClient({
     void loadTreeData();
   }, [loadTreeData]);
 
+  const treeSidebarTranslations = {
+    collaborators: t.collaboration.sidebarLink,
+    shareLink: t.publicShare.sidebarAction,
+    addMember: t.addMember,
+    addRelationship: t.addRelationship,
+    viewOnly: t.viewOnly,
+    warningBanner: t.sidebar.warningBanner,
+    limitReached: t.sidebar.limitReached,
+    memberCount: t.sidebar.memberCount,
+  };
+
   return (
-    <div className="flex h-full overflow-hidden">
-      {/* Left sidebar */}
-      <TreeSidebar
-        treeName={treeName}
-        memberCount={memberCount}
-        collaboratorsHref={`/${lang}/trees/${treeId}/collaborators`}
-        canEdit={canEdit}
-        canManageShare={isOwner}
-        canAddMember={canAddMember}
-        onAddMember={openAddMemberModal}
-        onAddRelationship={openAddRelationshipModal}
-        onOpenShareSettings={() => setIsShareModalOpen(true)}
-        t={{
-          collaborators: t.collaboration.sidebarLink,
-          shareLink: t.publicShare.sidebarAction,
-          addMember: t.addMember,
-          addRelationship: t.addRelationship,
-          viewOnly: t.viewOnly,
-          warningBanner: t.sidebar.warningBanner,
-          limitReached: t.sidebar.limitReached,
-          memberCount: t.sidebar.memberCount,
-        }}
-      />
+    <div className="relative flex h-full overflow-hidden">
+      {/* Tree Menu shell */}
+      {isDesktopViewport ? (
+        <TreeSidebar
+          treeName={treeName}
+          memberCount={memberCount}
+          collaboratorsHref={collaboratorsHref}
+          canEdit={canEdit}
+          canManageShare={isOwner}
+          canAddMember={canAddMember}
+          onCollaboratorsNavigate={handleCollaboratorsNavigate}
+          onAddMember={openAddMemberFromTreeMenu}
+          onAddRelationship={openAddRelationshipFromTreeMenu}
+          onOpenShareSettings={openShareSettingsFromTreeMenu}
+          t={treeSidebarTranslations}
+        />
+      ) : (
+        <>
+          <button
+            type="button"
+            onClick={() => setIsTreeMenuOpen(true)}
+            className="absolute left-4 top-4 z-20 inline-flex items-center gap-2 rounded-full border border-stone-200 bg-white px-4 py-2 text-sm font-semibold text-stone-900 shadow-sm"
+          >
+            <Menu
+              className="h-4 w-4"
+              aria-hidden="true"
+              data-testid="tree-menu-trigger-icon"
+            />
+            {t.treeMenu.trigger}
+          </button>
+
+          {isTreeMenuOpen && (
+            <div
+              className="absolute inset-0 z-30"
+              role="dialog"
+              aria-modal="true"
+              aria-label={t.treeMenu.dialogLabel}
+            >
+              <button
+                type="button"
+                className="absolute inset-0 bg-black/30"
+                onClick={closeTreeMenu}
+                aria-label={t.treeMenu.close}
+                data-testid="tree-menu-backdrop"
+              />
+
+              <div
+                className="absolute inset-y-0 left-0 flex w-full max-w-xs flex-col bg-white shadow-xl"
+                data-testid="tree-menu-drawer"
+              >
+                <div className="flex items-center justify-between border-b border-stone-100 px-4 py-3">
+                  <p className="text-sm font-semibold text-stone-900">
+                    {t.treeMenu.trigger}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={closeTreeMenu}
+                    className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-sm font-medium text-stone-700 hover:bg-stone-100"
+                    aria-label={t.treeMenu.close}
+                    data-testid="tree-menu-close-control"
+                  >
+                    <X className="h-4 w-4" aria-hidden="true" />
+                    {t.treeMenu.close}
+                  </button>
+                </div>
+
+                <div className="min-h-0 flex-1">
+                  <TreeSidebar
+                    treeName={treeName}
+                    memberCount={memberCount}
+                    collaboratorsHref={collaboratorsHref}
+                    canEdit={canEdit}
+                    canManageShare={isOwner}
+                    canAddMember={canAddMember}
+                    onCollaboratorsNavigate={handleCollaboratorsNavigate}
+                    onAddMember={openAddMemberFromTreeMenu}
+                    onAddRelationship={openAddRelationshipFromTreeMenu}
+                    onOpenShareSettings={openShareSettingsFromTreeMenu}
+                    className="w-full border-r-0 shadow-none"
+                    t={treeSidebarTranslations}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+        </>
+      )}
 
       {/* Canvas area */}
       <div className="flex-1 relative">
@@ -393,6 +550,9 @@ export default function TreeDetailClient({
             canAddMember={canAddMember}
             onNodeClick={(id) => {
               setActiveEdgePopover(null);
+              if (!isDesktopViewport) {
+                setIsTreeMenuOpen(false);
+              }
               setSelectedMemberId(id);
             }}
             onEdgeClick={handleEdgeClick}
@@ -415,6 +575,7 @@ export default function TreeDetailClient({
           onEditClick={() => setEditingMember(selectedMember)}
           onDeleted={handleMemberDeleted}
           onRelationshipRemoved={() => void loadTreeData()}
+          presentation={memberPanelPresentation}
           t={{
             ...t.panel,
             remove: t.relationship.remove,

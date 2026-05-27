@@ -9,6 +9,8 @@ import {
   formatMemberDateRange,
 } from "@/lib/tree-domain/tree-layout";
 
+export type MemberSidePanelPresentation = "desktop" | "tablet" | "mobile";
+
 interface SidePanelT {
   close: string;
   born: string;
@@ -48,6 +50,7 @@ interface MemberSidePanelProps {
   onEditClick: () => void;
   onDeleted: () => void;
   onRelationshipRemoved: () => void;
+  presentation?: MemberSidePanelPresentation;
   t: SidePanelT;
 }
 
@@ -62,6 +65,7 @@ export default function MemberSidePanel({
   onEditClick,
   onDeleted,
   onRelationshipRemoved,
+  presentation = "desktop",
   t,
 }: MemberSidePanelProps) {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -134,19 +138,24 @@ export default function MemberSidePanel({
     }
   };
 
-  return (
-    <div className="fixed right-0 top-14 h-[calc(100vh-3.5rem)] w-80 bg-white border-l border-stone-200 shadow-xl z-40 flex flex-col overflow-hidden">
+  const showCloseLabel = presentation !== "desktop";
+  const panelContent = (
+    <>
       {/* Header */}
       <div className="flex items-center justify-between px-5 py-4 border-b border-stone-100">
         <h2 className="text-base font-semibold text-stone-900 truncate">
           {displayName}
         </h2>
         <button
+          type="button"
           onClick={onClose}
-          className="p-1 text-stone-400 hover:text-stone-600 rounded-lg hover:bg-stone-100"
+          className="inline-flex items-center gap-1 rounded-lg p-1 text-stone-400 hover:text-stone-600 hover:bg-stone-100"
           aria-label={t.close}
         >
           <X className="w-5 h-5" />
+          {showCloseLabel && (
+            <span className="text-sm font-medium text-stone-700">{t.close}</span>
+          )}
         </button>
       </div>
 
@@ -293,6 +302,41 @@ export default function MemberSidePanel({
           </button>
         )}
       </div>
+    </>
+  );
+
+  if (presentation === "tablet") {
+    return (
+      <div className="fixed inset-0 z-40" role="dialog" aria-modal="true">
+        <button
+          type="button"
+          className="absolute inset-0 bg-black/30"
+          onClick={onClose}
+          aria-label={t.close}
+          data-testid="member-panel-backdrop"
+        />
+        <div className="absolute inset-y-0 right-0 flex w-full max-w-sm flex-col overflow-hidden border-l border-stone-200 bg-white shadow-xl">
+          {panelContent}
+        </div>
+      </div>
+    );
+  }
+
+  if (presentation === "mobile") {
+    return (
+      <div
+        className="fixed inset-0 z-40 flex flex-col overflow-hidden bg-white"
+        role="dialog"
+        aria-modal="true"
+      >
+        {panelContent}
+      </div>
+    );
+  }
+
+  return (
+    <div className="fixed right-0 top-14 h-[calc(100vh-3.5rem)] w-80 bg-white border-l border-stone-200 shadow-xl z-40 flex flex-col overflow-hidden">
+      {panelContent}
     </div>
   );
 }
