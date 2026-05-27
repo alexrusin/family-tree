@@ -1,12 +1,25 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import TreeCanvas from "@/app/[lang]/trees/[treeId]/TreeCanvas";
-import MemberSidePanel from "@/app/[lang]/trees/[treeId]/MemberSidePanel";
+import MemberSidePanel, {
+  type MemberSidePanelPresentation,
+} from "@/app/[lang]/trees/[treeId]/MemberSidePanel";
 import type {
   TreeMemberData,
   TreeRelationship,
 } from "@/lib/tree-domain/tree-layout";
+
+const TABLET_VIEWPORT_QUERY = "(min-width: 768px)";
+const DESKTOP_VIEWPORT_QUERY = "(min-width: 1024px)";
+
+function getMemberPanelPresentation(): MemberSidePanelPresentation {
+  if (typeof window === "undefined") return "desktop";
+  if (typeof window.matchMedia !== "function") return "desktop";
+  if (window.matchMedia(DESKTOP_VIEWPORT_QUERY).matches) return "desktop";
+  if (window.matchMedia(TABLET_VIEWPORT_QUERY).matches) return "tablet";
+  return "mobile";
+}
 
 export default function PublicTreeViewClient({
   treeId,
@@ -60,11 +73,37 @@ export default function PublicTreeViewClient({
   };
 }) {
   const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
+  const [memberPanelPresentation, setMemberPanelPresentation] =
+    useState<MemberSidePanelPresentation>(() => getMemberPanelPresentation());
 
   const selectedMember = useMemo(
     () => members.find((member) => member.id === selectedMemberId) ?? null,
     [members, selectedMemberId],
   );
+
+  useEffect(() => {
+    if (typeof window.matchMedia !== "function") return;
+
+    const desktopMediaQueryList = window.matchMedia(DESKTOP_VIEWPORT_QUERY);
+    const tabletMediaQueryList = window.matchMedia(TABLET_VIEWPORT_QUERY);
+
+    const syncViewport = () => {
+      const nextPresentation = desktopMediaQueryList.matches
+        ? "desktop"
+        : tabletMediaQueryList.matches
+          ? "tablet"
+          : "mobile";
+      setMemberPanelPresentation(nextPresentation);
+    };
+
+    desktopMediaQueryList.addEventListener("change", syncViewport);
+    tabletMediaQueryList.addEventListener("change", syncViewport);
+
+    return () => {
+      desktopMediaQueryList.removeEventListener("change", syncViewport);
+      tabletMediaQueryList.removeEventListener("change", syncViewport);
+    };
+  }, []);
 
   const getMemberName = (id: string) => {
     const member = members.find((entry) => entry.id === id);
@@ -103,6 +142,7 @@ export default function PublicTreeViewClient({
           onEditClick={() => {}}
           onDeleted={() => {}}
           onRelationshipRemoved={() => {}}
+          presentation={memberPanelPresentation}
           t={t.panel}
         />
       )}
