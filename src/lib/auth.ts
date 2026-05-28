@@ -4,8 +4,11 @@ import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "@/generated/prisma/client";
 import { sendEmail } from "@/lib/email";
 import { buildPostVerificationRedirect } from "@/lib/auth-callback";
+import { buildResetPasswordEmail } from "@/lib/reset-password-email";
 import enDictionary from "@/app/[lang]/dictionaries/en.json";
+import esDictionary from "@/app/[lang]/dictionaries/es.json";
 import ruDictionary from "@/app/[lang]/dictionaries/ru.json";
+import { isLocale, DEFAULT_LOCALE } from "@/lib/locale";
 
 // ============================================================================
 // Configuration & Constants
@@ -13,20 +16,25 @@ import ruDictionary from "@/app/[lang]/dictionaries/ru.json";
 
 const EMAIL_SUBJECTS = {
   en: {
-    verify: "Verify your email address",
-    reset: "Reset your password",
+    verify: enDictionary.auth.emailSubjects.verify,
+    reset: enDictionary.auth.emailSubjects.reset,
+  },
+  es: {
+    verify: esDictionary.auth.emailSubjects.verify,
+    reset: esDictionary.auth.emailSubjects.reset,
   },
   ru: {
-    verify: "Подтвердите ваш email",
-    reset: "Сброс пароля",
+    verify: ruDictionary.auth.emailSubjects.verify,
+    reset: ruDictionary.auth.emailSubjects.reset,
   },
 } as const;
 
 type SupportedLocale = keyof typeof EMAIL_SUBJECTS;
 
-const RESET_EMAIL_CONTENT = {
-  en: enDictionary.auth.resetPassword.email,
-  ru: ruDictionary.auth.resetPassword.email,
+const VERIFY_EMAIL_CONTENT = {
+  en: enDictionary.auth.verifyEmail.email,
+  es: esDictionary.auth.verifyEmail.email,
+  ru: ruDictionary.auth.verifyEmail.email,
 } as const;
 
 // Time constants (in seconds)
@@ -42,7 +50,8 @@ const TIME = {
 // ============================================================================
 
 function getUserLocale(locale?: string): SupportedLocale {
-  return locale === "ru" ? "ru" : "en";
+  const normalized = locale?.toLowerCase() ?? "";
+  return isLocale(normalized) ? normalized : DEFAULT_LOCALE;
 }
 
 function getBaseURL(): string {
@@ -66,11 +75,10 @@ function buildFrontendResetLink(
     ? new URL(callbackURL, baseURL)
     : new URL(`/${locale}/reset-password`, baseURL);
 
-  const targetPath =
-    callbackTarget.pathname.startsWith("/en/") ||
-    callbackTarget.pathname.startsWith("/ru/")
-      ? callbackTarget.pathname
-      : `/${locale}${callbackTarget.pathname}`;
+  const firstSegment = callbackTarget.pathname.split("/")[1] ?? "";
+  const targetPath = isLocale(firstSegment)
+    ? callbackTarget.pathname
+    : `/${locale}${callbackTarget.pathname}`;
 
   const resetLink = new URL(targetPath, callbackTarget.origin);
   if (token) {
@@ -105,13 +113,9 @@ export const auth = betterAuth({
       try {
         const locale = getUserLocale((user as { locale?: string }).locale);
         const resetLink = buildFrontendResetLink(url, locale);
-        const content = RESET_EMAIL_CONTENT[locale];
+        const { subject, html } = buildResetPasswordEmail({ locale, resetLink });
 
-        await sendEmail(
-          user.email,
-          EMAIL_SUBJECTS[locale].reset,
-          `<p>${content.intro}</p><p><a href="${resetLink}">${content.cta}</a></p><p>${content.expiry}</p><p>${content.fallback}</p><p>${resetLink}</p>`,
-        );
+        await sendEmail(user.email, subject, html);
       } catch (error) {
         console.error("Failed to send password reset email:", error);
         throw new Error("Failed to send password reset email");
@@ -134,10 +138,12 @@ export const auth = betterAuth({
           buildPostVerificationRedirect(locale, callbackURL),
         );
 
+        const content = VERIFY_EMAIL_CONTENT[locale];
+
         await sendEmail(
           user.email,
           EMAIL_SUBJECTS[locale].verify,
-          `<p>Click the link below to verify your email address.</p><p><a href="${verificationUrl.toString()}">Verify email</a></p>`,
+          `<p>${content.intro}</p><p><a href="${verificationUrl.toString()}">${content.cta}</a></p>`,
         );
       } catch (error) {
         console.error("Failed to send verification email:", error);

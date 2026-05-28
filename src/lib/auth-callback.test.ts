@@ -12,6 +12,9 @@ describe("resolvePostAuthRedirect", () => {
     expect(resolvePostAuthRedirect("en", "/ru/invitations/accept/token")).toBe(
       "/ru/invitations/accept/token",
     );
+    expect(resolvePostAuthRedirect("es", "/es/invitations/accept/token")).toBe(
+      "/es/invitations/accept/token",
+    );
   });
 
   it("preserves callback query and hash", () => {
@@ -26,6 +29,7 @@ describe("resolvePostAuthRedirect", () => {
   it("falls back for missing callback", () => {
     expect(resolvePostAuthRedirect("en", null)).toBe("/en/dashboard");
     expect(resolvePostAuthRedirect("ru", "")).toBe("/ru/dashboard");
+    expect(resolvePostAuthRedirect("es", null)).toBe("/es/dashboard");
   });
 
   it("falls back for non-local and malformed callback", () => {
@@ -39,6 +43,7 @@ describe("resolvePostAuthRedirect", () => {
     expect(resolvePostAuthRedirect("en", "/en\\n/dashboard")).toBe(
       "/en/dashboard",
     );
+    expect(resolvePostAuthRedirect("es", "/dashboard")).toBe("/es/dashboard");
   });
 });
 
@@ -58,6 +63,9 @@ describe("buildPostVerificationRedirect", () => {
     );
     expect(buildPostVerificationRedirect("ru", "")).toBe(
       "/ru/dashboard?emailVerified=1&welcome=create-tree",
+    );
+    expect(buildPostVerificationRedirect("es", null)).toBe(
+      "/es/dashboard?emailVerified=1&welcome=create-tree",
     );
   });
 

@@ -559,7 +559,11 @@
       "missingEmail": "Email is missing. Return to registration and try again.",
       "changeEmail": "Change Email",
       "wrongAddressPrompt": "Entered the wrong address?",
-      "checkSpam": "Check your spam folder if you don't see it."
+      "checkSpam": "Check your spam folder if you don't see it.",
+      "email": {
+        "intro": "Click the link below to verify your email address.",
+        "cta": "Verify email"
+      }
     },
     "emailSubjects": {
       "verify": "Verify your email address",

@@ -1,4 +1,5 @@
 import enDictionary from "@/app/[lang]/dictionaries/en.json";
+import esDictionary from "@/app/[lang]/dictionaries/es.json";
 import ruDictionary from "@/app/[lang]/dictionaries/ru.json";
 import type { Locale } from "@/generated/prisma/enums";
 import { sendEmail } from "@/lib/email";
@@ -20,11 +21,12 @@ type PendingEmailChangeEmailInput = {
 
 const COPY = {
   en: enDictionary.settings.account.emailChangeEmail,
+  es: esDictionary.settings.account.emailChangeEmail,
   ru: ruDictionary.settings.account.emailChangeEmail,
 } as const;
 
 function getCopy(locale: Locale) {
-  return locale === "ru" ? COPY.ru : COPY.en;
+  return COPY[locale] ?? COPY.en;
 }
 
 export function buildPendingEmailChangeEmail(

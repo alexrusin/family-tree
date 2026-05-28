@@ -29,4 +29,18 @@ describe("buildPendingEmailChangeEmail", () => {
       "https://app.local/ru/verify-email-change/token",
     );
   });
+
+  it("renders spanish pending email-change copy", () => {
+    const email = buildPendingEmailChangeEmail({
+      locale: "es",
+      verifyUrl: "https://app.local/es/verify-email-change/token",
+      nextEmail: "nuevo@example.com",
+    });
+
+    expect(email.subject).toContain("Verifica tu nuevo email");
+    expect(email.html).toContain("nuevo@example.com");
+    expect(email.html).toContain(
+      "https://app.local/es/verify-email-change/token",
+    );
+  });
 });

@@ -1,11 +1,12 @@
-const SUPPORTED_LOCALES = new Set(["en", "ru"]);
+import { DEFAULT_LOCALE, isLocale } from "@/lib/locale";
+
 export const EMAIL_VERIFIED_PARAM = "emailVerified";
 export const DASHBOARD_WELCOME_PARAM = "welcome";
 export const DASHBOARD_WELCOME_CREATE_TREE = "create-tree";
 
 function normalizeLang(lang: string): string {
   const normalizedLang = lang.trim().toLowerCase();
-  return SUPPORTED_LOCALES.has(normalizedLang) ? normalizedLang : "en";
+  return isLocale(normalizedLang) ? normalizedLang : DEFAULT_LOCALE;
 }
 
 function getSafePostAuthRedirect(
@@ -37,7 +38,7 @@ function getSafePostAuthRedirect(
 
   const segments = parsed.pathname.split("/").filter(Boolean);
   const callbackLocale = segments[0]?.toLowerCase();
-  if (!callbackLocale || !SUPPORTED_LOCALES.has(callbackLocale)) {
+  if (!callbackLocale || !isLocale(callbackLocale)) {
     return null;
   }
 
