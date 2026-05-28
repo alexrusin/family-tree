@@ -6,11 +6,11 @@
 #
 # Env vars:
 #   RALPH_MODEL           Model alias or full ID passed to `copilot --model`.
-#                         Defaults to "gpt-5.3-codex". Set to empty to use Copilot's default.
+#                         Defaults to "claude-sonnet-4.6". Set to empty to use Copilot's default.
 
 set -euo pipefail
 
-MODEL=${RALPH_MODEL-gpt-5.3-codex}
+MODEL=${RALPH_MODEL-claude-sonnet-4.6}
 
 if [[ $# -lt 1 ]]; then
   echo "usage: $0 <issues-dir>" >&2

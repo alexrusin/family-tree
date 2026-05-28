@@ -46,11 +46,16 @@ The Settings Section where a User manages profile identity details such as displ
 
 ## Preferred Locale
 
-The persisted language preference used to localize authenticated user experiences.
+The persisted language preference used to localize authenticated user experiences in English, Spanish, or Russian.
 
 ## Language Section
 
-The Settings Section where a User changes Preferred Locale between English and Russian.
+The Settings Section where a User changes Preferred Locale between English, Spanish, and Russian.
+
+## Language Picker
+
+A three-option control that lets a visitor or User switch the active interface locale between English, Spanish, and Russian. Its options are labeled with the languages' self-names: English, Español, and Русский.
+_Avoid_: Language Toggle
 
 ## Security Section
 

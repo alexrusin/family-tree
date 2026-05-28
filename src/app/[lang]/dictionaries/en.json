@@ -192,6 +192,7 @@
       "selectLabel": "Preferred language",
       "selectHelp": "Changing language reloads your workspace under the selected locale.",
       "optionEnglish": "English",
+      "optionSpanish": "Spanish",
       "optionRussian": "Russian",
       "discard": "Discard changes",
       "save": "Save preferences",

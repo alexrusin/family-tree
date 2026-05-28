@@ -16,7 +16,7 @@ export async function generateMetadata({
 }
 
 export async function generateStaticParams() {
-  return [{ lang: "en" }, { lang: "ru" }];
+  return [{ lang: "en" }, { lang: "es" }, { lang: "ru" }];
 }
 
 export default async function LocaleLayout({

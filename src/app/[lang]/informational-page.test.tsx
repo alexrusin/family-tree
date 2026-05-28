@@ -30,26 +30,36 @@ describe('localized informational pages', () => {
     notFound.mockClear()
   })
 
-  it('renders the privacy page for both supported locales', async () => {
+  it('renders the privacy page for all supported locales', async () => {
     const englishMarkup = await renderPage(PrivacyPage, 'en')
+    const spanishMarkup = await renderPage(PrivacyPage, 'es')
     const russianMarkup = await renderPage(PrivacyPage, 'ru')
 
     expect(englishMarkup).toContain('A calm, private place for family history')
     expect(englishMarkup).toContain('href="/en/privacy"')
     expect(englishMarkup).toContain('href="/en/support"')
 
+    expect(spanishMarkup).toContain('Un lugar tranquilo y privado para la historia familiar')
+    expect(spanishMarkup).toContain('href="/es/privacy"')
+    expect(spanishMarkup).toContain('href="/es/support"')
+
     expect(russianMarkup).toContain('Спокойное и приватное пространство для истории семьи')
     expect(russianMarkup).toContain('href="/ru/privacy"')
     expect(russianMarkup).toContain('href="/ru/support"')
   })
 
-  it('renders the support page for both supported locales', async () => {
+  it('renders the support page for all supported locales', async () => {
     const englishMarkup = await renderPage(SupportPage, 'en')
+    const spanishMarkup = await renderPage(SupportPage, 'es')
     const russianMarkup = await renderPage(SupportPage, 'ru')
 
     expect(englishMarkup).toContain('Support for using Generations')
     expect(englishMarkup).toContain('href="/en/privacy"')
     expect(englishMarkup).toContain('href="/en/support"')
+
+    expect(spanishMarkup).toContain('Soporte para usar Generations')
+    expect(spanishMarkup).toContain('href="/es/privacy"')
+    expect(spanishMarkup).toContain('href="/es/support"')
 
     expect(russianMarkup).toContain('Поддержка по использованию Generations')
     expect(russianMarkup).toContain('href="/ru/privacy"')
