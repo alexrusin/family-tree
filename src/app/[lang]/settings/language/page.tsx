@@ -19,8 +19,9 @@ export default async function LanguageSettingsPage({
   }
 
   const t = await getDictionary(lang);
+  const { locale: userLocale } = user as { locale?: string };
   const initialLocale =
-    (user as { locale?: string }).locale === "ru" ? "ru" : "en";
+    userLocale === "es" ? "es" : userLocale === "ru" ? "ru" : "en";
 
   return (
     <LanguageSettingsClient

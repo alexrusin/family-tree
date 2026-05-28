@@ -24,6 +24,7 @@ const translations = {
   selectLabel: "Preferred language",
   selectHelp: "Changing language reloads the app.",
   optionEnglish: "English",
+  optionSpanish: "Español",
   optionRussian: "Russian",
   discard: "Discard changes",
   save: "Save preferences",
@@ -175,5 +176,136 @@ describe("LanguageSettingsClient", () => {
       expect(pushMock).toHaveBeenCalledWith("/ru/settings/language");
     });
     expect(refreshMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("selector displays English, Español, and Русский options", () => {
+    render(
+      <LanguageSettingsClient
+        title="Language"
+        lang="en"
+        initialLocale="en"
+        t={translations}
+      />,
+    );
+
+    const select = screen.getByLabelText(
+      "Preferred language",
+    ) as HTMLSelectElement;
+    const optionValues = Array.from(select.options).map((o) => o.value);
+    const optionLabels = Array.from(select.options).map((o) => o.text);
+
+    expect(optionValues).toContain("en");
+    expect(optionValues).toContain("es");
+    expect(optionValues).toContain("ru");
+    expect(optionLabels).toContain("English");
+    expect(optionLabels).toContain("Español");
+    expect(optionLabels).toContain("Russian");
+  });
+
+  it("reflects the initial Spanish locale when user has es preference", () => {
+    render(
+      <LanguageSettingsClient
+        title="Language"
+        lang="es"
+        initialLocale="es"
+        t={translations}
+      />,
+    );
+
+    const select = screen.getByLabelText(
+      "Preferred language",
+    ) as HTMLSelectElement;
+    expect(select.value).toBe("es");
+  });
+
+  it("saves Spanish locale and navigates to /es/settings/language", async () => {
+    const user = userEvent.setup();
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: vi.fn().mockResolvedValue({ locale: "es" }),
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(
+      <LanguageSettingsClient
+        title="Language"
+        lang="en"
+        initialLocale="en"
+        t={translations}
+      />,
+    );
+
+    await user.selectOptions(
+      screen.getByLabelText("Preferred language"),
+      "es",
+    );
+    await user.click(screen.getByRole("button", { name: "Save preferences" }));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith("/api/account/locale", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ locale: "es" }),
+      });
+    });
+
+    await waitFor(() => {
+      expect(pushMock).toHaveBeenCalledWith("/es/settings/language");
+    });
+    expect(refreshMock).not.toHaveBeenCalled();
+  });
+
+  it("discards draft Spanish selection back to the persisted locale", async () => {
+    const user = userEvent.setup();
+
+    render(
+      <LanguageSettingsClient
+        title="Language"
+        lang="en"
+        initialLocale="en"
+        t={translations}
+      />,
+    );
+
+    const select = screen.getByLabelText(
+      "Preferred language",
+    ) as HTMLSelectElement;
+    const discardButton = screen.getByRole("button", {
+      name: "Discard changes",
+    });
+
+    await user.selectOptions(select, "es");
+    expect(select.value).toBe("es");
+
+    await user.click(discardButton);
+
+    expect(select.value).toBe("en");
+  });
+
+  it("shows localized error when Spanish save fails with a known error code", async () => {
+    const user = userEvent.setup();
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: false,
+      json: vi.fn().mockResolvedValue({ errorCode: "ERR_UNAUTHORIZED" }),
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(
+      <LanguageSettingsClient
+        title="Language"
+        lang="es"
+        initialLocale="es"
+        t={translations}
+      />,
+    );
+
+    await user.selectOptions(
+      screen.getByLabelText("Preferred language"),
+      "ru",
+    );
+    await user.click(screen.getByRole("button", { name: "Save preferences" }));
+
+    expect(await screen.findByText("Please sign in again")).not.toBeNull();
+    expect(pushMock).not.toHaveBeenCalled();
   });
 });

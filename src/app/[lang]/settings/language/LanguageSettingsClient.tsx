@@ -15,6 +15,7 @@ interface LanguageTranslations {
   selectLabel: string;
   selectHelp: string;
   optionEnglish: string;
+  optionSpanish: string;
   optionRussian: string;
   discard: string;
   save: string;
@@ -67,9 +68,10 @@ export default function LanguageSettingsClient({
   const localeOptions = useMemo(
     () => [
       { value: "en" as const, label: t.optionEnglish },
+      { value: "es" as const, label: t.optionSpanish },
       { value: "ru" as const, label: t.optionRussian },
     ],
-    [t.optionEnglish, t.optionRussian],
+    [t.optionEnglish, t.optionSpanish, t.optionRussian],
   );
 
   const discardChanges = () => {

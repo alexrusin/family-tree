@@ -5,8 +5,9 @@ import {
 } from "./language-form-state";
 
 describe("language form state", () => {
-  it("accepts en and ru locales", () => {
+  it("accepts en, es, and ru locales", () => {
     expect(toSupportedLocale("en")).toBe("en");
+    expect(toSupportedLocale("es")).toBe("es");
     expect(toSupportedLocale("ru")).toBe("ru");
   });
 
@@ -21,6 +22,7 @@ describe("language form state", () => {
 
   it("passes validation for supported locale", () => {
     expect(validateLanguagePreference("en")).toBeNull();
+    expect(validateLanguagePreference("es")).toBeNull();
     expect(validateLanguagePreference("ru")).toBeNull();
   });
 });

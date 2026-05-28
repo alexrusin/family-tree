@@ -112,4 +112,26 @@ describe("/api/account/locale", () => {
       select: { locale: true },
     });
   });
+
+  it("persists Spanish locale for authenticated users", async () => {
+    prismaClientMock.user.update.mockResolvedValue({ locale: "es" });
+
+    const request = new NextRequest("http://localhost/api/account/locale", {
+      method: "PATCH",
+      body: JSON.stringify({ locale: "es" }),
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+
+    const response = await PATCH(request);
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({ locale: "es" });
+    expect(prismaClientMock.user.update).toHaveBeenCalledWith({
+      where: { id: "u1" },
+      data: { locale: "es" },
+      select: { locale: true },
+    });
+  });
 });

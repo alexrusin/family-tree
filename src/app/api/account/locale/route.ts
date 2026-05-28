@@ -4,7 +4,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
 function toLocale(value: unknown): Locale | null {
-  if (value === "en" || value === "ru") {
+  if (value === "en" || value === "es" || value === "ru") {
     return value;
   }
 

@@ -1,7 +1,7 @@
-export type SupportedLocale = "en" | "ru";
+export type SupportedLocale = "en" | "es" | "ru";
 
 export function toSupportedLocale(value: unknown): SupportedLocale | null {
-  if (value === "en" || value === "ru") {
+  if (value === "en" || value === "es" || value === "ru") {
     return value;
   }
 
