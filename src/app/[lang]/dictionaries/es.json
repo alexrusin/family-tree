@@ -6,8 +6,7 @@
   "nav": {
     "logo": "Generations",
     "login": "Iniciar sesión",
-    "signup": "Registrarse",
-    "langToggle": "English"
+    "signup": "Registrarse"
   },
   "hero": {
     "badge": "Tu legado comienza aquí",

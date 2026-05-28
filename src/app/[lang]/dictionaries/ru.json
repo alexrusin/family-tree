@@ -6,8 +6,7 @@
   "nav": {
     "logo": "Generations",
     "login": "Войти",
-    "signup": "Зарегистрироваться",
-    "langToggle": "English"
+    "signup": "Зарегистрироваться"
   },
   "hero": {
     "badge": "Ваше наследие начинается здесь",

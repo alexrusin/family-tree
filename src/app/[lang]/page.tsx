@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { getDictionary, hasLocale } from './dictionaries/dictionaries'
-import LanguageToggle from './components/LanguageToggle'
+import LanguagePicker from './components/LanguagePicker'
 
 // SVG tree demo component — no external images
 function TreeDemo({ t }: { t: Record<string, string> }) {
@@ -72,7 +72,7 @@ export default async function LandingPage({ params }: PageProps<'/[lang]'>) {
             {t.nav.logo}
           </span>
           <div className="flex items-center gap-3">
-            <LanguageToggle label={t.nav.langToggle} currentLang={lang} />
+            <LanguagePicker currentLang={lang} />
             <Link
               href={`/${lang}/login`}
               className="text-sm font-semibold transition-colors hover:opacity-75"

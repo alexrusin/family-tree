@@ -1,12 +1,11 @@
 import Link from "next/link";
-import LanguageToggle from "./LanguageToggle";
+import LanguagePicker from "./LanguagePicker";
 import UserMenu from "./UserMenu";
 import { getCurrentUser } from "@/lib/auth-utils";
 
 interface HeaderProps {
   lang: string;
-  langToggleLabel: string;
-  langToggleErrors: {
+  langPickerErrors: {
     ERR_INVALID_LOCALE: string;
     ERR_UNAUTHORIZED: string;
     ERR_USER_NOT_FOUND: string;
@@ -23,8 +22,7 @@ interface HeaderProps {
 
 export default async function Header({
   lang,
-  langToggleLabel,
-  langToggleErrors,
+  langPickerErrors,
   navFamilyTree,
   navSettings,
   logoutLabel,
@@ -53,11 +51,10 @@ export default async function Header({
       </div>
 
       <div className="flex items-center gap-3">
-        <LanguageToggle
-          label={langToggleLabel}
+        <LanguagePicker
           currentLang={lang}
           persistLocalePreference={Boolean(user)}
-          errorMessages={langToggleErrors}
+          errorMessages={langPickerErrors}
         />
         <UserMenu
           lang={lang}

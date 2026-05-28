@@ -2,10 +2,15 @@
 
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
+import { type Locale, LOCALES } from "@/lib/locale";
 
-type SupportedLocale = "en" | "ru";
+const LOCALE_LABELS: Record<Locale, string> = {
+  en: "English",
+  es: "Español",
+  ru: "Русский",
+};
 
-interface LanguageToggleErrorMessages {
+interface LanguagePickerErrorMessages {
   ERR_INVALID_LOCALE: string;
   ERR_UNAUTHORIZED: string;
   ERR_USER_NOT_FOUND: string;
@@ -15,39 +20,16 @@ interface LanguageToggleErrorMessages {
   [key: string]: string;
 }
 
-interface LanguageToggleProps {
-  label: string;
+interface LanguagePickerProps {
   currentLang: string;
   persistLocalePreference?: boolean;
-  errorMessages?: LanguageToggleErrorMessages;
-}
-
-function toSupportedLocale(value: unknown): SupportedLocale | null {
-  if (value === "en" || value === "ru") {
-    return value;
-  }
-
-  return null;
-}
-
-function mapErrorCode(
-  errorCode: string | null | undefined,
-  errorMessages?: LanguageToggleErrorMessages,
-): string {
-  if (errorCode && errorMessages && errorCode in errorMessages) {
-    return errorMessages[errorCode];
-  }
-
-  return (
-    errorMessages?.generic ??
-    "Unable to save language preference right now. Please try again."
-  );
+  errorMessages?: LanguagePickerErrorMessages;
 }
 
 function getLocalizedPath(
   pathname: string,
   currentLang: string,
-  targetLang: SupportedLocale,
+  targetLang: Locale,
 ): string {
   if (pathname === `/${currentLang}`) {
     return `/${targetLang}`;
@@ -60,19 +42,41 @@ function getLocalizedPath(
   return `/${targetLang}${pathname.startsWith("/") ? pathname : `/${pathname}`}`;
 }
 
-export default function LanguageToggle({
-  label,
+function toLocale(value: unknown): Locale | null {
+  if (value === "en" || value === "es" || value === "ru") {
+    return value;
+  }
+
+  return null;
+}
+
+function mapErrorCode(
+  errorCode: string | null | undefined,
+  errorMessages?: LanguagePickerErrorMessages,
+): string {
+  if (errorCode && errorMessages && errorCode in errorMessages) {
+    return errorMessages[errorCode];
+  }
+
+  return (
+    errorMessages?.generic ??
+    "Unable to save language preference right now. Please try again."
+  );
+}
+
+export default function LanguagePicker({
   currentLang,
   persistLocalePreference = false,
   errorMessages,
-}: LanguageToggleProps) {
+}: LanguagePickerProps) {
   const pathname = usePathname();
   const router = useRouter();
   const [isSaving, setIsSaving] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
 
-  async function handleToggle() {
-    const targetLang = currentLang === "en" ? "ru" : "en";
+  async function handleSelect(targetLang: Locale) {
+    if (targetLang === currentLang || isSaving) return;
+
     const newPath = getLocalizedPath(pathname, currentLang, targetLang);
 
     if (!persistLocalePreference) {
@@ -97,7 +101,7 @@ export default function LanguageToggle({
         errorCode?: string;
       } | null;
 
-      const updatedLocale = toSupportedLocale(payload?.locale);
+      const updatedLocale = toLocale(payload?.locale);
 
       if (!response.ok || !updatedLocale) {
         setActionError(mapErrorCode(payload?.errorCode, errorMessages));
@@ -119,28 +123,31 @@ export default function LanguageToggle({
 
   return (
     <div className="flex flex-col items-end">
-      <button
-        onClick={handleToggle}
-        disabled={isSaving}
-        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-stone-100 hover:bg-stone-200 transition-colors text-amber-900 text-sm font-semibold tracking-wide disabled:cursor-not-allowed disabled:opacity-60"
-        aria-label="Switch language"
+      <div
+        className="flex rounded-full bg-stone-100 p-0.5"
+        role="group"
+        aria-label="Language"
       >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          className="w-4 h-4"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          aria-hidden="true"
-        >
-          <circle cx="12" cy="12" r="10" />
-          <path d="M12 2a14.5 14.5 0 0 0 0 20M12 2a14.5 14.5 0 0 1 0 20M2 12h20" />
-        </svg>
-        {label}
-      </button>
+        {LOCALES.map((locale) => {
+          const isActive = locale === currentLang;
+          return (
+            <button
+              key={locale}
+              type="button"
+              onClick={() => handleSelect(locale)}
+              disabled={isSaving}
+              aria-pressed={isActive}
+              className={
+                isActive
+                  ? "px-3 py-1 rounded-full text-sm font-semibold bg-amber-900 text-white cursor-default"
+                  : "px-3 py-1 rounded-full text-sm font-semibold text-amber-900 hover:bg-stone-200 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+              }
+            >
+              {LOCALE_LABELS[locale]}
+            </button>
+          );
+        })}
+      </div>
 
       {actionError ? (
         <p
