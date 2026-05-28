@@ -1,4 +1,5 @@
 import enDictionary from "@/app/[lang]/dictionaries/en.json";
+import esDictionary from "@/app/[lang]/dictionaries/es.json";
 import ruDictionary from "@/app/[lang]/dictionaries/ru.json";
 import type { CollaboratorRole, Locale } from "@/generated/prisma/enums";
 import { sendEmail } from "@/lib/email";
@@ -23,11 +24,14 @@ type InvitationEmailInput = {
 
 const COPY = {
   en: enDictionary.tree.collaboration.email,
+  es: esDictionary.tree.collaboration.email,
   ru: ruDictionary.tree.collaboration.email,
 } as const;
 
 function getInvitationCopy(locale: Locale) {
-  return locale === "ru" ? COPY.ru : COPY.en;
+  if (locale === "es") return COPY.es;
+  if (locale === "ru") return COPY.ru;
+  return COPY.en;
 }
 
 export function buildInvitationEmail(input: Omit<InvitationEmailInput, "to">) {

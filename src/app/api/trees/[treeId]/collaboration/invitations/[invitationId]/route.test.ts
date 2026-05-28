@@ -222,6 +222,36 @@ describe("/api/trees/[treeId]/collaboration/invitations/[invitationId]", () => {
     );
   });
 
+  it("resends spanish invitation using stored es locale", async () => {
+    prismaClientMock.invitation.findFirst.mockResolvedValue({
+      id: "i2",
+      invitedEmail: "amiga@example.com",
+      role: "viewer",
+      message: null,
+      locale: "es",
+    });
+
+    const request = new NextRequest(
+      "http://localhost/api/trees/t1/collaboration/invitations/i2",
+      {
+        method: "PATCH",
+      },
+    );
+
+    const response = await PATCH(request, {
+      params: Promise.resolve({ treeId: "t1", invitationId: "i2" }),
+    });
+
+    expect(response.status).toBe(200);
+    expect(sendInvitationEmailMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        locale: "es",
+        to: "amiga@example.com",
+        acceptUrl: "http://localhost:3000/es/invitations/accept/raw-token",
+      }),
+    );
+  });
+
   it("returns 401 for unauthenticated DELETE", async () => {
     getSessionMock.mockResolvedValue(null);
 

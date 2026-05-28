@@ -37,4 +37,37 @@ describe("buildInvitationEmail", () => {
     expect(email.html).toContain("Наблюдатель");
     expect(email.html).not.toContain("Сообщение:");
   });
+
+  it("renders spanish invitation copy", () => {
+    const email = buildInvitationEmail({
+      locale: "es",
+      inviterName: "Carlos",
+      treeName: "Familia García",
+      acceptUrl: "https://app.local/es/invitations/accept/tok",
+      role: "editor",
+      message: "Por favor únete",
+    });
+
+    expect(email.subject).toContain("Invitación");
+    expect(email.subject).toContain("Familia García");
+    expect(email.html).toContain("Carlos");
+    expect(email.html).toContain("Familia García");
+    expect(email.html).toContain("Editor");
+    expect(email.html).toContain("Por favor únete");
+  });
+
+  it("renders spanish invitation copy without message", () => {
+    const email = buildInvitationEmail({
+      locale: "es",
+      inviterName: "Ana",
+      treeName: "Familia López",
+      acceptUrl: "https://app.local/es/invitations/accept/tok",
+      role: "viewer",
+      message: null,
+    });
+
+    expect(email.subject).toContain("Invitación");
+    expect(email.html).toContain("Observador");
+    expect(email.html).not.toContain("Mensaje:");
+  });
 });

@@ -28,7 +28,9 @@ function getPrismaClient() {
 }
 
 function toLocale(value: unknown): Locale {
-  return value === "ru" ? "ru" : "en";
+  if (value === "es") return "es";
+  if (value === "ru") return "ru";
+  return "en";
 }
 
 function parseInvitationPayload(value: unknown): InvitationPayload | null {

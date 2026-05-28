@@ -461,4 +461,72 @@ describe("/api/trees/[treeId]/collaboration", () => {
       }),
     );
   });
+
+  it("uses invitee spanish locale for invitation when invitee has es locale", async () => {
+    prismaClientMock.user.findUnique.mockResolvedValue({
+      id: "u-invitee",
+      locale: "es",
+    });
+    prismaClientMock.collaborator.findUnique.mockResolvedValue(null);
+
+    const request = new NextRequest(
+      "http://localhost/api/trees/t1/collaboration",
+      {
+        method: "POST",
+        body: JSON.stringify({
+          email: "invitee@example.com",
+          role: "viewer",
+          message: null,
+        }),
+      },
+    );
+
+    const response = await POST(request, {
+      params: Promise.resolve({ treeId: "t1" }),
+    });
+
+    expect(response.status).toBe(201);
+    expect(sendInvitationEmailMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        locale: "es",
+        acceptUrl: "http://localhost:3000/es/invitations/accept/token-raw",
+      }),
+    );
+  });
+
+  it("falls back to spanish owner locale when invitee has no saved locale", async () => {
+    getSessionMock.mockResolvedValue({
+      user: {
+        id: "u-owner",
+        email: "owner@example.com",
+        name: "Tree Owner",
+        locale: "es",
+      },
+    });
+    prismaClientMock.user.findUnique.mockResolvedValue(null);
+
+    const request = new NextRequest(
+      "http://localhost/api/trees/t1/collaboration",
+      {
+        method: "POST",
+        body: JSON.stringify({
+          email: "newuser@example.com",
+          role: "editor",
+          message: null,
+        }),
+      },
+    );
+
+    const response = await POST(request, {
+      params: Promise.resolve({ treeId: "t1" }),
+    });
+
+    expect(response.status).toBe(201);
+    expect(sendInvitationEmailMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        locale: "es",
+        acceptUrl: "http://localhost:3000/es/invitations/accept/token-raw",
+      }),
+    );
+  });
 });
