@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { getDictionary, hasLocale } from './dictionaries/dictionaries'
 import LanguagePicker from './components/LanguagePicker'
+import { getCurrentUser } from '@/lib/auth-utils'
 
 // SVG tree demo component — no external images
 function TreeDemo({ t }: { t: Record<string, string> }) {
@@ -61,6 +62,7 @@ export default async function LandingPage({ params }: PageProps<'/[lang]'>) {
   if (!hasLocale(lang)) notFound()
 
   const t = await getDictionary(lang)
+  const user = await getCurrentUser()
 
   return (
     <div className="min-h-screen flex flex-col" style={{ backgroundColor: '#fbf9f8', color: '#1b1c1b', fontFamily: 'Inter, sans-serif' }}>
@@ -72,7 +74,11 @@ export default async function LandingPage({ params }: PageProps<'/[lang]'>) {
             {t.nav.logo}
           </span>
           <div className="flex items-center gap-3">
-            <LanguagePicker currentLang={lang} />
+            <LanguagePicker
+              currentLang={lang}
+              persistLocalePreference={Boolean(user)}
+              errorMessages={t.settings.language.errors}
+            />
             <Link
               href={`/${lang}/login`}
               className="text-sm font-semibold transition-colors hover:opacity-75"
