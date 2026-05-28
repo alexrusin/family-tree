@@ -74,6 +74,31 @@ describe("GET /api/public-tree/[shareToken]", () => {
     expect(body.members[0].birthYear).toBeNull();
   });
 
+  it("returns es ownerLocale when owner locale is Spanish", async () => {
+    prismaMock.familyTree.findUnique.mockResolvedValue({
+      id: "t1",
+      ownerId: "u1",
+      shareEnabled: true,
+      shareToken: "token-es",
+      name: "García Family",
+      owner: { locale: "es" },
+    });
+    prismaMock.treeMember.findMany.mockResolvedValue([]);
+    prismaMock.relationship.findMany.mockResolvedValue([]);
+
+    const request = new NextRequest(
+      "http://localhost/api/public-tree/token-es",
+      { method: "GET" },
+    );
+    const response = await GET(request, {
+      params: Promise.resolve({ shareToken: "token-es" }),
+    });
+
+    expect(response.status).toBe(200);
+    const body = await response.json();
+    expect(body.ownerLocale).toBe("es");
+  });
+
   it("returns 410 when active token exists but sharing disabled", async () => {
     prismaMock.familyTree.findUnique.mockResolvedValue({
       id: "t1",

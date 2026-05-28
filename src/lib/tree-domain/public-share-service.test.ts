@@ -24,6 +24,22 @@ describe("public-share-service", () => {
     expect(result.ownerLocale).toBe("ru");
   });
 
+  it("propagates Spanish owner locale when sharing is enabled", async () => {
+    const repo = {
+      findTreeByActiveToken: vi.fn().mockResolvedValue({
+        id: "t1",
+        ownerId: "u1",
+        ownerLocale: "es",
+        shareEnabled: true,
+      }),
+      findHistoricalToken: vi.fn().mockResolvedValue(null),
+    };
+
+    const result = await resolvePublicShareToken(repo, "token-es");
+    expect(result.status).toBe("active");
+    expect(result.ownerLocale).toBe("es");
+  });
+
   it("returns disabled when active token exists but sharing is off", async () => {
     const repo = {
       findTreeByActiveToken: vi.fn().mockResolvedValue({

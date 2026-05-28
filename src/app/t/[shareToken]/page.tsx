@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { getDictionary } from "@/app/[lang]/dictionaries/dictionaries";
+import { isLocale, DEFAULT_LOCALE } from "@/lib/locale";
 import type {
   TreeMemberData,
   TreeRelationship,
@@ -70,12 +71,14 @@ export default async function PublicTreePage({
 
   const payload = (await response.json()) as {
     tree: { id: string; name: string };
-    ownerLocale: "en" | "ru";
+    ownerLocale: string;
     members: TreeMemberData[];
     relationships: TreeRelationship[];
   };
 
-  const ownerLocale = payload.ownerLocale === "ru" ? "ru" : "en";
+  const ownerLocale = isLocale(payload.ownerLocale)
+    ? payload.ownerLocale
+    : DEFAULT_LOCALE;
   const t = await getDictionary(ownerLocale);
 
   return (

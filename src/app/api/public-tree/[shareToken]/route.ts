@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@/generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { resolvePublicShareToken } from "@/lib/tree-domain/public-share-service";
+import { isLocale, DEFAULT_LOCALE } from "@/lib/locale";
 
 function getPrismaClient() {
   return new PrismaClient({
@@ -40,10 +41,11 @@ export async function GET(
             return null;
           }
 
+          const rawLocale = tree.owner?.locale ?? "";
           return {
             id: tree.id,
             ownerId: tree.ownerId,
-            ownerLocale: tree.owner?.locale === "ru" ? "ru" : "en",
+            ownerLocale: isLocale(rawLocale) ? rawLocale : DEFAULT_LOCALE,
             shareEnabled: tree.shareEnabled,
           };
         },

@@ -1,5 +1,6 @@
 import { createHash } from "crypto";
 import { generateShareToken } from "@/lib/tree-utils";
+import type { Locale } from "@/lib/locale";
 import type { TreeRole } from "./tree-access";
 
 export type PublicShareStatus =
@@ -17,7 +18,7 @@ export async function resolvePublicShareToken(
     findTreeByActiveToken: (token: string) => Promise<{
       id: string;
       ownerId: string;
-      ownerLocale: "en" | "ru";
+      ownerLocale: Locale;
       shareEnabled: boolean;
     } | null>;
     findHistoricalToken: (
@@ -28,7 +29,7 @@ export async function resolvePublicShareToken(
 ): Promise<{
   status: PublicShareStatus;
   treeId?: string;
-  ownerLocale?: "en" | "ru";
+  ownerLocale?: Locale;
 }> {
   const active = await repo.findTreeByActiveToken(token);
   if (active) {
