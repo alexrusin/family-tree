@@ -1,14 +1,36 @@
-import Link from 'next/link'
-import LanguageToggle from './LanguageToggle'
+import Link from "next/link";
+import LanguagePicker from "./LanguagePicker";
+import UserMenu from "./UserMenu";
+import { getCurrentUser } from "@/lib/auth-utils";
 
 interface HeaderProps {
-  lang: string
-  langToggleLabel: string
-  navFamilyTree: string
-  navGallery: string
+  lang: string;
+  langPickerErrors: {
+    ERR_INVALID_LOCALE: string;
+    ERR_UNAUTHORIZED: string;
+    ERR_USER_NOT_FOUND: string;
+    ERR_UPDATE_FAILED: string;
+    ERR_INTERNAL: string;
+    generic: string;
+    [key: string]: string;
+  };
+  navFamilyTree: string;
+  navGallery: string;
+  navSettings: string;
+  logoutLabel: string;
 }
 
-export default function Header({ lang, langToggleLabel, navFamilyTree, navGallery }: HeaderProps) {
+export default async function Header({
+  lang,
+  langPickerErrors,
+  navFamilyTree,
+  navSettings,
+  logoutLabel,
+}: HeaderProps) {
+  const user = await getCurrentUser();
+  const avatarLabel = user?.name?.trim() || user?.email?.trim() || "User";
+  const avatarFallback = avatarLabel.charAt(0).toUpperCase() || "A";
+
   return (
     <header className="bg-[#FAFAF9] flex justify-between items-center w-full px-6 py-3 border-b border-stone-200 shadow-sm shadow-amber-900/5 fixed top-0 z-50">
       <div className="flex items-center gap-8">
@@ -20,27 +42,29 @@ export default function Header({ lang, langToggleLabel, navFamilyTree, navGaller
         </Link>
         <nav className="hidden md:flex gap-1 items-center">
           <Link
-            href="#"
+            href={`/${lang}/dashboard`}
             className="text-amber-900 font-semibold px-3 py-1.5 rounded-lg hover:bg-stone-100 transition-colors active:scale-95 duration-200"
           >
             {navFamilyTree}
-          </Link>
-          <Link
-            href="#"
-            className="text-stone-500 px-3 py-1.5 rounded-lg hover:bg-stone-100 transition-colors active:scale-95 duration-200"
-          >
-            {navGallery}
           </Link>
         </nav>
       </div>
 
       <div className="flex items-center gap-3">
-        <LanguageToggle label={langToggleLabel} currentLang={lang} />
-        {/* Placeholder avatar */}
-        <div className="w-9 h-9 rounded-full bg-amber-100 border-2 border-primary-container flex items-center justify-center text-amber-900 font-semibold text-sm select-none">
-          A
-        </div>
+        <LanguagePicker
+          currentLang={lang}
+          persistLocalePreference={Boolean(user)}
+          errorMessages={langPickerErrors}
+        />
+        <UserMenu
+          lang={lang}
+          navSettings={navSettings}
+          logoutLabel={logoutLabel}
+          avatarLabel={avatarLabel}
+          avatarFallback={avatarFallback}
+          avatarImage={user?.image}
+        />
       </div>
     </header>
-  )
+  );
 }

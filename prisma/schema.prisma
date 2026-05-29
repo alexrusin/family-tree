@@ -14,17 +14,217 @@ datasource db {
 
 enum Locale {
   en
+  es
   ru
 }
 
 model User {
-  id             String   @id @default(uuid()) @db.Uuid
-  email          String   @unique
-  password_hash  String
-  display_name   String
-  avatar_url     String?
-  locale         Locale   @default(en)
-  email_verified Boolean  @default(false)
-  created_at     DateTime @db.Timestamp(6)
-  updated_at     DateTime @db.Timestamp(6)
+  id                 String              @id
+  email              String              @unique
+  name               String
+  image              String?
+  locale             Locale              @default(en)
+  emailVerified      Boolean             @default(false) @map("email_verified")
+  createdAt          DateTime            @map("created_at") @db.Timestamp(6)
+  updatedAt          DateTime            @map("updated_at") @db.Timestamp(6)
+  sessions           Session[]
+  accounts           Account[]
+  pendingEmailChange PendingEmailChange?
+  ownedTrees         FamilyTree[]        @relation(name: "OwnedTrees")
+  collaboratedTrees  Collaborator[]      @relation(name: "CollaboratedTrees")
+}
+
+model Session {
+  id        String   @id
+  expiresAt DateTime @map("expires_at") @db.Timestamp(6)
+  token     String   @unique
+  createdAt DateTime @map("created_at") @db.Timestamp(6)
+  updatedAt DateTime @map("updated_at") @db.Timestamp(6)
+  ipAddress String?  @map("ip_address")
+  userAgent String?  @map("user_agent")
+  userId    String   @map("user_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Account {
+  id                    String    @id
+  accountId             String    @map("account_id")
+  providerId            String    @map("provider_id")
+  userId                String    @map("user_id")
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?   @map("access_token")
+  refreshToken          String?   @map("refresh_token")
+  idToken               String?   @map("id_token")
+  accessTokenExpiresAt  DateTime? @map("access_token_expires_at") @db.Timestamp(6)
+  refreshTokenExpiresAt DateTime? @map("refresh_token_expires_at") @db.Timestamp(6)
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @map("created_at") @db.Timestamp(6)
+  updatedAt             DateTime  @map("updated_at") @db.Timestamp(6)
+}
+
+model Verification {
+  id         String    @id
+  identifier String
+  value      String
+  expiresAt  DateTime  @map("expires_at") @db.Timestamp(6)
+  createdAt  DateTime? @map("created_at") @db.Timestamp(6)
+  updatedAt  DateTime? @map("updated_at") @db.Timestamp(6)
+}
+
+model PendingEmailChange {
+  id        String   @id @default(uuid())
+  userId    String   @unique @map("user_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  newEmail  String   @map("new_email")
+  tokenHash String   @unique @map("token_hash")
+  locale    Locale   @default(en)
+  expiresAt DateTime @map("expires_at") @db.Timestamp(6)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamp(6)
+
+  @@index([newEmail])
+}
+
+enum CollaboratorRole {
+  editor
+  viewer
+}
+
+enum InvitationStatus {
+  pending
+  accepted
+  cancelled
+}
+
+enum RelationshipType {
+  parent
+  spouse
+  sibling
+}
+
+enum DatePrecision {
+  year
+  month
+  day
+}
+
+enum MemberGender {
+  male
+  female
+  other
+  undisclosed
+}
+
+enum PublicShareTokenStatus {
+  regenerated
+}
+
+model FamilyTree {
+  id                   String                    @id @default(uuid())
+  name                 String
+  ownerId              String                    @map("owner_id")
+  owner                User                      @relation(name: "OwnedTrees", fields: [ownerId], references: [id], onDelete: Cascade)
+  shareToken           String                    @unique @map("share_token")
+  shareEnabled         Boolean                   @default(false) @map("share_enabled")
+  memberCount          Int                       @default(0) @map("member_count")
+  createdAt            DateTime                  @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt            DateTime                  @updatedAt @map("updated_at") @db.Timestamp(6)
+  collaborators        Collaborator[]
+  invitations          Invitation[]
+  members              TreeMember[]
+  relationships        Relationship[]
+  publicShareTokenLogs PublicShareTokenHistory[]
+
+  @@index([ownerId])
+}
+
+model PublicShareTokenHistory {
+  id        String                 @id @default(uuid())
+  treeId    String                 @map("tree_id")
+  tree      FamilyTree             @relation(fields: [treeId], references: [id], onDelete: Cascade)
+  tokenHash String                 @unique @map("token_hash")
+  status    PublicShareTokenStatus @default(regenerated)
+  createdAt DateTime               @default(now()) @map("created_at") @db.Timestamp(6)
+
+  @@index([treeId, status])
+}
+
+model Invitation {
+  id           String           @id @default(uuid())
+  treeId       String           @map("tree_id")
+  tree         FamilyTree       @relation(fields: [treeId], references: [id], onDelete: Cascade)
+  invitedEmail String           @map("invited_email")
+  role         CollaboratorRole
+  tokenHash    String           @unique @map("token_hash")
+  message      String?          @db.VarChar(500)
+  locale       Locale           @default(en)
+  status       InvitationStatus @default(pending)
+  expiresAt    DateTime         @map("expires_at") @db.Timestamp(6)
+  acceptedAt   DateTime?        @map("accepted_at") @db.Timestamp(6)
+  cancelledAt  DateTime?        @map("cancelled_at") @db.Timestamp(6)
+  createdAt    DateTime         @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt    DateTime         @updatedAt @map("updated_at") @db.Timestamp(6)
+
+  @@index([treeId, status])
+  @@index([invitedEmail, status])
+}
+
+model Collaborator {
+  id         String           @id @default(uuid())
+  treeId     String           @map("tree_id")
+  tree       FamilyTree       @relation(fields: [treeId], references: [id], onDelete: Cascade)
+  userId     String           @map("user_id")
+  user       User             @relation(name: "CollaboratedTrees", fields: [userId], references: [id], onDelete: Cascade)
+  role       CollaboratorRole
+  invitedAt  DateTime         @default(now()) @map("invited_at") @db.Timestamp(6)
+  acceptedAt DateTime?        @map("accepted_at") @db.Timestamp(6)
+  createdAt  DateTime         @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt  DateTime         @updatedAt @map("updated_at") @db.Timestamp(6)
+
+  @@unique([treeId, userId])
+  @@index([userId])
+  @@index([treeId])
+}
+
+model TreeMember {
+  id                    String         @id @default(uuid())
+  treeId                String         @map("tree_id")
+  tree                  FamilyTree     @relation(fields: [treeId], references: [id], onDelete: Cascade)
+  firstName             String         @map("first_name")
+  lastName              String?        @map("last_name")
+  gender                MemberGender   @default(undisclosed)
+  isLiving              Boolean        @default(false) @map("is_living")
+  bio                   String?        @db.VarChar(1000)
+  photoUrl              String?        @map("photo_url")
+  photoKey              String?        @map("photo_key")
+  birthPrecision        DatePrecision? @map("birth_precision")
+  birthYear             Int?           @map("birth_year")
+  birthMonth            Int?           @map("birth_month")
+  birthDay              Int?           @map("birth_day")
+  deathPrecision        DatePrecision? @map("death_precision")
+  deathYear             Int?           @map("death_year")
+  deathMonth            Int?           @map("death_month")
+  deathDay              Int?           @map("death_day")
+  createdAt             DateTime       @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt             DateTime       @updatedAt @map("updated_at") @db.Timestamp(6)
+  outgoingRelationships Relationship[] @relation("RelationshipFrom")
+  incomingRelationships Relationship[] @relation("RelationshipTo")
+
+  @@index([treeId])
+}
+
+model Relationship {
+  id           String           @id @default(uuid())
+  treeId       String           @map("tree_id")
+  tree         FamilyTree       @relation(fields: [treeId], references: [id], onDelete: Cascade)
+  fromMemberId String           @map("from_member_id")
+  fromMember   TreeMember       @relation("RelationshipFrom", fields: [fromMemberId], references: [id], onDelete: Cascade)
+  toMemberId   String           @map("to_member_id")
+  toMember     TreeMember       @relation("RelationshipTo", fields: [toMemberId], references: [id], onDelete: Cascade)
+  type         RelationshipType
+  createdAt    DateTime         @default(now()) @map("created_at") @db.Timestamp(6)
+
+  @@unique([treeId, fromMemberId, toMemberId, type])
+  @@index([treeId])
 }

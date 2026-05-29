@@ -1,13 +1,16 @@
 import 'server-only'
 
-const dictionaries = {
-  en: () => import('./en.json').then((m) => m.default),
-  ru: () => import('./ru.json').then((m) => m.default),
-}
+import { type Locale, isLocale } from '@/lib/locale'
 
-export type Locale = keyof typeof dictionaries
+const dictionaries: Record<Locale, () => Promise<typeof import('./en.json')>> =
+  {
+    en: () => import('./en.json').then((m) => m.default),
+    es: () => import('./es.json').then((m) => m.default),
+    ru: () => import('./ru.json').then((m) => m.default),
+  }
 
-export const hasLocale = (locale: string): locale is Locale =>
-  locale in dictionaries
+export type { Locale }
+
+export const hasLocale = isLocale
 
 export const getDictionary = async (locale: Locale) => dictionaries[locale]()
