@@ -13,7 +13,9 @@ const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const RESEND_COOLDOWN_MS = 5 * 60 * 1000;
 
 function toLocale(value: unknown): Locale {
-  return value === "ru" ? "ru" : "en";
+  if (value === "es") return "es";
+  if (value === "ru") return "ru";
+  return "en";
 }
 
 function normalizeEmail(value: unknown): string | null {

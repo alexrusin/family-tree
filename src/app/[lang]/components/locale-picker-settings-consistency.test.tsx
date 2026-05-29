@@ -83,7 +83,8 @@ describe("authenticated Language Picker and Language Section consistency", () =>
         />,
       );
 
-      await user.click(screen.getByRole("button", { name: "Español" }));
+      await user.click(screen.getByRole("button", { name: /language/i }));
+      await user.click(screen.getByRole("option", { name: "Español" }));
 
       await waitFor(() => {
         expect(fetchMock).toHaveBeenCalledWith(
@@ -145,7 +146,8 @@ describe("authenticated Language Picker and Language Section consistency", () =>
         />,
       );
 
-      await user.click(screen.getByRole("button", { name: "Español" }));
+      await user.click(screen.getByRole("button", { name: /language/i }));
+      await user.click(screen.getByRole("option", { name: "Español" }));
 
       await waitFor(() => {
         expect(pushMock).toHaveBeenCalledWith("/es/dashboard");
@@ -202,7 +204,8 @@ describe("authenticated Language Picker and Language Section consistency", () =>
         />,
       );
 
-      await user.click(screen.getByRole("button", { name: "Español" }));
+      await user.click(screen.getByRole("button", { name: /language/i }));
+      await user.click(screen.getByRole("option", { name: "Español" }));
 
       expect(await screen.findByRole("alert")).not.toBeNull();
       expect(pushMock).not.toHaveBeenCalled();
@@ -249,7 +252,8 @@ describe("authenticated Language Picker and Language Section consistency", () =>
       const user = userEvent.setup();
       render(<LanguagePicker currentLang="en" />);
 
-      await user.click(screen.getByRole("button", { name: "Español" }));
+      await user.click(screen.getByRole("button", { name: /language/i }));
+      await user.click(screen.getByRole("option", { name: "Español" }));
 
       expect(pushMock).toHaveBeenCalledWith("/es/dashboard");
       expect(fetchMock).not.toHaveBeenCalled();

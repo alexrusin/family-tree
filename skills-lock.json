@@ -19,6 +19,12 @@
       "skillPath": "skills/productivity/handoff/SKILL.md",
       "computedHash": "3fdffd9dce6fc3e9f9f756ba79d694c5f162e11c7e7fbc72a0958f204312e0b1"
     },
+    "review": {
+      "source": "mattpocock/skills",
+      "sourceType": "github",
+      "skillPath": "skills/in-progress/review/SKILL.md",
+      "computedHash": "fc4ca8a9495e93692282bebeb3bc99a6d46e27e2fccf4730001df98451b72f80"
+    },
     "tdd": {
       "source": "mattpocock/skills",
       "sourceType": "github",

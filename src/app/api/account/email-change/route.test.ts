@@ -239,6 +239,60 @@ describe("/api/account/email-change", () => {
     });
   });
 
+  it("uses spanish locale for pending email change emails", async () => {
+    prismaClientMock.user.findUnique.mockImplementation(
+      async (args: { where: { id?: string; email?: string } }) => {
+        if (args.where.id) {
+          return {
+            id: "u1",
+            email: "alex@example.com",
+            locale: "es",
+          };
+        }
+
+        return null;
+      },
+    );
+
+    const request = new NextRequest(
+      "http://localhost/api/account/email-change",
+      {
+        method: "POST",
+        body: JSON.stringify({ email: "new@example.com" }),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      },
+    );
+
+    const response = await POST(request);
+
+    expect(response.status).toBe(200);
+    expect(prismaClientMock.pendingEmailChange.upsert).toHaveBeenCalledWith({
+      where: { userId: "u1" },
+      create: {
+        userId: "u1",
+        newEmail: "new@example.com",
+        tokenHash: "hashed-token",
+        locale: "es",
+        expiresAt: new Date("2026-05-21T00:00:00.000Z"),
+      },
+      update: {
+        newEmail: "new@example.com",
+        tokenHash: "hashed-token",
+        locale: "es",
+        expiresAt: new Date("2026-05-21T00:00:00.000Z"),
+      },
+    });
+
+    expect(sendPendingEmailChangeEmailMock).toHaveBeenCalledWith({
+      locale: "es",
+      verifyUrl: "http://localhost:3000/es/verify-email-change/raw-token",
+      nextEmail: "new@example.com",
+      to: "new@example.com",
+    });
+  });
+
   it("returns 429 when resend is within 5-minute cooldown", async () => {
     prismaClientMock.pendingEmailChange.findUnique.mockResolvedValue({
       id: "pec1",

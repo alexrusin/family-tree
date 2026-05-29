@@ -114,11 +114,6 @@ export default function ForgotPasswordClient({
         <div className="w-full max-w-md mx-auto">
           <div className="bg-surface-container-lowest p-8 md:p-10 rounded-xl shadow-xl border border-outline-variant/40">
             <div className="mb-8">
-              <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-primary-fixed mb-4 text-primary">
-                <span className="material-symbols-outlined" aria-hidden="true">
-                  lock_reset
-                </span>
-              </div>
               <h1 className="text-headline-lg text-primary mb-2">{t.title}</h1>
               <p className="text-on-surface-variant">{t.body}</p>
             </div>
