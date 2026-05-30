@@ -53,7 +53,14 @@ describe("GET /api/public-tree/[shareToken]", () => {
       owner: { locale: "ru" },
     });
     prismaMock.treeMember.findMany.mockResolvedValue([
-      { id: "m1", isLiving: true, birthYear: 1984 },
+      {
+        id: "m1",
+        treeId: "t1",
+        isLiving: true,
+        birthYear: 1984,
+        photoKey: "trees/t1/members/m1.webp",
+        photoUrl: "trees/t1/members/m1.webp",
+      },
     ]);
     prismaMock.relationship.findMany.mockResolvedValue([]);
 
@@ -72,6 +79,7 @@ describe("GET /api/public-tree/[shareToken]", () => {
     expect(response.headers.get("Cache-Control")).toBe("no-store");
     const body = await response.json();
     expect(body.members[0].birthYear).toBeNull();
+    expect(body.members[0].photoUrl).toBe("/api/trees/t1/members/m1/photo");
   });
 
   it("returns es ownerLocale when owner locale is Spanish", async () => {

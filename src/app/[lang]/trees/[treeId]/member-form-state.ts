@@ -26,7 +26,7 @@ export function initialMemberFormState(): MemberFormState {
     lastName: "",
     gender: "undisclosed",
     bio: "",
-    isLiving: false,
+    isLiving: true,
     birthPrecision: "year",
     birthYear: "",
     birthMonth: "",

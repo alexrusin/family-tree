@@ -65,7 +65,7 @@ vi.mock("@/lib/tree-domain/photo-upload", () => ({
   ),
 }));
 
-const { POST } = await import("./route");
+const { GET, POST } = await import("./route");
 
 function makeFormData(fields: Record<string, string>): FormData {
   const fd = new FormData();
@@ -198,5 +198,94 @@ describe("POST /api/trees/[treeId]/members", () => {
     });
     expect(prismaClientMock.treeMember.create).not.toHaveBeenCalled();
     expect(prismaClientMock.familyTree.update).not.toHaveBeenCalled();
+  });
+
+  it("maps member photos to the proxy URL when listing members", async () => {
+    prismaClientMock.treeMember.findMany.mockResolvedValue([
+      {
+        id: "m1",
+        treeId: "t1",
+        firstName: "Elena",
+        isLiving: false,
+        photoKey: "trees/t1/members/uuid.webp",
+        photoUrl: "trees/t1/members/uuid.webp",
+      },
+      {
+        id: "m2",
+        treeId: "t1",
+        firstName: "Alex",
+        isLiving: true,
+        photoKey: null,
+        photoUrl: "https://legacy.example.com/member.webp",
+      },
+    ]);
+
+    const request = new NextRequest("http://localhost/api/trees/t1/members", {
+      method: "GET",
+    });
+
+    const response = await GET(request, {
+      params: Promise.resolve({ treeId: "t1" }),
+    });
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({
+      members: [
+        {
+          id: "m1",
+          treeId: "t1",
+          firstName: "Elena",
+          isLiving: false,
+          photoKey: "trees/t1/members/uuid.webp",
+          photoUrl: "/api/trees/t1/members/m1/photo",
+        },
+        {
+          id: "m2",
+          treeId: "t1",
+          firstName: "Alex",
+          isLiving: true,
+          photoKey: null,
+          photoUrl: "https://legacy.example.com/member.webp",
+        },
+      ],
+    });
+  });
+
+  it("returns the proxy URL after creating a member with a photo", async () => {
+    const photoFormData = makeFormData({ firstName: "Elena", isLiving: "false" });
+    photoFormData.append(
+      "photo",
+      new File(["avatar"], "avatar.png", { type: "image/png" }),
+    );
+
+    prismaClientMock.treeMember.create.mockResolvedValueOnce({
+      id: "m1",
+      treeId: "t1",
+      firstName: "Elena",
+      isLiving: false,
+      photoKey: "trees/t1/members/uuid.webp",
+      photoUrl: "trees/t1/members/uuid.webp",
+    });
+
+    const request = new NextRequest("http://localhost/api/trees/t1/members", {
+      method: "POST",
+      body: photoFormData,
+    });
+
+    const response = await POST(request, {
+      params: Promise.resolve({ treeId: "t1" }),
+    });
+
+    expect(response.status).toBe(201);
+    await expect(response.json()).resolves.toEqual({
+      member: {
+        id: "m1",
+        treeId: "t1",
+        firstName: "Elena",
+        isLiving: false,
+        photoKey: "trees/t1/members/uuid.webp",
+        photoUrl: "/api/trees/t1/members/m1/photo",
+      },
+    });
   });
 });

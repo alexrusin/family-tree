@@ -162,7 +162,8 @@ const translations = {
     update: "Save Changes",
     closeModal: "Close modal",
     currentPhotoAlt: "Current photo",
-    photoEditingSoon: "Photo editing coming soon.",
+    addPhoto: "Add Photo",
+    updatePhoto: "Update Photo",
   },
   relationship: {
     addTitle: "Add Relationship",

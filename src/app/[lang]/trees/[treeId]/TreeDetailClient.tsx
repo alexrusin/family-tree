@@ -64,7 +64,8 @@ interface MemberSubT {
   update: string;
   closeModal: string;
   currentPhotoAlt: string;
-  photoEditingSoon: string;
+  addPhoto: string;
+  updatePhoto: string;
 }
 interface RelationshipSubT {
   addTitle: string;

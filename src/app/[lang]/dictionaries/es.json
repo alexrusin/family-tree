@@ -291,7 +291,8 @@
       "update": "Guardar cambios",
       "closeModal": "Cerrar modal",
       "currentPhotoAlt": "Foto actual",
-      "photoEditingSoon": "Edición de fotos disponible próximamente."
+      "addPhoto": "Agregar foto",
+      "updatePhoto": "Actualizar foto"
     },
     "relationship": {
       "addTitle": "Agregar relación",

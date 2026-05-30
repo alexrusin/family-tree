@@ -291,7 +291,8 @@
       "update": "Сохранить изменения",
       "closeModal": "Закрыть модальное окно",
       "currentPhotoAlt": "Текущее фото",
-      "photoEditingSoon": "Редактирование фото скоро появится."
+      "addPhoto": "Добавить фото",
+      "updatePhoto": "Обновить фото"
     },
     "relationship": {
       "addTitle": "Добавить связь",

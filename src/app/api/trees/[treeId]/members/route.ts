@@ -19,6 +19,7 @@ import {
   generatePhotoKey,
   photoPublicUrl,
 } from "@/lib/tree-domain/photo-upload";
+import { resolveTreeMemberPhotoUrl } from "@/lib/tree-domain/member-photo";
 
 const VALID_GENDERS = new Set<MemberGenderValue>([
   "male",
@@ -38,6 +39,25 @@ function getPrismaClient() {
   return new PrismaClient({
     adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }),
   });
+}
+
+function toResponseMember<
+  T extends {
+    id: string;
+    treeId: string;
+    photoKey: string | null;
+    photoUrl: string | null;
+  },
+>(member: T): T {
+  return {
+    ...member,
+    photoUrl: resolveTreeMemberPhotoUrl({
+      treeId: member.treeId,
+      memberId: member.id,
+      photoKey: member.photoKey,
+      storedPhotoUrl: member.photoUrl,
+    }),
+  };
 }
 
 export async function GET(
@@ -69,7 +89,10 @@ export async function GET(
       orderBy: { createdAt: "asc" },
     });
 
-    return NextResponse.json({ members }, { status: 200 });
+    return NextResponse.json(
+      { members: members.map((member) => toResponseMember(member)) },
+      { status: 200 },
+    );
   } catch (error) {
     console.error("Error listing tree members:", error);
     return NextResponse.json({ errorCode: "ERR_INTERNAL" }, { status: 500 });
@@ -201,7 +224,10 @@ export async function POST(
       return created;
     });
 
-    return NextResponse.json({ member }, { status: 201 });
+    return NextResponse.json(
+      { member: toResponseMember(member) },
+      { status: 201 },
+    );
   } catch (error) {
     if (error instanceof Error) {
       if (error.message === "ERR_FORBIDDEN") {
