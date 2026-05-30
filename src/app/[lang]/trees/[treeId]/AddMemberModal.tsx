@@ -213,8 +213,8 @@ export default function AddMemberModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-amber-900/10 backdrop-blur-sm px-4">
-      <div className="w-full max-w-2xl bg-white rounded-xl shadow-xl border border-stone-100 overflow-hidden max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-amber-900/10 px-4 pt-20 pb-4 backdrop-blur-sm sm:items-center sm:py-4">
+      <div className="w-full max-w-2xl bg-white rounded-xl shadow-xl border border-stone-100 overflow-hidden max-h-[calc(100vh-6rem)] overflow-y-auto sm:max-h-[90vh]">
         <div className="flex items-center justify-between px-6 py-4 border-b border-stone-100">
           <div>
             <h2 className="text-xl font-semibold text-stone-900">

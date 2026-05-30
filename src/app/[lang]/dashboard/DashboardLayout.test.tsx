@@ -65,7 +65,7 @@ describe("DashboardLayout", () => {
     cleanup();
   });
 
-  it("shows the verification welcome and opens the first-tree flow for new users", () => {
+  it("shows the verification welcome and invites new users without auto-opening the modal", () => {
     useSearchParamsMock.mockReturnValue(
       new URLSearchParams("emailVerified=1&welcome=create-tree"),
     );
@@ -89,7 +89,7 @@ describe("DashboardLayout", () => {
       screen.getAllByRole("button", { name: "Create New Tree" }).length,
     ).toBeGreaterThan(0);
     expect(screen.getByTestId("dashboard-client").textContent).toContain(
-      "modal:true",
+      "modal:false",
     );
   });
 

@@ -8,6 +8,7 @@ import { authClient } from "@/lib/auth-client";
 interface UserMenuProps {
   lang: string;
   navSettings: string;
+  navFamilyTree: string;
   logoutLabel: string;
   avatarLabel: string;
   avatarFallback: string;
@@ -16,6 +17,7 @@ interface UserMenuProps {
 
 export default function UserMenu({
   lang,
+  navFamilyTree,
   navSettings,
   logoutLabel,
   avatarLabel,
@@ -98,6 +100,14 @@ export default function UserMenu({
           className="absolute right-0 mt-2 min-w-40 rounded-xl border border-stone-200 bg-white shadow-lg shadow-amber-900/10 py-1 z-50"
         >
           <Link
+            href={`/${lang}/dashboard`}
+            role="menuitem"
+            onClick={() => setIsOpen(false)}
+            className="block w-full px-4 py-2 text-left text-sm text-stone-700 hover:bg-stone-100 transition-colors"
+          >
+            {navFamilyTree}
+          </Link>
+          <Link
             href={`/${lang}/settings/account`}
             role="menuitem"
             onClick={() => setIsOpen(false)}
@@ -110,7 +120,7 @@ export default function UserMenu({
             role="menuitem"
             onClick={onLogout}
             disabled={isSigningOut}
-            className="block w-full px-4 py-2 text-left text-sm text-stone-700 hover:bg-stone-100 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+            className="block w-full px-4 py-2 text-left text-sm text-stone-700 hover:bg-stone-100 transition-colors disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
           >
             {logoutLabel}
           </button>

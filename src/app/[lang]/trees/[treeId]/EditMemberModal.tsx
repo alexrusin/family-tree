@@ -3,7 +3,11 @@
 
 import { useEffect, useRef, useState } from "react";
 import { X } from "lucide-react";
-import { type MemberFormState, type BirthPrecision } from "./member-form-state";
+import {
+  type MemberFormState,
+  type BirthPrecision,
+  validateMemberPhotoSelection,
+} from "./member-form-state";
 import MemberDateSection from "./MemberDateSection";
 import type { TreeMemberData } from "@/lib/tree-domain/tree-layout";
 
@@ -30,15 +34,19 @@ interface EditMemberT {
   yearLabel: string;
   monthLabel: string;
   dayLabel: string;
+  profilePhoto: string;
   isLiving: string;
   update: string;
   closeModal: string;
   currentPhotoAlt: string;
-  photoEditingSoon: string;
+  addPhoto: string;
+  updatePhoto: string;
   cancel: string;
   saving: string;
   errors: {
     ERR_FIRST_NAME_REQUIRED: string;
+    ERR_IMAGE_TOO_LARGE: string;
+    ERR_UNSUPPORTED_IMAGE_TYPE: string;
     ERR_FORBIDDEN: string;
     ERR_DEATH_BEFORE_BIRTH: string;
     ERR_INVALID_PARTIAL_DATE: string;
@@ -90,8 +98,10 @@ export default function EditMemberModal({
   const [formState, setFormState] = useState<MemberFormState>(() =>
     memberToFormState(member),
   );
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [photoError, setPhotoError] = useState<string | null>(null);
   const firstNameRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -104,6 +114,29 @@ export default function EditMemberModal({
     onClose();
   };
 
+  const handlePhotoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) {
+      setSelectedFile(null);
+      setPhotoError(null);
+      return;
+    }
+
+    const validationError = validateMemberPhotoSelection({
+      sizeBytes: file.size,
+      contentType: file.type,
+    });
+
+    if (validationError) {
+      setSelectedFile(null);
+      setPhotoError(validationError);
+      return;
+    }
+
+    setSelectedFile(file);
+    setPhotoError(null);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -111,45 +144,54 @@ export default function EditMemberModal({
       setError(t.errors.ERR_FIRST_NAME_REQUIRED);
       return;
     }
+    if (photoError) {
+      setError(mapError(photoError, t.errors));
+      return;
+    }
     setIsLoading(true);
     try {
-      const body: Record<string, unknown> = {
-        firstName: formState.firstName.trim(),
-        lastName: formState.lastName.trim() || null,
-        gender: formState.gender,
-        bio: formState.bio.trim() || null,
-        isLiving: formState.isLiving,
-      };
+      const body = new FormData();
+      body.append("firstName", formState.firstName.trim());
+      body.append("lastName", formState.lastName.trim());
+      body.append("gender", formState.gender);
+      body.append("bio", formState.bio.trim());
+      body.append("isLiving", String(formState.isLiving));
       if (formState.birthYear.trim()) {
-        body.birthPrecision = formState.birthPrecision;
-        body.birthYear = parseInt(formState.birthYear);
-        if (formState.birthPrecision !== "year" && formState.birthMonth.trim())
-          body.birthMonth = parseInt(formState.birthMonth);
-        if (formState.birthPrecision === "day" && formState.birthDay.trim())
-          body.birthDay = parseInt(formState.birthDay);
+        body.append("birthPrecision", formState.birthPrecision);
+        body.append("birthYear", formState.birthYear.trim());
+        if (formState.birthPrecision !== "year" && formState.birthMonth.trim()) {
+          body.append("birthMonth", formState.birthMonth.trim());
+        }
+        if (formState.birthPrecision === "day" && formState.birthDay.trim()) {
+          body.append("birthDay", formState.birthDay.trim());
+        }
       } else {
-        body.birthPrecision = null;
-        body.birthYear = null;
-        body.birthMonth = null;
-        body.birthDay = null;
+        body.append("birthPrecision", "");
+        body.append("birthYear", "");
+        body.append("birthMonth", "");
+        body.append("birthDay", "");
       }
       if (!formState.isLiving && formState.deathYear.trim()) {
-        body.deathPrecision = formState.deathPrecision;
-        body.deathYear = parseInt(formState.deathYear);
-        if (formState.deathPrecision !== "year" && formState.deathMonth.trim())
-          body.deathMonth = parseInt(formState.deathMonth);
-        if (formState.deathPrecision === "day" && formState.deathDay.trim())
-          body.deathDay = parseInt(formState.deathDay);
+        body.append("deathPrecision", formState.deathPrecision);
+        body.append("deathYear", formState.deathYear.trim());
+        if (formState.deathPrecision !== "year" && formState.deathMonth.trim()) {
+          body.append("deathMonth", formState.deathMonth.trim());
+        }
+        if (formState.deathPrecision === "day" && formState.deathDay.trim()) {
+          body.append("deathDay", formState.deathDay.trim());
+        }
       } else {
-        body.deathPrecision = null;
-        body.deathYear = null;
-        body.deathMonth = null;
-        body.deathDay = null;
+        body.append("deathPrecision", "");
+        body.append("deathYear", "");
+        body.append("deathMonth", "");
+        body.append("deathDay", "");
+      }
+      if (selectedFile) {
+        body.append("photo", selectedFile);
       }
       const res = await fetch(`/api/trees/${treeId}/members/${member.id}`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
+        body,
       });
       if (!res.ok) {
         const data = (await res.json().catch(() => null)) as {
@@ -169,8 +211,8 @@ export default function EditMemberModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-amber-900/10 backdrop-blur-sm px-4">
-      <div className="w-full max-w-2xl bg-white rounded-xl shadow-xl border border-stone-100 overflow-hidden max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-amber-900/10 px-4 pt-20 pb-4 backdrop-blur-sm sm:items-center sm:py-4">
+      <div className="w-full max-w-2xl bg-white rounded-xl shadow-xl border border-stone-100 overflow-hidden max-h-[calc(100vh-6rem)] overflow-y-auto sm:max-h-[90vh]">
         <div className="flex items-center justify-between px-6 py-4 border-b border-stone-100">
           <div>
             <h2 className="text-xl font-semibold text-stone-900">
@@ -187,15 +229,19 @@ export default function EditMemberModal({
           </button>
         </div>
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
-          {member.photoUrl && (
+          {(member.photoUrl || selectedFile) && (
             <div className="flex items-center gap-3">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={member.photoUrl}
-                alt={t.currentPhotoAlt}
-                className="w-12 h-12 rounded-full object-cover border-2 border-stone-200"
-              />
-              <p className="text-sm text-stone-500">{t.photoEditingSoon}</p>
+              {member.photoUrl && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={member.photoUrl}
+                  alt={t.currentPhotoAlt}
+                  className="w-12 h-12 rounded-full object-cover border-2 border-stone-200"
+                />
+              )}
+              {selectedFile && (
+                <p className="text-sm text-stone-500">{selectedFile.name}</p>
+              )}
             </div>
           )}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -268,6 +314,28 @@ export default function EditMemberModal({
                 {t.isLiving}
               </label>
             </div>
+          </div>
+          <div>
+            <label
+              htmlFor="editMemberPhoto"
+              className="block text-sm font-semibold text-stone-900 mb-2"
+            >
+              {member.photoUrl ? t.updatePhoto : t.addPhoto}
+            </label>
+            <p className="text-sm text-stone-500 mb-2">{t.profilePhoto}</p>
+            <input
+              id="editMemberPhoto"
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              onChange={handlePhotoChange}
+              className="block w-full text-sm text-stone-600 file:mr-4 file:py-2 file:px-3 file:rounded-lg file:border-0 file:bg-stone-100 file:text-stone-700 hover:file:bg-stone-200"
+              disabled={isLoading}
+            />
+            {photoError && (
+              <p className="mt-2 text-sm text-red-600">
+                {mapError(photoError, t.errors)}
+              </p>
+            )}
           </div>
           <div>
             <label className="block text-sm font-semibold text-stone-900 mb-2">

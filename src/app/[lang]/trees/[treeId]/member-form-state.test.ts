@@ -5,8 +5,8 @@ import {
 } from "./member-form-state";
 
 describe("member form state", () => {
-  it("defaults isLiving to false", () => {
-    expect(initialMemberFormState().isLiving).toBe(false);
+  it("defaults isLiving to true", () => {
+    expect(initialMemberFormState().isLiving).toBe(true);
   });
 
   it("rejects files over 5mb", () => {

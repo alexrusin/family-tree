@@ -23,18 +23,18 @@ export interface CreateMemberInput {
   photoUrl?: string | null;
 }
 
-export async function createMember(params: {
+export async function createMember<TCreated extends { id: string }>(params: {
   repo: {
     getRole: (treeId: string, userId: string) => Promise<TreeRole>;
     getTreeMemberCount: (treeId: string) => Promise<number>;
     createMemberRecord: (
       args: { treeId: string } & CreateMemberInput,
-    ) => Promise<{ id: string }>;
+    ) => Promise<TCreated>;
   };
   actorUserId: string;
   treeId: string;
   input: CreateMemberInput;
-}): Promise<{ id: string }> {
+}): Promise<TCreated> {
   const role = await params.repo.getRole(params.treeId, params.actorUserId);
   if (!canEditMembers(role)) {
     throw new Error("ERR_FORBIDDEN");

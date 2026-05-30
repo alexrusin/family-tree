@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@/generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { resolvePublicShareToken } from "@/lib/tree-domain/public-share-service";
+import { resolveTreeMemberPhotoUrl } from "@/lib/tree-domain/member-photo";
 import { isLocale, DEFAULT_LOCALE } from "@/lib/locale";
 
 function getPrismaClient() {
@@ -71,28 +72,41 @@ export async function GET(
       );
     }
 
+    const treeId = state.treeId!;
+    const ownerLocale = state.ownerLocale!;
+
     const [tree, members, relationships] = await Promise.all([
       prisma.familyTree.findUnique({
-        where: { id: state.treeId },
+        where: { id: treeId },
         select: { id: true, name: true },
       }),
       prisma.treeMember.findMany({
-        where: { treeId: state.treeId },
+        where: { treeId },
         orderBy: { createdAt: "asc" },
       }),
       prisma.relationship.findMany({
-        where: { treeId: state.treeId },
+        where: { treeId },
         orderBy: { createdAt: "asc" },
       }),
     ]);
 
     const publicMembers = members.map((member) => {
+      const baseMember = {
+        ...member,
+        photoUrl: resolveTreeMemberPhotoUrl({
+          treeId,
+          memberId: member.id,
+          photoKey: member.photoKey,
+          storedPhotoUrl: member.photoUrl,
+        }),
+      };
+
       if (!member.isLiving) {
-        return member;
+        return baseMember;
       }
 
       return {
-        ...member,
+        ...baseMember,
         birthYear: null,
       };
     });
@@ -101,10 +115,10 @@ export async function GET(
       NextResponse.json(
         {
           tree: {
-            id: tree?.id ?? state.treeId,
+            id: tree?.id ?? treeId,
             name: tree?.name ?? "Family Tree",
           },
-          ownerLocale: state.ownerLocale,
+          ownerLocale,
           members: publicMembers,
           relationships,
         },

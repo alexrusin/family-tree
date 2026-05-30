@@ -59,9 +59,7 @@ export default function DashboardLayout({
     searchParams.get(DASHBOARD_WELCOME_PARAM) ===
       DASHBOARD_WELCOME_CREATE_TREE &&
     myTrees.length === 0;
-  const [createModalOpen, setCreateModalOpen] = useState(() =>
-    shouldInviteFirstTree,
-  );
+  const [createModalOpen, setCreateModalOpen] = useState(false);
 
   return (
     <div className="pt-24 pb-20 px-6">

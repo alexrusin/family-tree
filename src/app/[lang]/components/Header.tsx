@@ -58,6 +58,7 @@ export default async function Header({
         />
         <UserMenu
           lang={lang}
+          navFamilyTree={navFamilyTree}
           navSettings={navSettings}
           logoutLabel={logoutLabel}
           avatarLabel={avatarLabel}

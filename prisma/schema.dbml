@@ -1,0 +1,224 @@
+Project family_tree {
+  database_type: "PostgreSQL"
+  Note: "Derived from prisma/schema.prisma and prisma/migrations through 20260528000000_add_es_to_locale_enum."
+}
+
+Enum Locale {
+  en
+  es
+  ru
+}
+
+Enum CollaboratorRole {
+  editor
+  viewer
+}
+
+Enum InvitationStatus {
+  pending
+  accepted
+  cancelled
+}
+
+Enum RelationshipType {
+  parent
+  spouse
+  sibling
+}
+
+Enum DatePrecision {
+  year
+  month
+  day
+}
+
+Enum MemberGender {
+  male
+  female
+  other
+  undisclosed
+}
+
+Enum PublicShareTokenStatus {
+  regenerated
+}
+
+Table User {
+  id text [pk, not null]
+  email text [not null, unique]
+  name text [not null]
+  image text
+  locale Locale [not null, default: 'en']
+  email_verified boolean [not null, default: false]
+  created_at timestamp [not null]
+  updated_at timestamp [not null]
+}
+
+Table Session {
+  id text [pk, not null]
+  expires_at timestamp [not null]
+  token text [not null, unique]
+  created_at timestamp [not null]
+  updated_at timestamp [not null]
+  ip_address text
+  user_agent text
+  user_id text [not null]
+}
+
+Table Account {
+  id text [pk, not null]
+  account_id text [not null]
+  provider_id text [not null]
+  user_id text [not null]
+  access_token text
+  refresh_token text
+  id_token text
+  access_token_expires_at timestamp
+  refresh_token_expires_at timestamp
+  scope text
+  password text
+  created_at timestamp [not null]
+  updated_at timestamp [not null]
+}
+
+Table Verification {
+  id text [pk, not null]
+  identifier text [not null]
+  value text [not null]
+  expires_at timestamp [not null]
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table PendingEmailChange {
+  id text [pk, not null]
+  user_id text [not null, unique]
+  new_email text [not null]
+  token_hash text [not null, unique]
+  locale Locale [not null, default: 'en']
+  expires_at timestamp [not null]
+  created_at timestamp [not null, default: `CURRENT_TIMESTAMP`]
+  updated_at timestamp [not null]
+
+  Indexes {
+    new_email [name: "PendingEmailChange_new_email_idx"]
+  }
+}
+
+Table FamilyTree {
+  id text [pk, not null]
+  name text [not null]
+  owner_id text [not null]
+  share_token text [not null, unique]
+  share_enabled boolean [not null, default: false]
+  member_count integer [not null, default: 0]
+  created_at timestamp [not null, default: `CURRENT_TIMESTAMP`]
+  updated_at timestamp [not null]
+
+  Indexes {
+    owner_id [name: "FamilyTree_owner_id_idx"]
+  }
+}
+
+Table PublicShareTokenHistory {
+  id text [pk, not null]
+  tree_id text [not null]
+  token_hash text [not null, unique]
+  status PublicShareTokenStatus [not null, default: 'regenerated']
+  created_at timestamp [not null, default: `CURRENT_TIMESTAMP`]
+
+  Indexes {
+    (tree_id, status) [name: "PublicShareTokenHistory_tree_id_status_idx"]
+  }
+}
+
+Table Invitation {
+  id text [pk, not null]
+  tree_id text [not null]
+  invited_email text [not null]
+  role CollaboratorRole [not null]
+  token_hash text [not null, unique]
+  message varchar(500)
+  locale Locale [not null, default: 'en']
+  status InvitationStatus [not null, default: 'pending']
+  expires_at timestamp [not null]
+  accepted_at timestamp
+  cancelled_at timestamp
+  created_at timestamp [not null, default: `CURRENT_TIMESTAMP`]
+  updated_at timestamp [not null]
+
+  Indexes {
+    (tree_id, status) [name: "Invitation_tree_id_status_idx"]
+    (invited_email, status) [name: "Invitation_invited_email_status_idx"]
+  }
+}
+
+Table Collaborator {
+  id text [pk, not null]
+  tree_id text [not null]
+  user_id text [not null]
+  role CollaboratorRole [not null]
+  invited_at timestamp [not null, default: `CURRENT_TIMESTAMP`]
+  accepted_at timestamp
+  created_at timestamp [not null, default: `CURRENT_TIMESTAMP`]
+  updated_at timestamp [not null]
+
+  Indexes {
+    user_id [name: "Collaborator_user_id_idx"]
+    tree_id [name: "Collaborator_tree_id_idx"]
+    (tree_id, user_id) [unique, name: "Collaborator_tree_id_user_id_key"]
+  }
+}
+
+Table TreeMember {
+  id text [pk, not null]
+  tree_id text [not null]
+  first_name text [not null]
+  last_name text
+  gender MemberGender [not null, default: 'undisclosed']
+  is_living boolean [not null, default: false]
+  bio varchar(1000)
+  photo_url text
+  photo_key text
+  birth_precision DatePrecision
+  birth_year integer
+  birth_month integer
+  birth_day integer
+  death_precision DatePrecision
+  death_year integer
+  death_month integer
+  death_day integer
+  created_at timestamp [not null, default: `CURRENT_TIMESTAMP`]
+  updated_at timestamp [not null]
+
+  Indexes {
+    tree_id [name: "TreeMember_tree_id_idx"]
+  }
+}
+
+Table Relationship {
+  id text [pk, not null]
+  tree_id text [not null]
+  from_member_id text [not null]
+  to_member_id text [not null]
+  type RelationshipType [not null]
+  created_at timestamp [not null, default: `CURRENT_TIMESTAMP`]
+
+  Indexes {
+    tree_id [name: "Relationship_tree_id_idx"]
+    (tree_id, from_member_id, to_member_id, type) [unique, name: "Relationship_tree_id_from_member_id_to_member_id_type_key"]
+  }
+}
+
+Ref: Session.user_id > User.id [delete: cascade, update: cascade]
+Ref: Account.user_id > User.id [delete: cascade, update: cascade]
+Ref: PendingEmailChange.user_id > User.id [delete: cascade, update: cascade]
+Ref: FamilyTree.owner_id > User.id [delete: cascade, update: cascade]
+Ref: PublicShareTokenHistory.tree_id > FamilyTree.id [delete: cascade, update: cascade]
+Ref: Invitation.tree_id > FamilyTree.id [delete: cascade, update: cascade]
+Ref: Collaborator.tree_id > FamilyTree.id [delete: cascade, update: cascade]
+Ref: Collaborator.user_id > User.id [delete: cascade, update: cascade]
+Ref: TreeMember.tree_id > FamilyTree.id [delete: cascade, update: cascade]
+Ref: Relationship.tree_id > FamilyTree.id [delete: cascade, update: cascade]
+Ref: Relationship.from_member_id > TreeMember.id [delete: cascade, update: cascade]
+Ref: Relationship.to_member_id > TreeMember.id [delete: cascade, update: cascade]
