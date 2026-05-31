@@ -117,7 +117,6 @@ export default async function DashboardPage({
             emptyBody: t.dashboard.emptyBody,
             emailVerifiedTitle: t.dashboard.emailVerifiedTitle,
             emailVerifiedBody: t.dashboard.emailVerifiedBody,
-            createFirstTreePrompt: t.dashboard.createFirstTreePrompt,
             cardMenuRename: t.dashboard.cardMenuRename,
             cardMenuDelete: t.dashboard.cardMenuDelete,
           }}

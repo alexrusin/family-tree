@@ -1,4 +1,5 @@
 import { headers } from "next/headers";
+import { unstable_rethrow } from "next/navigation";
 import { auth } from "./auth";
 
 /**
@@ -15,6 +16,7 @@ export async function getCurrentUser() {
     });
     return session?.user || null;
   } catch (error) {
+    unstable_rethrow(error);
     console.error("Failed to get current user:", error);
     return null;
   }

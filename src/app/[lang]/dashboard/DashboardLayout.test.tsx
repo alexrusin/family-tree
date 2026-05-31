@@ -65,7 +65,7 @@ describe("DashboardLayout", () => {
     cleanup();
   });
 
-  it("shows the verification welcome and invites new users without auto-opening the modal", () => {
+  it("shows the email verified message after verification without opening the modal", () => {
     useSearchParamsMock.mockReturnValue(
       new URLSearchParams("emailVerified=1&welcome=create-tree"),
     );
@@ -79,21 +79,17 @@ describe("DashboardLayout", () => {
       />,
     );
 
+    expect(screen.getByText("Email verified successfully")).not.toBeNull();
+    expect(screen.getByText("Your account is ready.")).not.toBeNull();
     expect(
-      screen.getByText("Email verified successfully"),
-    ).not.toBeNull();
-    expect(
-      screen.getByText("Create your first family tree to get started."),
-    ).not.toBeNull();
-    expect(
-      screen.getAllByRole("button", { name: "Create New Tree" }).length,
-    ).toBeGreaterThan(0);
+      screen.queryByText("Create your first family tree to get started."),
+    ).toBeNull();
     expect(screen.getByTestId("dashboard-client").textContent).toContain(
       "modal:false",
     );
   });
 
-  it("shows success feedback without auto-opening the modal when the user already owns a tree", () => {
+  it("shows the email verified message even when the user already owns a tree", () => {
     useSearchParamsMock.mockReturnValue(
       new URLSearchParams("emailVerified=1&welcome=create-tree"),
     );
@@ -117,6 +113,7 @@ describe("DashboardLayout", () => {
     );
 
     expect(screen.getByText("Email verified successfully")).not.toBeNull();
+    expect(screen.getByText("Your account is ready.")).not.toBeNull();
     expect(
       screen.queryByText("Create your first family tree to get started."),
     ).toBeNull();
