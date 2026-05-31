@@ -20,6 +20,14 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
+## Docker deployment
+
+1. Copy `.env.example` to `.env`.
+2. Set `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`, `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, and `NEXT_PUBLIC_BETTER_AUTH_URL` for your server.
+3. Start the stack with `docker compose up -d --build`.
+
+The compose file starts the Next.js app and PostgreSQL together, persists the database in the `postgres_data` volume, and runs `prisma migrate deploy` before the app starts.
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:
