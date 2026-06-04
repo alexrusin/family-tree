@@ -18,6 +18,7 @@ import {
   type TreeMemberData,
   type TreeRelationship,
   type TreeFlowEdge,
+  type TreeArrangement,
 } from "@/lib/tree-domain/tree-layout";
 
 const MEMBER_HARD_LIMIT = 300;
@@ -236,6 +237,7 @@ export default function TreeDetailClient({
 }: TreeDetailClientProps) {
   const [members, setMembers] = useState<TreeMemberData[]>([]);
   const [relationships, setRelationships] = useState<TreeRelationship[]>([]);
+  const [arrangement, setArrangement] = useState<TreeArrangement | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
 
@@ -264,9 +266,10 @@ export default function TreeDetailClient({
     setIsLoading(true);
     setLoadError(null);
     try {
-      const [mRes, rRes] = await Promise.all([
+      const [mRes, rRes, aRes] = await Promise.all([
         fetch(`/api/trees/${treeId}/members`, { cache: "no-store" }),
         fetch(`/api/trees/${treeId}/relationships`, { cache: "no-store" }),
+        fetch(`/api/trees/${treeId}/arrangement`, { cache: "no-store" }),
       ]);
       if (!mRes.ok || !rRes.ok) throw new Error("load");
       const mData = (await mRes.json()) as { members?: TreeMemberData[] };
@@ -275,6 +278,12 @@ export default function TreeDetailClient({
       };
       setMembers(mData.members ?? []);
       setRelationships(rData.relationships ?? []);
+      if (aRes.ok) {
+        const aData = (await aRes.json()) as {
+          arrangement?: TreeArrangement | null;
+        };
+        setArrangement(aData.arrangement ?? null);
+      }
     } catch {
       setLoadError(t.errors.loadFailed);
     } finally {
@@ -549,6 +558,7 @@ export default function TreeDetailClient({
             members={members}
             relationships={relationships}
             canAddMember={canAddMember}
+            arrangement={arrangement}
             onNodeClick={(id) => {
               setActiveEdgePopover(null);
               if (!isDesktopViewport) {

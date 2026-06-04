@@ -24,9 +24,9 @@ This project uses [`next/font`](https://nextjs.org/docs/app/building-your-applic
 
 1. Copy `.env.example` to `.env`.
 2. Set `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`, `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, and `NEXT_PUBLIC_BETTER_AUTH_URL` for your server.
-3. Start the stack with `docker compose up -d --build`.
+3. Start the deployment stack with `docker compose -f docker-compose-deploy.yaml up -d --build`.
 
-The compose file starts the Next.js app and PostgreSQL together, persists the database in the `postgres_data` volume, and runs `prisma migrate deploy` before the app starts.
+The deployment compose file starts PostgreSQL and then starts the Next.js app container. On startup, the app container runs `prisma migrate deploy` and then launches the Next.js standalone server.
 
 ## Learn More
 

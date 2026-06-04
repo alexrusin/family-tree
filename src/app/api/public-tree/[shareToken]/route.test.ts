@@ -50,6 +50,7 @@ describe("GET /api/public-tree/[shareToken]", () => {
       shareEnabled: true,
       shareToken: "token-active",
       name: "Miller Family",
+      nodePositions: null,
       owner: { locale: "ru" },
     });
     prismaMock.treeMember.findMany.mockResolvedValue([
@@ -89,6 +90,7 @@ describe("GET /api/public-tree/[shareToken]", () => {
       shareEnabled: true,
       shareToken: "token-es",
       name: "García Family",
+      nodePositions: null,
       owner: { locale: "es" },
     });
     prismaMock.treeMember.findMany.mockResolvedValue([]);
@@ -163,5 +165,84 @@ describe("GET /api/public-tree/[shareToken]", () => {
     });
 
     expect(response.status).toBe(404);
+  });
+
+  it("includes null arrangement when nodePositions is null", async () => {
+    prismaMock.familyTree.findUnique.mockResolvedValue({
+      id: "t1",
+      ownerId: "u1",
+      shareEnabled: true,
+      shareToken: "token-no-arr",
+      name: "Miller Family",
+      nodePositions: null,
+      owner: { locale: "en" },
+    });
+    prismaMock.treeMember.findMany.mockResolvedValue([]);
+    prismaMock.relationship.findMany.mockResolvedValue([]);
+
+    const request = new NextRequest(
+      "http://localhost/api/public-tree/token-no-arr",
+      { method: "GET" },
+    );
+    const response = await GET(request, {
+      params: Promise.resolve({ shareToken: "token-no-arr" }),
+    });
+
+    expect(response.status).toBe(200);
+    const body = await response.json();
+    expect(body.arrangement).toBeNull();
+  });
+
+  it("includes saved arrangement when nodePositions is valid", async () => {
+    const savedArrangement = { m1: { x: 100, y: 200 }, m2: { x: 300, y: 400 } };
+    prismaMock.familyTree.findUnique.mockResolvedValue({
+      id: "t1",
+      ownerId: "u1",
+      shareEnabled: true,
+      shareToken: "token-with-arr",
+      name: "Miller Family",
+      nodePositions: savedArrangement,
+      owner: { locale: "en" },
+    });
+    prismaMock.treeMember.findMany.mockResolvedValue([]);
+    prismaMock.relationship.findMany.mockResolvedValue([]);
+
+    const request = new NextRequest(
+      "http://localhost/api/public-tree/token-with-arr",
+      { method: "GET" },
+    );
+    const response = await GET(request, {
+      params: Promise.resolve({ shareToken: "token-with-arr" }),
+    });
+
+    expect(response.status).toBe(200);
+    const body = await response.json();
+    expect(body.arrangement).toEqual(savedArrangement);
+  });
+
+  it("returns null arrangement when nodePositions contains invalid data", async () => {
+    prismaMock.familyTree.findUnique.mockResolvedValue({
+      id: "t1",
+      ownerId: "u1",
+      shareEnabled: true,
+      shareToken: "token-bad-arr",
+      name: "Miller Family",
+      nodePositions: { m1: { x: "not-a-number", y: 0 } },
+      owner: { locale: "en" },
+    });
+    prismaMock.treeMember.findMany.mockResolvedValue([]);
+    prismaMock.relationship.findMany.mockResolvedValue([]);
+
+    const request = new NextRequest(
+      "http://localhost/api/public-tree/token-bad-arr",
+      { method: "GET" },
+    );
+    const response = await GET(request, {
+      params: Promise.resolve({ shareToken: "token-bad-arr" }),
+    });
+
+    expect(response.status).toBe(200);
+    const body = await response.json();
+    expect(body.arrangement).toBeNull();
   });
 });

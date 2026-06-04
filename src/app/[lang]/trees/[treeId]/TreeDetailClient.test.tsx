@@ -21,8 +21,17 @@ vi.mock("next/link", () => ({
 vi.mock("next/dynamic", () => ({
   default:
     () =>
-    ({ onNodeClick }: { onNodeClick: (id: string) => void }) => (
-      <div data-testid="tree-canvas">
+    ({
+      onNodeClick,
+      arrangement,
+    }: {
+      onNodeClick: (id: string) => void;
+      arrangement?: unknown;
+    }) => (
+      <div
+        data-testid="tree-canvas"
+        data-arrangement={JSON.stringify(arrangement ?? null)}
+      >
         <button type="button" onClick={() => onNodeClick("member-1")}>
           Select member
         </button>
@@ -573,5 +582,107 @@ describe("TreeDetailClient responsive tree workspace shell", () => {
       );
     });
     expect(screen.queryByRole("button", { name: "Tree Menu" })).toBeNull();
+  });
+});
+
+describe("TreeDetailClient manual arrangement rendering", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    currentViewportWidth = 0;
+    mediaQueries = [];
+  });
+
+  afterEach(() => {
+    cleanup();
+    vi.unstubAllGlobals();
+  });
+
+  it("passes arrangement to TreeCanvas when the arrangement endpoint returns data", async () => {
+    const savedArrangement = { "member-1": { x: 100, y: 200 } };
+    mockMatchMedia(1280);
+    vi.stubGlobal(
+      "fetch",
+      vi.fn((input: RequestInfo | URL) => {
+        const url = String(input);
+        if (url.includes("/members"))
+          return Promise.resolve({
+            ok: true,
+            json: async () => ({ members: [] }),
+          });
+        if (url.includes("/relationships"))
+          return Promise.resolve({
+            ok: true,
+            json: async () => ({ relationships: [] }),
+          });
+        if (url.includes("/arrangement"))
+          return Promise.resolve({
+            ok: true,
+            json: async () => ({ arrangement: savedArrangement }),
+          });
+        return Promise.resolve({ ok: true, json: async () => ({}) });
+      }),
+    );
+
+    render(
+      <TreeDetailClient
+        lang="en"
+        treeId="tree-1"
+        treeName="Family Tree"
+        canEdit={true}
+        isOwner={false}
+        initialMemberCount={0}
+        t={translations}
+      />,
+    );
+
+    await waitFor(() => {
+      const canvas = screen.getByTestId("tree-canvas");
+      const attr = canvas.getAttribute("data-arrangement");
+      expect(JSON.parse(attr ?? "null")).toEqual(savedArrangement);
+    });
+  });
+
+  it("passes null arrangement to TreeCanvas when the arrangement endpoint returns null", async () => {
+    mockMatchMedia(1280);
+    vi.stubGlobal(
+      "fetch",
+      vi.fn((input: RequestInfo | URL) => {
+        const url = String(input);
+        if (url.includes("/members"))
+          return Promise.resolve({
+            ok: true,
+            json: async () => ({ members: [] }),
+          });
+        if (url.includes("/relationships"))
+          return Promise.resolve({
+            ok: true,
+            json: async () => ({ relationships: [] }),
+          });
+        if (url.includes("/arrangement"))
+          return Promise.resolve({
+            ok: true,
+            json: async () => ({ arrangement: null }),
+          });
+        return Promise.resolve({ ok: true, json: async () => ({}) });
+      }),
+    );
+
+    render(
+      <TreeDetailClient
+        lang="en"
+        treeId="tree-1"
+        treeName="Family Tree"
+        canEdit={false}
+        isOwner={false}
+        initialMemberCount={0}
+        t={translations}
+      />,
+    );
+
+    await waitFor(() => {
+      const canvas = screen.getByTestId("tree-canvas");
+      const attr = canvas.getAttribute("data-arrangement");
+      expect(JSON.parse(attr ?? "undefined")).toBeNull();
+    });
   });
 });

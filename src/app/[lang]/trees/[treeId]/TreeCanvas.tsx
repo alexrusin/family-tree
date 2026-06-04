@@ -15,6 +15,7 @@ import "@xyflow/react/dist/style.css";
 
 import {
   buildTreeGraph,
+  type TreeArrangement,
   type TreeFlowEdge,
   type TreeMemberData,
   type TreeRelationship,
@@ -32,6 +33,7 @@ interface TreeCanvasProps {
   members: TreeMemberData[];
   relationships: TreeRelationship[];
   canAddMember: boolean;
+  arrangement?: TreeArrangement | null;
   onNodeClick: (memberId: string) => void;
   onEdgeClick: (event: React.MouseEvent, edge: TreeFlowEdge) => void;
   onAddMember: () => void;
@@ -113,14 +115,15 @@ export default function TreeCanvas({
   members,
   relationships,
   canAddMember,
+  arrangement,
   onNodeClick,
   onEdgeClick,
   onAddMember,
   t,
 }: TreeCanvasProps) {
   const { nodes, edges } = useMemo(
-    () => buildTreeGraph(members, relationships),
-    [members, relationships],
+    () => buildTreeGraph(members, relationships, arrangement),
+    [members, relationships, arrangement],
   );
 
   const handleNodeClick: NodeMouseHandler = (_event, node) => {

@@ -6,6 +6,7 @@ import MemberSidePanel, {
   type MemberSidePanelPresentation,
 } from "@/app/[lang]/trees/[treeId]/MemberSidePanel";
 import type {
+  TreeArrangement,
   TreeMemberData,
   TreeRelationship,
 } from "@/lib/tree-domain/tree-layout";
@@ -25,12 +26,14 @@ export default function PublicTreeViewClient({
   treeId,
   members,
   relationships,
+  arrangement,
   treeName,
   t,
 }: {
   treeId: string;
   members: TreeMemberData[];
   relationships: TreeRelationship[];
+  arrangement?: TreeArrangement | null;
   treeName: string;
   t: {
     canvas: {
@@ -123,6 +126,7 @@ export default function PublicTreeViewClient({
           members={members}
           relationships={relationships}
           canAddMember={false}
+          arrangement={arrangement}
           onNodeClick={setSelectedMemberId}
           onEdgeClick={() => {}}
           onAddMember={() => {}}

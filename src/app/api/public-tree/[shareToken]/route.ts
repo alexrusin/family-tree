@@ -4,6 +4,10 @@ import { PrismaPg } from "@prisma/adapter-pg";
 import { resolvePublicShareToken } from "@/lib/tree-domain/public-share-service";
 import { resolveTreeMemberPhotoUrl } from "@/lib/tree-domain/member-photo";
 import { isLocale, DEFAULT_LOCALE } from "@/lib/locale";
+import {
+  isValidArrangement,
+  type TreeArrangement,
+} from "@/lib/tree-domain/tree-layout";
 
 function getPrismaClient() {
   return new PrismaClient({
@@ -78,7 +82,7 @@ export async function GET(
     const [tree, members, relationships] = await Promise.all([
       prisma.familyTree.findUnique({
         where: { id: treeId },
-        select: { id: true, name: true },
+        select: { id: true, name: true, nodePositions: true },
       }),
       prisma.treeMember.findMany({
         where: { treeId },
@@ -111,6 +115,12 @@ export async function GET(
       };
     });
 
+    const rawPositions = tree?.nodePositions;
+    const arrangement: TreeArrangement | null =
+      rawPositions != null && isValidArrangement(rawPositions)
+        ? rawPositions
+        : null;
+
     return withPublicHeaders(
       NextResponse.json(
         {
@@ -121,6 +131,7 @@ export async function GET(
           ownerLocale,
           members: publicMembers,
           relationships,
+          arrangement,
         },
         { status: 200 },
       ),

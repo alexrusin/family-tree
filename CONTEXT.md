@@ -90,7 +90,31 @@ The rule that deleting a User removes owned-tree data and collaborator access wh
 A tree-scoped navigation and action entry point for the tree workspace. It exposes actions such as collaboration, sharing, and editing without implying the tree is owned by the current viewer.
 _Avoid_: My Tree, tree sidebar
 
+## Family Tree
+
+A shared collection of Members and Relationships owned by one User and optionally accessed by Collaborators. It is the unit of ownership, sharing, and workspace arrangement.
+
+## Manual Tree Arrangement
+
+The persisted set of node positions for one Family Tree's workspace. Editors can change it by dragging nodes so the tree reopens in the same shared arrangement for Collaborator Viewers and Guest Viewers.
+_Avoid_: temporary layout, personal layout
+
+## Reset Layout
+
+An editor action that discards the Manual Tree Arrangement and restores the automatic tree layout. It is the escape hatch when the shared arrangement has become less useful than the computed one.
+_Avoid_: undo drag history, personal reset
+
 ## Member Details Panel
 
 A tree-workspace panel that shows the currently selected member's profile details, relationships, and permitted actions. Its presentation can vary by viewport without changing what it represents.
 _Avoid_: member sidebar, side panel
+
+## Example Dialogue
+
+**Developer**: A Collaborator Viewer opened the Family Tree through the app and said the branches still overlap. Will they see the Manual Tree Arrangement an editor saved yesterday?
+
+**Domain Expert**: Yes. The saved arrangement is part of the Family Tree workspace, so Collaborator Viewers and Guest Viewers both see it.
+
+**Developer**: And if the arrangement gets messy after a few edits?
+
+**Domain Expert**: An editor can use Reset Layout to discard the Manual Tree Arrangement and return to the automatic layout.
