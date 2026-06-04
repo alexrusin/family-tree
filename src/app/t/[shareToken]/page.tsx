@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { getDictionary } from "@/app/[lang]/dictionaries/dictionaries";
 import { isLocale, DEFAULT_LOCALE } from "@/lib/locale";
 import type {
+  TreeArrangement,
   TreeMemberData,
   TreeRelationship,
 } from "@/lib/tree-domain/tree-layout";
@@ -74,6 +75,7 @@ export default async function PublicTreePage({
     ownerLocale: string;
     members: TreeMemberData[];
     relationships: TreeRelationship[];
+    arrangement?: TreeArrangement | null;
   };
 
   const ownerLocale = isLocale(payload.ownerLocale)
@@ -87,6 +89,7 @@ export default async function PublicTreePage({
       treeName={payload.tree.name}
       members={payload.members}
       relationships={payload.relationships}
+      arrangement={payload.arrangement ?? null}
       t={{
         canvas: t.tree.canvas,
         panel: {

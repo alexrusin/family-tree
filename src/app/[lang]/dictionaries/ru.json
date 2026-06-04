@@ -326,7 +326,9 @@
       "relationshipGeneric": "Не удалось добавить связь. Попробуйте ещё раз.",
       "loadFailed": "Не удалось загрузить участников и связи.",
       "chooseTwoMembers": "Выберите двух участников.",
-      "chooseDifferentMembers": "Выберите двух разных участников."
+      "chooseDifferentMembers": "Выберите двух разных участников.",
+      "dragSaveFailed": "Не удалось сохранить позицию участника. Узел возвращён на прежнее место.",
+      "resetLayoutFailed": "Не удалось сбросить расположение. Попробуйте ещё раз."
     },
     "canvas": {
       "emptyTitle": "Участников пока нет",
@@ -366,7 +368,8 @@
     "sidebar": {
       "warningBanner": "Приближается лимит 300 участников ({count}/300).",
       "limitReached": "Достигнут лимит 300 участников. Добавить больше нельзя.",
-      "memberCount": "{count} участников"
+      "memberCount": "{count} участников",
+      "resetLayout": "Сбросить расположение"
     },
     "treeMenu": {
       "trigger": "Tree Menu",

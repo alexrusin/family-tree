@@ -10,8 +10,17 @@ import type {
 import PublicTreeViewClient from "./PublicTreeViewClient";
 
 vi.mock("@/app/[lang]/trees/[treeId]/TreeCanvas", () => ({
-  default: ({ onNodeClick }: { onNodeClick: (id: string) => void }) => (
-    <div data-testid="tree-canvas">
+  default: ({
+    onNodeClick,
+    arrangement,
+  }: {
+    onNodeClick: (id: string) => void;
+    arrangement?: unknown;
+  }) => (
+    <div
+      data-testid="tree-canvas"
+      data-arrangement={JSON.stringify(arrangement ?? null)}
+    >
       <button type="button" onClick={() => onNodeClick("member-1")}>
         Select member
       </button>
@@ -253,5 +262,56 @@ describe("PublicTreeViewClient responsive member details", () => {
     expect(
       screen.queryByRole("button", { name: translations.panel.remove }),
     ).toBeNull();
+  });
+});
+
+describe("PublicTreeViewClient arrangement rendering", () => {
+  beforeEach(() => {
+    currentViewportWidth = 0;
+    mediaQueries = [];
+    vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    cleanup();
+    vi.unstubAllGlobals();
+  });
+
+  it("passes a saved arrangement to TreeCanvas", () => {
+    const savedArrangement = { "member-1": { x: 50, y: 80 } };
+    mockMatchMedia(1280);
+
+    render(
+      <PublicTreeViewClient
+        treeId="tree-1"
+        treeName="Shared Tree"
+        members={members}
+        relationships={relationships}
+        arrangement={savedArrangement}
+        t={translations}
+      />,
+    );
+
+    const canvas = screen.getByTestId("tree-canvas");
+    const attr = canvas.getAttribute("data-arrangement");
+    expect(JSON.parse(attr ?? "null")).toEqual(savedArrangement);
+  });
+
+  it("passes null to TreeCanvas when no arrangement is provided", () => {
+    mockMatchMedia(1280);
+
+    render(
+      <PublicTreeViewClient
+        treeId="tree-1"
+        treeName="Shared Tree"
+        members={members}
+        relationships={relationships}
+        t={translations}
+      />,
+    );
+
+    const canvas = screen.getByTestId("tree-canvas");
+    const attr = canvas.getAttribute("data-arrangement");
+    expect(JSON.parse(attr ?? "undefined")).toBeNull();
   });
 });

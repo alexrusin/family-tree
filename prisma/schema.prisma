@@ -127,6 +127,7 @@ model FamilyTree {
   owner                User                      @relation(name: "OwnedTrees", fields: [ownerId], references: [id], onDelete: Cascade)
   shareToken           String                    @unique @map("share_token")
   shareEnabled         Boolean                   @default(false) @map("share_enabled")
+  nodePositions        Json?                     @map("node_positions")
   memberCount          Int                       @default(0) @map("member_count")
   createdAt            DateTime                  @default(now()) @map("created_at") @db.Timestamp(6)
   updatedAt            DateTime                  @updatedAt @map("updated_at") @db.Timestamp(6)

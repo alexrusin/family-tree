@@ -3,6 +3,7 @@ import { PrismaClient } from "@/generated/prisma/client";
 import type { DatePrecision, MemberGender } from "@/generated/prisma/enums";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { auth } from "@/lib/auth";
+import { toPrismaNodePositions } from "@/lib/tree-domain/tree-arrangement-json";
 import {
   canEditMembers,
   canDeleteMembers,
@@ -22,6 +23,10 @@ import {
   validatePhotoFile,
 } from "@/lib/tree-domain/photo-upload";
 import { resolveTreeMemberPhotoUrl } from "@/lib/tree-domain/member-photo";
+import {
+  isValidArrangement,
+  pruneArrangement,
+} from "@/lib/tree-domain/tree-layout";
 
 const VALID_GENDERS = new Set<MemberGender>([
   "male",
@@ -432,6 +437,23 @@ export async function DELETE(
         where: { id: treeId },
         data: { memberCount: { decrement: 1 } },
       });
+
+      const tree = await tx.familyTree.findUnique({
+        where: { id: treeId },
+        select: { nodePositions: true },
+      });
+      const raw = tree?.nodePositions;
+      if (raw != null && isValidArrangement(raw) && memberId in raw) {
+        const remaining = new Set(Object.keys(raw).filter((k) => k !== memberId));
+        await tx.familyTree.update({
+          where: { id: treeId },
+          data: {
+            nodePositions: toPrismaNodePositions(
+              pruneArrangement(raw, remaining),
+            ),
+          },
+        });
+      }
     });
 
     return NextResponse.json({ success: true }, { status: 200 });

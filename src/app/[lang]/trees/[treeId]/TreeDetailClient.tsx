@@ -18,6 +18,7 @@ import {
   type TreeMemberData,
   type TreeRelationship,
   type TreeFlowEdge,
+  type TreeArrangement,
 } from "@/lib/tree-domain/tree-layout";
 
 const MEMBER_HARD_LIMIT = 300;
@@ -100,6 +101,7 @@ interface ErrorsSubT {
   loadFailed: string;
   chooseTwoMembers: string;
   chooseDifferentMembers: string;
+  dragSaveFailed: string;
   [key: string]: string;
 }
 interface TreeT {
@@ -147,6 +149,7 @@ interface TreeT {
     warningBanner: string;
     limitReached: string;
     memberCount: string;
+    resetLayout: string;
   };
   treeMenu: {
     trigger: string;
@@ -236,8 +239,10 @@ export default function TreeDetailClient({
 }: TreeDetailClientProps) {
   const [members, setMembers] = useState<TreeMemberData[]>([]);
   const [relationships, setRelationships] = useState<TreeRelationship[]>([]);
+  const [arrangement, setArrangement] = useState<TreeArrangement | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [layoutError, setLayoutError] = useState<string | null>(null);
 
   const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
   const [isAddRelationshipOpen, setIsAddRelationshipOpen] = useState(false);
@@ -264,9 +269,10 @@ export default function TreeDetailClient({
     setIsLoading(true);
     setLoadError(null);
     try {
-      const [mRes, rRes] = await Promise.all([
+      const [mRes, rRes, aRes] = await Promise.all([
         fetch(`/api/trees/${treeId}/members`, { cache: "no-store" }),
         fetch(`/api/trees/${treeId}/relationships`, { cache: "no-store" }),
+        fetch(`/api/trees/${treeId}/arrangement`, { cache: "no-store" }),
       ]);
       if (!mRes.ok || !rRes.ok) throw new Error("load");
       const mData = (await mRes.json()) as { members?: TreeMemberData[] };
@@ -275,6 +281,12 @@ export default function TreeDetailClient({
       };
       setMembers(mData.members ?? []);
       setRelationships(rData.relationships ?? []);
+      if (aRes.ok) {
+        const aData = (await aRes.json()) as {
+          arrangement?: TreeArrangement | null;
+        };
+        setArrangement(aData.arrangement ?? null);
+      }
     } catch {
       setLoadError(t.errors.loadFailed);
     } finally {
@@ -433,6 +445,54 @@ export default function TreeDetailClient({
     void loadTreeData();
   }, [loadTreeData]);
 
+  const handleNodeDragStop = useCallback(
+    async (memberId: string, position: { x: number; y: number }) => {
+      const prevArrangement = arrangement;
+      const nextArrangement = {
+        ...(arrangement ?? {}),
+        [memberId]: position,
+      } as TreeArrangement;
+      try {
+        const response = await fetch(`/api/trees/${treeId}/arrangement`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ arrangement: nextArrangement }),
+        });
+        if (!response.ok) throw new Error("save failed");
+        setArrangement(nextArrangement);
+        setLayoutError(null);
+      } catch {
+        // Revert visual positions by setting a new arrangement reference with the
+        // same data — this triggers the useEffect in TreeCanvas to re-sync nodes.
+        setArrangement(
+          prevArrangement === null
+            ? ({} as TreeArrangement)
+            : { ...prevArrangement },
+        );
+        setLayoutError(t.errors.dragSaveFailed);
+      }
+    },
+    [arrangement, treeId, t.errors.dragSaveFailed],
+  );
+
+  const handleResetLayout = useCallback(async () => {
+    try {
+      const response = await fetch(`/api/trees/${treeId}/arrangement`, {
+        method: "DELETE",
+      });
+      if (!response.ok) throw new Error("reset failed");
+      setArrangement(null);
+      setLayoutError(null);
+    } catch {
+      setLayoutError(t.errors.resetLayoutFailed);
+    }
+  }, [treeId, t.errors.resetLayoutFailed]);
+
+  const handleResetLayoutFromTreeMenu = useCallback(() => {
+    closeTreeMenu();
+    void handleResetLayout();
+  }, [closeTreeMenu, handleResetLayout]);
+
   const treeSidebarTranslations = {
     collaborators: t.collaboration.sidebarLink,
     shareLink: t.publicShare.sidebarAction,
@@ -442,6 +502,7 @@ export default function TreeDetailClient({
     warningBanner: t.sidebar.warningBanner,
     limitReached: t.sidebar.limitReached,
     memberCount: t.sidebar.memberCount,
+    resetLayout: t.sidebar.resetLayout,
   };
 
   return (
@@ -459,6 +520,7 @@ export default function TreeDetailClient({
           onAddMember={openAddMemberFromTreeMenu}
           onAddRelationship={openAddRelationshipFromTreeMenu}
           onOpenShareSettings={openShareSettingsFromTreeMenu}
+          onResetLayout={handleResetLayout}
           t={treeSidebarTranslations}
         />
       ) : (
@@ -523,6 +585,7 @@ export default function TreeDetailClient({
                     onAddMember={openAddMemberFromTreeMenu}
                     onAddRelationship={openAddRelationshipFromTreeMenu}
                     onOpenShareSettings={openShareSettingsFromTreeMenu}
+                    onResetLayout={handleResetLayoutFromTreeMenu}
                     className="w-full border-r-0 shadow-none"
                     t={treeSidebarTranslations}
                   />
@@ -540,6 +603,11 @@ export default function TreeDetailClient({
             <p className="text-sm text-red-600">{loadError}</p>
           </div>
         )}
+        {layoutError && (
+          <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10 bg-red-50 border border-red-200 rounded-xl px-4 py-3">
+            <p className="text-sm text-red-600">{layoutError}</p>
+          </div>
+        )}
         {isLoading ? (
           <div className="w-full h-full flex items-center justify-center bg-[#fbf9f8]">
             <p className="text-stone-500">{t.canvas.loading}</p>
@@ -549,6 +617,8 @@ export default function TreeDetailClient({
             members={members}
             relationships={relationships}
             canAddMember={canAddMember}
+            canEdit={canEdit}
+            arrangement={arrangement}
             onNodeClick={(id) => {
               setActiveEdgePopover(null);
               if (!isDesktopViewport) {
@@ -558,6 +628,7 @@ export default function TreeDetailClient({
             }}
             onEdgeClick={handleEdgeClick}
             onAddMember={openAddMemberModal}
+            onDragStop={canEdit ? handleNodeDragStop : undefined}
             t={t.canvas}
           />
         )}

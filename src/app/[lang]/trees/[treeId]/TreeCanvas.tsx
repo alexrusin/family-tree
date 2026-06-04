@@ -1,13 +1,15 @@
 // src/app/[lang]/trees/[treeId]/TreeCanvas.tsx
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import {
   ReactFlow,
   Panel,
   useReactFlow,
+  useNodesState,
   type EdgeMouseHandler,
   type NodeMouseHandler,
+  type OnNodeDrag,
   type NodeTypes,
   type EdgeTypes,
 } from "@xyflow/react";
@@ -15,7 +17,9 @@ import "@xyflow/react/dist/style.css";
 
 import {
   buildTreeGraph,
+  type TreeArrangement,
   type TreeFlowEdge,
+  type TreeFlowNode,
   type TreeMemberData,
   type TreeRelationship,
 } from "@/lib/tree-domain/tree-layout";
@@ -32,9 +36,12 @@ interface TreeCanvasProps {
   members: TreeMemberData[];
   relationships: TreeRelationship[];
   canAddMember: boolean;
+  canEdit: boolean;
+  arrangement?: TreeArrangement | null;
   onNodeClick: (memberId: string) => void;
   onEdgeClick: (event: React.MouseEvent, edge: TreeFlowEdge) => void;
   onAddMember: () => void;
+  onDragStop?: (memberId: string, position: { x: number; y: number }) => void;
   t: {
     emptyTitle: string;
     emptyBody: string;
@@ -113,15 +120,36 @@ export default function TreeCanvas({
   members,
   relationships,
   canAddMember,
+  canEdit,
+  arrangement,
   onNodeClick,
   onEdgeClick,
   onAddMember,
+  onDragStop,
   t,
 }: TreeCanvasProps) {
-  const { nodes, edges } = useMemo(
-    () => buildTreeGraph(members, relationships),
-    [members, relationships],
+  const initialNodes = useMemo(
+    () => buildTreeGraph(members, relationships, arrangement).nodes,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
   );
+
+  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
+
+  const edges = useMemo(
+    () => buildTreeGraph(members, relationships, arrangement).edges,
+    [members, relationships, arrangement],
+  );
+
+  // Sync nodes from parent state (handles initial load, member additions/removals, and position reverts).
+  useEffect(() => {
+    const { nodes: computedNodes } = buildTreeGraph(
+      members,
+      relationships,
+      arrangement,
+    );
+    setNodes(computedNodes);
+  }, [members, relationships, arrangement, setNodes]);
 
   const handleNodeClick: NodeMouseHandler = (_event, node) => {
     if (node.type === "member") onNodeClick(node.id);
@@ -129,6 +157,12 @@ export default function TreeCanvas({
 
   const handleEdgeClick: EdgeMouseHandler = (event, edge) => {
     onEdgeClick(event as React.MouseEvent, edge as TreeFlowEdge);
+  };
+
+  const handleNodeDragStop: OnNodeDrag<TreeFlowNode> = (_event, node) => {
+    if (node.type === "member") {
+      onDragStop?.(node.id, node.position);
+    }
   };
 
   if (members.length === 0) {
@@ -163,10 +197,12 @@ export default function TreeCanvas({
       edges={edges}
       nodeTypes={nodeTypes}
       edgeTypes={edgeTypes}
-      nodesDraggable={false}
+      nodesDraggable={canEdit}
       nodesConnectable={false}
+      onNodesChange={onNodesChange}
       onNodeClick={handleNodeClick}
       onEdgeClick={handleEdgeClick}
+      onNodeDragStop={handleNodeDragStop}
       fitView
       fitViewOptions={{ padding: 0.2 }}
       defaultEdgeOptions={{

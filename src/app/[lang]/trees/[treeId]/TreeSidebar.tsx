@@ -2,7 +2,7 @@
 "use client";
 
 import Link from "next/link";
-import { Plus, Link2, AlertTriangle, Users, Share2 } from "lucide-react";
+import { Plus, Link2, AlertTriangle, Users, Share2, RotateCcw } from "lucide-react";
 
 const MEMBER_WARN_THRESHOLD = 250;
 const MEMBER_HARD_LIMIT = 300;
@@ -16,6 +16,7 @@ interface TreeSidebarT {
   limitReached: string;
   memberCount: string;
   shareLink: string;
+  resetLayout: string;
 }
 
 interface TreeSidebarProps {
@@ -29,6 +30,7 @@ interface TreeSidebarProps {
   onAddMember: () => void;
   onAddRelationship: () => void;
   onOpenShareSettings: () => void;
+  onResetLayout: () => void;
   className?: string;
   t: TreeSidebarT;
 }
@@ -44,6 +46,7 @@ export default function TreeSidebar({
   onAddMember,
   onAddRelationship,
   onOpenShareSettings,
+  onResetLayout,
   className,
   t,
 }: TreeSidebarProps) {
@@ -115,6 +118,13 @@ export default function TreeSidebar({
             >
               <Link2 className="w-4 h-4" />
               {t.addRelationship}
+            </button>
+            <button
+              onClick={onResetLayout}
+              className="w-full px-4 py-2.5 bg-stone-100 text-stone-900 rounded-lg font-semibold hover:bg-stone-200 transition-colors flex items-center justify-center gap-2 text-sm"
+            >
+              <RotateCcw className="w-4 h-4" />
+              {t.resetLayout}
             </button>
           </>
         ) : (
