@@ -322,4 +322,75 @@ describe("/api/trees/[treeId]/members/[memberId]", () => {
       errorCode: "ERR_FORBIDDEN",
     });
   });
+
+  it("deletes the member and removes only its saved position from the arrangement", async () => {
+    const existingArrangement = {
+      m1: { x: 10, y: 20 },
+      m2: { x: 30, y: 40 },
+    };
+    prismaClientMock.familyTree.findUnique
+      .mockResolvedValueOnce({ ownerId: "u1" }) // getTreeRole
+      .mockResolvedValueOnce({ nodePositions: existingArrangement }); // prune inside tx
+
+    const request = new NextRequest(
+      "http://localhost/api/trees/t1/members/m1",
+      { method: "DELETE" },
+    );
+
+    const response = await DELETE(request, {
+      params: Promise.resolve({ treeId: "t1", memberId: "m1" }),
+    });
+
+    expect(response.status).toBe(200);
+    const arrangementUpdateCall = prismaClientMock.familyTree.update.mock.calls.find(
+      (call) => call[0]?.data?.nodePositions !== undefined,
+    );
+    expect(arrangementUpdateCall).toBeDefined();
+    expect(arrangementUpdateCall![0].data.nodePositions).toEqual({
+      m2: { x: 30, y: 40 },
+    });
+  });
+
+  it("deletes the member without touching the arrangement when the member has no saved position", async () => {
+    const existingArrangement = { m2: { x: 30, y: 40 } };
+    prismaClientMock.familyTree.findUnique
+      .mockResolvedValueOnce({ ownerId: "u1" })
+      .mockResolvedValueOnce({ nodePositions: existingArrangement });
+
+    const request = new NextRequest(
+      "http://localhost/api/trees/t1/members/m1",
+      { method: "DELETE" },
+    );
+
+    const response = await DELETE(request, {
+      params: Promise.resolve({ treeId: "t1", memberId: "m1" }),
+    });
+
+    expect(response.status).toBe(200);
+    const arrangementUpdateCall = prismaClientMock.familyTree.update.mock.calls.find(
+      (call) => call[0]?.data?.nodePositions !== undefined,
+    );
+    expect(arrangementUpdateCall).toBeUndefined();
+  });
+
+  it("deletes the member without touching the arrangement when the tree has no saved arrangement", async () => {
+    prismaClientMock.familyTree.findUnique
+      .mockResolvedValueOnce({ ownerId: "u1" })
+      .mockResolvedValueOnce({ nodePositions: null });
+
+    const request = new NextRequest(
+      "http://localhost/api/trees/t1/members/m1",
+      { method: "DELETE" },
+    );
+
+    const response = await DELETE(request, {
+      params: Promise.resolve({ treeId: "t1", memberId: "m1" }),
+    });
+
+    expect(response.status).toBe(200);
+    const arrangementUpdateCall = prismaClientMock.familyTree.update.mock.calls.find(
+      (call) => call[0]?.data?.nodePositions !== undefined,
+    );
+    expect(arrangementUpdateCall).toBeUndefined();
+  });
 });

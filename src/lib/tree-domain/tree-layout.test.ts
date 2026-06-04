@@ -4,6 +4,7 @@ import {
   buildTreeGraph,
   formatMemberDateRange,
   isValidArrangement,
+  pruneArrangement,
   type TreeArrangement,
   type TreeMemberData,
   type TreeRelationship,
@@ -223,6 +224,93 @@ describe("buildTreeGraph with arrangement", () => {
     // Centered horizontally between a (x=0) and b (x=200): mid x ≈ 0+200/2 = 100
     // The exact formula is (pa.x + pb.x) / 2 + NODE_W / 2 - UNION_SIZE / 2 where NODE_W=120, UNION_SIZE=8
     expect(unionNode.position.x).toBeCloseTo(100 + 120 / 2 - 8 / 2, 0);
+  });
+});
+
+describe("pruneArrangement", () => {
+  it("removes the deleted member's entry while keeping all others", () => {
+    const arrangement: TreeArrangement = {
+      m1: { x: 10, y: 20 },
+      m2: { x: 30, y: 40 },
+      m3: { x: 50, y: 60 },
+    };
+    const result = pruneArrangement(arrangement, new Set(["m1", "m3"]));
+    expect(result).toEqual({
+      m1: { x: 10, y: 20 },
+      m3: { x: 50, y: 60 },
+    });
+    expect("m2" in result).toBe(false);
+  });
+
+  it("returns empty object when all entries are pruned", () => {
+    const arrangement: TreeArrangement = { m1: { x: 10, y: 20 } };
+    expect(pruneArrangement(arrangement, new Set([]))).toEqual({});
+  });
+
+  it("returns arrangement unchanged when every member is in the remaining set", () => {
+    const arrangement: TreeArrangement = { m1: { x: 10, y: 20 } };
+    expect(pruneArrangement(arrangement, new Set(["m1"]))).toEqual(arrangement);
+  });
+
+  it("returns empty object for an empty arrangement regardless of remaining set", () => {
+    expect(pruneArrangement({}, new Set(["m1"]))).toEqual({});
+  });
+});
+
+describe("arrangement preservation during tree edits", () => {
+  it("keeps existing saved positions fixed and seeds newly added member with a valid position", () => {
+    const parent = makeMember("parent");
+    const child = makeMember("child");
+    const rels: TreeRelationship[] = [
+      { id: "r1", fromMemberId: "parent", toMemberId: "child", type: "parent" },
+    ];
+    // Parent has a saved position; child is newly added (not in arrangement).
+    const arrangement: TreeArrangement = { parent: { x: 500, y: 100 } };
+    const { nodes } = buildTreeGraph([parent, child], rels, arrangement);
+
+    const parentNode = nodes.find((n) => n.id === "parent")!;
+    const childNode = nodes.find((n) => n.id === "child")!;
+
+    // Parent's manually saved position must not change.
+    expect(parentNode.position).toEqual({ x: 500, y: 100 });
+    // Newly added child receives a valid (finite) seeded position from auto-layout.
+    expect(Number.isFinite(childNode.position.x)).toBe(true);
+    expect(Number.isFinite(childNode.position.y)).toBe(true);
+  });
+
+  it("keeps all positioned members fixed when a relationship is added between existing members", () => {
+    const a = makeMember("a");
+    const b = makeMember("b");
+    const arrangement: TreeArrangement = {
+      a: { x: 100, y: 200 },
+      b: { x: 300, y: 200 },
+    };
+    // No relationship initially — both members are positioned.
+    const rels: TreeRelationship[] = [
+      { id: "rs", fromMemberId: "a", toMemberId: "b", type: "spouse" },
+    ];
+    const { nodes } = buildTreeGraph([a, b], rels, arrangement);
+
+    const nodeA = nodes.find((n) => n.id === "a")!;
+    const nodeB = nodes.find((n) => n.id === "b")!;
+    expect(nodeA.position).toEqual({ x: 100, y: 200 });
+    expect(nodeB.position).toEqual({ x: 300, y: 200 });
+  });
+
+  it("keeps positioned members fixed when a relationship is deleted (arrangement unchanged)", () => {
+    const a = makeMember("a");
+    const b = makeMember("b");
+    const arrangement: TreeArrangement = {
+      a: { x: 100, y: 200 },
+      b: { x: 300, y: 200 },
+    };
+    // After relationship deletion the caller rebuilds with fewer rels — positions stay.
+    const { nodes } = buildTreeGraph([a, b], [], arrangement);
+
+    const nodeA = nodes.find((n) => n.id === "a")!;
+    const nodeB = nodes.find((n) => n.id === "b")!;
+    expect(nodeA.position).toEqual({ x: 100, y: 200 });
+    expect(nodeB.position).toEqual({ x: 300, y: 200 });
   });
 });
 

@@ -11,6 +11,20 @@ export interface MemberPosition {
 export type TreeArrangement = Record<string, MemberPosition>;
 
 /**
+ * Returns a new arrangement that contains only the entries whose keys are
+ * present in `remainingMemberIds`. Use this after deleting a member to keep
+ * the stored arrangement in sync with the current tree members.
+ */
+export function pruneArrangement(
+  arrangement: TreeArrangement,
+  remainingMemberIds: Set<string>,
+): TreeArrangement {
+  return Object.fromEntries(
+    Object.entries(arrangement).filter(([id]) => remainingMemberIds.has(id)),
+  );
+}
+
+/**
  * Runtime guard for values loaded from the database or received over the
  * network. Rejects any value that is not a plain object whose entries all
  * carry finite numeric `x`/`y` coordinates.
