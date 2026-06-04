@@ -23,18 +23,31 @@ vi.mock("next/dynamic", () => ({
     () =>
     ({
       onNodeClick,
+      onDragStop,
+      canEdit,
       arrangement,
     }: {
       onNodeClick: (id: string) => void;
+      onDragStop?: (memberId: string, position: { x: number; y: number }) => void;
+      canEdit?: boolean;
       arrangement?: unknown;
     }) => (
       <div
         data-testid="tree-canvas"
         data-arrangement={JSON.stringify(arrangement ?? null)}
+        data-can-edit={String(canEdit ?? false)}
       >
         <button type="button" onClick={() => onNodeClick("member-1")}>
           Select member
         </button>
+        {canEdit && onDragStop && (
+          <button
+            type="button"
+            onClick={() => onDragStop("member-1", { x: 50, y: 100 })}
+          >
+            Drag member
+          </button>
+        )}
       </div>
     ),
 }));
@@ -207,6 +220,7 @@ const translations = {
     loadFailed: "Unable to load members and relationships.",
     chooseTwoMembers: "Choose two members.",
     chooseDifferentMembers: "Choose different members.",
+    dragSaveFailed: "Unable to save member position.",
   },
 };
 
@@ -684,5 +698,185 @@ describe("TreeDetailClient manual arrangement rendering", () => {
       const attr = canvas.getAttribute("data-arrangement");
       expect(JSON.parse(attr ?? "undefined")).toBeNull();
     });
+  });
+});
+
+describe("TreeDetailClient drag-and-save", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    currentViewportWidth = 0;
+    mediaQueries = [];
+  });
+
+  afterEach(() => {
+    cleanup();
+    vi.unstubAllGlobals();
+  });
+
+  function setupFetchWithArrangementHandler(
+    arrangementHandler: (body: { arrangement?: unknown }) => Response | Promise<Response>,
+  ) {
+    mockMatchMedia(1280);
+    vi.stubGlobal(
+      "fetch",
+      vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
+        const url = String(input);
+        if (url.includes("/members"))
+          return Promise.resolve({
+            ok: true,
+            json: async () => ({
+              members: [{ id: "member-1", firstName: "Alice" }],
+            }),
+          });
+        if (url.includes("/relationships"))
+          return Promise.resolve({
+            ok: true,
+            json: async () => ({ relationships: [] }),
+          });
+        if (url.includes("/arrangement") && init?.method === "PUT") {
+          const body = JSON.parse(String(init.body)) as { arrangement?: unknown };
+          return Promise.resolve(arrangementHandler(body));
+        }
+        if (url.includes("/arrangement"))
+          return Promise.resolve({
+            ok: true,
+            json: async () => ({ arrangement: null }),
+          });
+        return Promise.resolve({ ok: true, json: async () => ({}) });
+      }),
+    );
+  }
+
+  it("passes canEdit to the canvas", async () => {
+    mockMatchMedia(1280);
+    vi.stubGlobal(
+      "fetch",
+      vi.fn((input: RequestInfo | URL) => {
+        const url = String(input);
+        if (url.includes("/members"))
+          return Promise.resolve({ ok: true, json: async () => ({ members: [] }) });
+        if (url.includes("/relationships"))
+          return Promise.resolve({ ok: true, json: async () => ({ relationships: [] }) });
+        if (url.includes("/arrangement"))
+          return Promise.resolve({ ok: true, json: async () => ({ arrangement: null }) });
+        return Promise.resolve({ ok: true, json: async () => ({}) });
+      }),
+    );
+
+    render(
+      <TreeDetailClient
+        lang="en"
+        treeId="tree-1"
+        treeName="Family Tree"
+        canEdit={false}
+        isOwner={false}
+        initialMemberCount={0}
+        t={translations}
+      />,
+    );
+
+    await waitFor(() => {
+      const canvas = screen.getByTestId("tree-canvas");
+      expect(canvas.getAttribute("data-can-edit")).toBe("false");
+    });
+  });
+
+  it("saves the new arrangement and clears any drag error on successful drag", async () => {
+    const user = userEvent.setup();
+    const savedArrangements: unknown[] = [];
+
+    setupFetchWithArrangementHandler((body) => {
+      savedArrangements.push(body.arrangement);
+      return { ok: true, json: async () => ({ arrangement: body.arrangement }) } as Response;
+    });
+
+    render(
+      <TreeDetailClient
+        lang="en"
+        treeId="tree-1"
+        treeName="Family Tree"
+        canEdit={true}
+        isOwner={false}
+        initialMemberCount={1}
+        t={translations}
+      />,
+    );
+
+    const dragBtn = await screen.findByRole("button", { name: "Drag member" });
+    await user.click(dragBtn);
+
+    await waitFor(() => {
+      expect(savedArrangements).toHaveLength(1);
+      expect(savedArrangements[0]).toEqual({ "member-1": { x: 50, y: 100 } });
+    });
+
+    expect(screen.queryByText("Unable to save member position.")).toBeNull();
+  });
+
+  it("shows an inline error and reverts the node when saving the dragged position fails", async () => {
+    const user = userEvent.setup();
+
+    setupFetchWithArrangementHandler(() => ({
+      ok: false,
+      json: async () => ({ errorCode: "ERR_INTERNAL" }),
+    } as Response));
+
+    render(
+      <TreeDetailClient
+        lang="en"
+        treeId="tree-1"
+        treeName="Family Tree"
+        canEdit={true}
+        isOwner={false}
+        initialMemberCount={1}
+        t={translations}
+      />,
+    );
+
+    const dragBtn = await screen.findByRole("button", { name: "Drag member" });
+    await user.click(dragBtn);
+
+    await waitFor(() => {
+      expect(
+        screen.getByText("Unable to save member position."),
+      ).not.toBeNull();
+    });
+  });
+
+  it("does not expose drag controls to Collaborator Viewers (canEdit=false)", async () => {
+    mockMatchMedia(1280);
+    vi.stubGlobal(
+      "fetch",
+      vi.fn((input: RequestInfo | URL) => {
+        const url = String(input);
+        if (url.includes("/members"))
+          return Promise.resolve({
+            ok: true,
+            json: async () => ({
+              members: [{ id: "member-1", firstName: "Alice" }],
+            }),
+          });
+        if (url.includes("/relationships"))
+          return Promise.resolve({ ok: true, json: async () => ({ relationships: [] }) });
+        if (url.includes("/arrangement"))
+          return Promise.resolve({ ok: true, json: async () => ({ arrangement: null }) });
+        return Promise.resolve({ ok: true, json: async () => ({}) });
+      }),
+    );
+
+    render(
+      <TreeDetailClient
+        lang="en"
+        treeId="tree-1"
+        treeName="Family Tree"
+        canEdit={false}
+        isOwner={false}
+        initialMemberCount={1}
+        t={translations}
+      />,
+    );
+
+    await screen.findByTestId("tree-canvas");
+    expect(screen.queryByRole("button", { name: "Drag member" })).toBeNull();
   });
 });

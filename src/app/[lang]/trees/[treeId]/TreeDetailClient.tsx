@@ -101,6 +101,7 @@ interface ErrorsSubT {
   loadFailed: string;
   chooseTwoMembers: string;
   chooseDifferentMembers: string;
+  dragSaveFailed: string;
   [key: string]: string;
 }
 interface TreeT {
@@ -240,6 +241,7 @@ export default function TreeDetailClient({
   const [arrangement, setArrangement] = useState<TreeArrangement | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [dragError, setDragError] = useState<string | null>(null);
 
   const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
   const [isAddRelationshipOpen, setIsAddRelationshipOpen] = useState(false);
@@ -442,6 +444,36 @@ export default function TreeDetailClient({
     void loadTreeData();
   }, [loadTreeData]);
 
+  const handleNodeDragStop = useCallback(
+    async (memberId: string, position: { x: number; y: number }) => {
+      const prevArrangement = arrangement;
+      const nextArrangement = {
+        ...(arrangement ?? {}),
+        [memberId]: position,
+      } as TreeArrangement;
+      try {
+        const response = await fetch(`/api/trees/${treeId}/arrangement`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ arrangement: nextArrangement }),
+        });
+        if (!response.ok) throw new Error("save failed");
+        setArrangement(nextArrangement);
+        setDragError(null);
+      } catch {
+        // Revert visual positions by setting a new arrangement reference with the
+        // same data — this triggers the useEffect in TreeCanvas to re-sync nodes.
+        setArrangement(
+          prevArrangement === null
+            ? ({} as TreeArrangement)
+            : { ...prevArrangement },
+        );
+        setDragError(t.errors.dragSaveFailed);
+      }
+    },
+    [arrangement, treeId, t.errors.dragSaveFailed],
+  );
+
   const treeSidebarTranslations = {
     collaborators: t.collaboration.sidebarLink,
     shareLink: t.publicShare.sidebarAction,
@@ -549,6 +581,11 @@ export default function TreeDetailClient({
             <p className="text-sm text-red-600">{loadError}</p>
           </div>
         )}
+        {dragError && (
+          <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10 bg-red-50 border border-red-200 rounded-xl px-4 py-3">
+            <p className="text-sm text-red-600">{dragError}</p>
+          </div>
+        )}
         {isLoading ? (
           <div className="w-full h-full flex items-center justify-center bg-[#fbf9f8]">
             <p className="text-stone-500">{t.canvas.loading}</p>
@@ -558,6 +595,7 @@ export default function TreeDetailClient({
             members={members}
             relationships={relationships}
             canAddMember={canAddMember}
+            canEdit={canEdit}
             arrangement={arrangement}
             onNodeClick={(id) => {
               setActiveEdgePopover(null);
@@ -568,6 +606,7 @@ export default function TreeDetailClient({
             }}
             onEdgeClick={handleEdgeClick}
             onAddMember={openAddMemberModal}
+            onDragStop={canEdit ? handleNodeDragStop : undefined}
             t={t.canvas}
           />
         )}

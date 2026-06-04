@@ -326,7 +326,8 @@
       "relationshipGeneric": "Unable to add relationship. Please try again.",
       "loadFailed": "Unable to load members and relationships.",
       "chooseTwoMembers": "Please choose two members.",
-      "chooseDifferentMembers": "Please choose two different members."
+      "chooseDifferentMembers": "Please choose two different members.",
+      "dragSaveFailed": "Unable to save member position. The node has been moved back."
     },
     "canvas": {
       "emptyTitle": "No members yet",
