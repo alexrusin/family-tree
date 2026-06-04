@@ -149,6 +149,7 @@ interface TreeT {
     warningBanner: string;
     limitReached: string;
     memberCount: string;
+    resetLayout: string;
   };
   treeMenu: {
     trigger: string;
@@ -241,7 +242,7 @@ export default function TreeDetailClient({
   const [arrangement, setArrangement] = useState<TreeArrangement | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [dragError, setDragError] = useState<string | null>(null);
+  const [layoutError, setLayoutError] = useState<string | null>(null);
 
   const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
   const [isAddRelationshipOpen, setIsAddRelationshipOpen] = useState(false);
@@ -459,7 +460,7 @@ export default function TreeDetailClient({
         });
         if (!response.ok) throw new Error("save failed");
         setArrangement(nextArrangement);
-        setDragError(null);
+        setLayoutError(null);
       } catch {
         // Revert visual positions by setting a new arrangement reference with the
         // same data — this triggers the useEffect in TreeCanvas to re-sync nodes.
@@ -468,11 +469,29 @@ export default function TreeDetailClient({
             ? ({} as TreeArrangement)
             : { ...prevArrangement },
         );
-        setDragError(t.errors.dragSaveFailed);
+        setLayoutError(t.errors.dragSaveFailed);
       }
     },
     [arrangement, treeId, t.errors.dragSaveFailed],
   );
+
+  const handleResetLayout = useCallback(async () => {
+    try {
+      const response = await fetch(`/api/trees/${treeId}/arrangement`, {
+        method: "DELETE",
+      });
+      if (!response.ok) throw new Error("reset failed");
+      setArrangement(null);
+      setLayoutError(null);
+    } catch {
+      setLayoutError(t.errors.resetLayoutFailed);
+    }
+  }, [treeId, t.errors.resetLayoutFailed]);
+
+  const handleResetLayoutFromTreeMenu = useCallback(() => {
+    closeTreeMenu();
+    void handleResetLayout();
+  }, [closeTreeMenu, handleResetLayout]);
 
   const treeSidebarTranslations = {
     collaborators: t.collaboration.sidebarLink,
@@ -483,6 +502,7 @@ export default function TreeDetailClient({
     warningBanner: t.sidebar.warningBanner,
     limitReached: t.sidebar.limitReached,
     memberCount: t.sidebar.memberCount,
+    resetLayout: t.sidebar.resetLayout,
   };
 
   return (
@@ -500,6 +520,7 @@ export default function TreeDetailClient({
           onAddMember={openAddMemberFromTreeMenu}
           onAddRelationship={openAddRelationshipFromTreeMenu}
           onOpenShareSettings={openShareSettingsFromTreeMenu}
+          onResetLayout={handleResetLayout}
           t={treeSidebarTranslations}
         />
       ) : (
@@ -564,6 +585,7 @@ export default function TreeDetailClient({
                     onAddMember={openAddMemberFromTreeMenu}
                     onAddRelationship={openAddRelationshipFromTreeMenu}
                     onOpenShareSettings={openShareSettingsFromTreeMenu}
+                    onResetLayout={handleResetLayoutFromTreeMenu}
                     className="w-full border-r-0 shadow-none"
                     t={treeSidebarTranslations}
                   />
@@ -581,9 +603,9 @@ export default function TreeDetailClient({
             <p className="text-sm text-red-600">{loadError}</p>
           </div>
         )}
-        {dragError && (
+        {layoutError && (
           <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10 bg-red-50 border border-red-200 rounded-xl px-4 py-3">
-            <p className="text-sm text-red-600">{dragError}</p>
+            <p className="text-sm text-red-600">{layoutError}</p>
           </div>
         )}
         {isLoading ? (
