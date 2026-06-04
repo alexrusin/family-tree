@@ -9,7 +9,7 @@ import {
   useNodesState,
   type EdgeMouseHandler,
   type NodeMouseHandler,
-  type NodeDragHandler,
+  type OnNodeDrag,
   type NodeTypes,
   type EdgeTypes,
 } from "@xyflow/react";
@@ -19,6 +19,7 @@ import {
   buildTreeGraph,
   type TreeArrangement,
   type TreeFlowEdge,
+  type TreeFlowNode,
   type TreeMemberData,
   type TreeRelationship,
 } from "@/lib/tree-domain/tree-layout";
@@ -158,7 +159,7 @@ export default function TreeCanvas({
     onEdgeClick(event as React.MouseEvent, edge as TreeFlowEdge);
   };
 
-  const handleNodeDragStop: NodeDragHandler = (_event, node) => {
+  const handleNodeDragStop: OnNodeDrag<TreeFlowNode> = (_event, node) => {
     if (node.type === "member") {
       onDragStop?.(node.id, node.position);
     }

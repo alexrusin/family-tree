@@ -126,6 +126,7 @@ export default function PublicTreeViewClient({
           members={members}
           relationships={relationships}
           canAddMember={false}
+          canEdit={false}
           arrangement={arrangement}
           onNodeClick={setSelectedMemberId}
           onEdgeClick={() => {}}

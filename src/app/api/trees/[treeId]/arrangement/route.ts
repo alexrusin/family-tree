@@ -3,6 +3,7 @@ import { PrismaClient, Prisma } from "@/generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { auth } from "@/lib/auth";
 import { getTreeRole } from "@/lib/tree-domain/tree-access";
+import { toPrismaNodePositions } from "@/lib/tree-domain/tree-arrangement-json";
 import {
   isValidArrangement,
   type TreeArrangement,
@@ -82,7 +83,7 @@ export async function PUT(
     const arrangement: TreeArrangement = body.arrangement;
     await prisma.familyTree.update({
       where: { id: treeId },
-      data: { nodePositions: arrangement },
+      data: { nodePositions: toPrismaNodePositions(arrangement) },
     });
 
     return NextResponse.json({ arrangement }, { status: 200 });

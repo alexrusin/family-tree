@@ -3,6 +3,7 @@ import { PrismaClient } from "@/generated/prisma/client";
 import type { DatePrecision, MemberGender } from "@/generated/prisma/enums";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { auth } from "@/lib/auth";
+import { toPrismaNodePositions } from "@/lib/tree-domain/tree-arrangement-json";
 import {
   canEditMembers,
   canDeleteMembers,
@@ -446,7 +447,11 @@ export async function DELETE(
         const remaining = new Set(Object.keys(raw).filter((k) => k !== memberId));
         await tx.familyTree.update({
           where: { id: treeId },
-          data: { nodePositions: pruneArrangement(raw, remaining) },
+          data: {
+            nodePositions: toPrismaNodePositions(
+              pruneArrangement(raw, remaining),
+            ),
+          },
         });
       }
     });
