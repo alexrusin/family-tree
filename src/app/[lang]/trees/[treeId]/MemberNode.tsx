@@ -6,9 +6,15 @@ import { Handle, Position, type NodeProps, type Node } from "@xyflow/react";
 import {
   formatMemberDateRange,
   type MemberNodeData,
+  SPOUSE_LEFT_SOURCE_HANDLE,
+  SPOUSE_LEFT_TARGET_HANDLE,
+  SPOUSE_RIGHT_SOURCE_HANDLE,
+  SPOUSE_RIGHT_TARGET_HANDLE,
 } from "@/lib/tree-domain/tree-layout";
 
 export type MemberNodeType = Node<MemberNodeData, "member">;
+const SPOUSE_HANDLE_MIDPOINT = 40;
+const HIDDEN_HANDLE_CLASS = "opacity-0 pointer-events-none";
 
 function getInitials(firstName: string, lastName: string | null): string {
   return `${firstName.charAt(0)}${lastName ? lastName.charAt(0) : ""}`.toUpperCase();
@@ -24,7 +30,25 @@ export const MemberNode = memo(function MemberNode({
 
   return (
     <div className="flex flex-col items-center" style={{ width: 120 }}>
-      <Handle type="target" position={Position.Top} className="opacity-0" />
+      <Handle
+        type="target"
+        position={Position.Top}
+        className={HIDDEN_HANDLE_CLASS}
+      />
+      <Handle
+        id={SPOUSE_LEFT_TARGET_HANDLE}
+        type="target"
+        position={Position.Left}
+        className={HIDDEN_HANDLE_CLASS}
+        style={{ top: SPOUSE_HANDLE_MIDPOINT }}
+      />
+      <Handle
+        id={SPOUSE_RIGHT_TARGET_HANDLE}
+        type="target"
+        position={Position.Right}
+        className={HIDDEN_HANDLE_CLASS}
+        style={{ top: SPOUSE_HANDLE_MIDPOINT }}
+      />
 
       <div
         className={`w-20 h-20 rounded-full overflow-hidden border-4 shadow-lg transition-transform duration-200 ${
@@ -57,7 +81,25 @@ export const MemberNode = memo(function MemberNode({
         </p>
       )}
 
-      <Handle type="source" position={Position.Bottom} className="opacity-0" />
+      <Handle
+        type="source"
+        position={Position.Bottom}
+        className={HIDDEN_HANDLE_CLASS}
+      />
+      <Handle
+        id={SPOUSE_LEFT_SOURCE_HANDLE}
+        type="source"
+        position={Position.Left}
+        className={HIDDEN_HANDLE_CLASS}
+        style={{ top: SPOUSE_HANDLE_MIDPOINT }}
+      />
+      <Handle
+        id={SPOUSE_RIGHT_SOURCE_HANDLE}
+        type="source"
+        position={Position.Right}
+        className={HIDDEN_HANDLE_CLASS}
+        style={{ top: SPOUSE_HANDLE_MIDPOINT }}
+      />
     </div>
   );
 });

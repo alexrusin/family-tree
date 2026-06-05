@@ -5,6 +5,10 @@ import {
   formatMemberDateRange,
   isValidArrangement,
   pruneArrangement,
+  SPOUSE_LEFT_SOURCE_HANDLE,
+  SPOUSE_LEFT_TARGET_HANDLE,
+  SPOUSE_RIGHT_SOURCE_HANDLE,
+  SPOUSE_RIGHT_TARGET_HANDLE,
   type TreeArrangement,
   type TreeMemberData,
   type TreeRelationship,
@@ -87,11 +91,33 @@ describe("buildTreeGraph", () => {
     const rels: TreeRelationship[] = [
       { id: "rs", fromMemberId: "a", toMemberId: "b", type: "spouse" },
     ];
-    const { nodes, edges } = buildTreeGraph(members, rels);
+    const { nodes, edges } = buildTreeGraph(members, rels, {
+      a: { x: 0, y: 0 },
+      b: { x: 300, y: 0 },
+    });
     expect(nodes.filter((n) => n.type === "union")).toHaveLength(0);
     const e = edges.find((e) => e.type === "spouse");
     expect(e).toBeDefined();
     expect((e!.data as { relationshipId: string }).relationshipId).toBe("rs");
+    expect(e?.sourceHandle).toBe(SPOUSE_RIGHT_SOURCE_HANDLE);
+    expect(e?.targetHandle).toBe(SPOUSE_LEFT_TARGET_HANDLE);
+  });
+
+  it("anchors a direct spouse edge to inward-facing side handles after manual arrangement changes", () => {
+    const members = [makeMember("a"), makeMember("b")];
+    const rels: TreeRelationship[] = [
+      { id: "rs", fromMemberId: "a", toMemberId: "b", type: "spouse" },
+    ];
+
+    const { edges } = buildTreeGraph(members, rels, {
+      a: { x: 300, y: 0 },
+      b: { x: 0, y: 0 },
+    });
+
+    const e = edges.find((edge) => edge.type === "spouse");
+    expect(e).toBeDefined();
+    expect(e?.sourceHandle).toBe(SPOUSE_LEFT_SOURCE_HANDLE);
+    expect(e?.targetHandle).toBe(SPOUSE_RIGHT_TARGET_HANDLE);
   });
 
   it("creates a union node for a couple with at least one child of either parent", () => {
@@ -105,6 +131,11 @@ describe("buildTreeGraph", () => {
     const unionNodes = nodes.filter((n) => n.type === "union");
     expect(unionNodes).toHaveLength(1);
     expect(edges.filter((e) => e.type === "spouse")).toHaveLength(2);
+    expect(
+      edges
+        .filter((e) => e.type === "spouse")
+        .every((e) => !e.sourceHandle && !e.targetHandle),
+    ).toBe(true);
     const parentEdges = edges.filter((e) => e.type === "parent");
     expect(parentEdges).toHaveLength(1);
     expect(parentEdges[0].target).toBe("child");

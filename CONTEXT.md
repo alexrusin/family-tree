@@ -94,6 +94,22 @@ _Avoid_: My Tree, tree sidebar
 
 A shared collection of Members and Relationships owned by one User and optionally accessed by Collaborators. It is the unit of ownership, sharing, and workspace arrangement.
 
+## Member
+
+A person represented within one Family Tree. Members participate in Relationships with other Members.
+
+## Relationship
+
+A typed connection between two Members in one Family Tree. The canonical Relationship types are Parent Relationship, Spouse Relationship, and Sibling Relationship.
+
+## Spouse Relationship
+
+A mutual Relationship between two Members who are spouses. It is non-directional in the workspace even when a stored record happens to list one Member first.
+
+## Union
+
+A shared parental pairing between two Members who have at least one child in common. A Union groups the shared-child connection and is distinct from a Spouse Relationship by itself.
+
 ## Manual Tree Arrangement
 
 The persisted set of node positions for one Family Tree's workspace. Editors can change it by dragging nodes so the tree reopens in the same shared arrangement for Collaborator Viewers and Guest Viewers.
