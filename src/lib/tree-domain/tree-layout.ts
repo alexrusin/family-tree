@@ -77,6 +77,10 @@ export type TreeFlowEdge =
 const NODE_W = 120;
 const NODE_H = 150;
 const UNION_SIZE = 8;
+export const SPOUSE_LEFT_SOURCE_HANDLE = "spouse-left-source";
+export const SPOUSE_LEFT_TARGET_HANDLE = "spouse-left-target";
+export const SPOUSE_RIGHT_SOURCE_HANDLE = "spouse-right-source";
+export const SPOUSE_RIGHT_TARGET_HANDLE = "spouse-right-target";
 
 export function buildTreeGraph(
   members: TreeMemberData[],
@@ -225,11 +229,24 @@ export function buildTreeGraph(
   for (const r of spouseRels) {
     const [a, b] = [r.fromMemberId, r.toMemberId].sort();
     if (!unionMap.has(`${a}::${b}`)) {
+      const sourcePos = pos.get(r.fromMemberId);
+      const targetPos = pos.get(r.toMemberId);
+      const sourceIsOnLeft =
+        sourcePos !== undefined &&
+        targetPos !== undefined &&
+        sourcePos.x <= targetPos.x;
+
       edges.push({
         id: `e-spouse-${r.id}`,
         source: r.fromMemberId,
         target: r.toMemberId,
         type: "spouse" as const,
+        sourceHandle: sourceIsOnLeft
+          ? SPOUSE_RIGHT_SOURCE_HANDLE
+          : SPOUSE_LEFT_SOURCE_HANDLE,
+        targetHandle: sourceIsOnLeft
+          ? SPOUSE_LEFT_TARGET_HANDLE
+          : SPOUSE_RIGHT_TARGET_HANDLE,
         data: { relationshipId: r.id },
       });
     }
