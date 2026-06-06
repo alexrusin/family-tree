@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { FormEvent, useMemo, useState } from "react";
 import { authClient } from "@/lib/auth-client";
 import {
-  buildPostVerificationRedirect,
+  EMAIL_VERIFIED_PARAM,
   resolvePostAuthRedirect,
 } from "@/lib/auth-callback";
 
@@ -56,6 +56,7 @@ export default function LoginClient({ lang, t }: LoginClientProps) {
   const [errors, setErrors] = useState<FormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const rawCallback = searchParams.get("callback");
+  const emailVerified = searchParams.get(EMAIL_VERIFIED_PARAM) === "1";
 
   const callbackTarget = useMemo(
     () => (rawCallback ? resolvePostAuthRedirect(lang, rawCallback) : null),
@@ -66,9 +67,18 @@ export default function LoginClient({ lang, t }: LoginClientProps) {
       callbackTarget ? `?callback=${encodeURIComponent(callbackTarget)}` : "",
     [callbackTarget],
   );
-  const verificationCallback = useMemo(
-    () => buildPostVerificationRedirect(lang, rawCallback),
-    [lang, rawCallback],
+  const loginCallback = useMemo(
+    () => {
+      const target = new URL(
+        resolvePostAuthRedirect(lang, rawCallback),
+        "http://localhost",
+      );
+      if (!rawCallback && emailVerified) {
+        target.searchParams.set(EMAIL_VERIFIED_PARAM, "1");
+      }
+      return `${target.pathname}${target.search}${target.hash}`;
+    },
+    [lang, rawCallback, emailVerified],
   );
 
   const signupHref = useMemo(
@@ -105,14 +115,14 @@ export default function LoginClient({ lang, t }: LoginClientProps) {
       const response = (await authClient.signIn.email({
         email: email.trim(),
         password,
-        callbackURL: verificationCallback,
+        callbackURL: loginCallback,
       })) as { error?: { message?: string } };
       if (response.error) {
         setErrors({ form: t.errors.invalidCredentials });
         return;
       }
 
-      router.push(resolvePostAuthRedirect(lang, rawCallback));
+      router.push(loginCallback);
     } catch {
       setErrors({ form: t.errors.generic });
     } finally {

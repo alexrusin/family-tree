@@ -131,11 +131,10 @@ export const auth = betterAuth({
         const locale = getUserLocale((user as { locale?: string }).locale);
         const baseURL = getBaseURL();
         const verificationUrl = new URL(url, baseURL);
-        const callbackURL = verificationUrl.searchParams.get("callbackURL");
         verificationUrl.searchParams.set("locale", locale);
         verificationUrl.searchParams.set(
           "callbackURL",
-          buildPostVerificationRedirect(locale, callbackURL),
+          buildPostVerificationRedirect(locale),
         );
 
         const content = VERIFY_EMAIL_CONTENT[locale];

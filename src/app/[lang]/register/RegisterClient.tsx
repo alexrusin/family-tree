@@ -79,8 +79,8 @@ export default function RegisterClient({ lang, t }: RegisterClientProps) {
     [callbackTarget],
   );
   const verificationCallback = useMemo(
-    () => buildPostVerificationRedirect(lang, rawCallback),
-    [lang, rawCallback],
+    () => buildPostVerificationRedirect(lang),
+    [lang],
   );
 
   const loginHref = useMemo(

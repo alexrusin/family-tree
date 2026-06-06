@@ -1,8 +1,6 @@
 import { DEFAULT_LOCALE, isLocale } from "@/lib/locale";
 
 export const EMAIL_VERIFIED_PARAM = "emailVerified";
-export const DASHBOARD_WELCOME_PARAM = "welcome";
-export const DASHBOARD_WELCOME_CREATE_TREE = "create-tree";
 
 function normalizeLang(lang: string): string {
   const normalizedLang = lang.trim().toLowerCase();
@@ -57,22 +55,12 @@ export function resolvePostAuthRedirect(
 
 export function buildPostVerificationRedirect(
   lang: string,
-  rawCallback: string | null | undefined,
 ): string {
-  const explicitRedirect = getSafePostAuthRedirect(rawCallback);
-  if (explicitRedirect) {
-    return explicitRedirect;
-  }
-
   const fallback = new URL(
     resolvePostAuthRedirect(lang, null),
     "http://localhost",
   );
   fallback.searchParams.set(EMAIL_VERIFIED_PARAM, "1");
-  fallback.searchParams.set(
-    DASHBOARD_WELCOME_PARAM,
-    DASHBOARD_WELCOME_CREATE_TREE,
-  );
 
   return `${fallback.pathname}${fallback.search}${fallback.hash}`;
 }
