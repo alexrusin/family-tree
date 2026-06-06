@@ -26,16 +26,22 @@ vi.mock("next/dynamic", () => ({
       onDragStop,
       canEdit,
       arrangement,
+      members,
+      relationships,
     }: {
       onNodeClick: (id: string) => void;
       onDragStop?: (memberId: string, position: { x: number; y: number }) => void;
       canEdit?: boolean;
       arrangement?: unknown;
+      members?: Array<{ id: string }>;
+      relationships?: Array<{ id: string }>;
     }) => (
       <div
         data-testid="tree-canvas"
         data-arrangement={JSON.stringify(arrangement ?? null)}
         data-can-edit={String(canEdit ?? false)}
+        data-member-count={String(members?.length ?? 0)}
+        data-relationship-count={String(relationships?.length ?? 0)}
       >
         <button type="button" onClick={() => onNodeClick("member-1")}>
           Select member
@@ -53,12 +59,88 @@ vi.mock("next/dynamic", () => ({
 }));
 
 vi.mock("./AddMemberModal", () => ({
-  default: ({ isOpen }: { isOpen: boolean }) =>
-    isOpen ? <div data-testid="add-member-modal" /> : null,
+  default: ({
+    isOpen,
+    onMemberCreated,
+  }: {
+    isOpen: boolean;
+    onMemberCreated: (member: {
+      id: string;
+      firstName: string;
+      lastName: string | null;
+      isLiving: boolean;
+      birthYear: number | null;
+      birthMonth: number | null;
+      birthDay: number | null;
+      birthPrecision: string | null;
+      deathYear: number | null;
+      deathMonth: number | null;
+      deathDay: number | null;
+      deathPrecision: string | null;
+      photoUrl: string | null;
+      bio: string | null;
+      gender: string;
+    }) => void;
+  }) =>
+    isOpen ? (
+      <div data-testid="add-member-modal">
+        <button
+          type="button"
+          onClick={() =>
+            onMemberCreated({
+              id: "member-2",
+              firstName: "Member2",
+              lastName: null,
+              isLiving: true,
+              birthYear: null,
+              birthMonth: null,
+              birthDay: null,
+              birthPrecision: null,
+              deathYear: null,
+              deathMonth: null,
+              deathDay: null,
+              deathPrecision: null,
+              photoUrl: null,
+              bio: null,
+              gender: "undisclosed",
+            })
+          }
+        >
+          Complete add member
+        </button>
+      </div>
+    ) : null,
 }));
 vi.mock("./AddRelationshipModal", () => ({
-  default: ({ isOpen }: { isOpen: boolean }) =>
-    isOpen ? <div data-testid="add-relationship-modal" /> : null,
+  default: ({
+    isOpen,
+    onRelationshipCreated,
+  }: {
+    isOpen: boolean;
+    onRelationshipCreated: (relationship: {
+      id: string;
+      fromMemberId: string;
+      toMemberId: string;
+      type: "parent" | "spouse" | "sibling";
+    }) => void;
+  }) =>
+    isOpen ? (
+      <div data-testid="add-relationship-modal">
+        <button
+          type="button"
+          onClick={() =>
+            onRelationshipCreated({
+              id: "relationship-1",
+              fromMemberId: "member-1",
+              toMemberId: "member-2",
+              type: "spouse",
+            })
+          }
+        >
+          Complete add relationship
+        </button>
+      </div>
+    ) : null,
 }));
 vi.mock("./EditMemberModal", () => ({ default: () => null }));
 vi.mock("./ShareLinkSettingsModal", () => ({
@@ -69,11 +151,17 @@ vi.mock("./MemberSidePanel", () => ({
   default: ({
     member,
     onClose,
+    onDeleted,
+    onRelationshipRemoved,
+    allRelationships,
     presentation = "desktop",
     t,
   }: {
     member: { id: string };
     onClose: () => void;
+    onDeleted: (memberId: string) => void;
+    onRelationshipRemoved: (relationshipId: string) => void;
+    allRelationships: Array<{ id: string }>;
     presentation?: "desktop" | "tablet" | "mobile";
     t: { close: string };
   }) => (
@@ -81,9 +169,19 @@ vi.mock("./MemberSidePanel", () => ({
       data-testid="member-side-panel"
       data-member-id={member.id}
       data-presentation={presentation}
+      data-relationship-count={String(allRelationships.length)}
     >
       <button type="button" onClick={onClose}>
         {t.close}
+      </button>
+      <button type="button" onClick={() => onDeleted(member.id)}>
+        Delete selected member
+      </button>
+      <button
+        type="button"
+        onClick={() => onRelationshipRemoved("relationship-1")}
+      >
+        Remove selected relationship
       </button>
     </aside>
   ),
@@ -598,6 +696,123 @@ describe("TreeDetailClient responsive tree workspace shell", () => {
       );
     });
     expect(screen.queryByRole("button", { name: "Tree Menu" })).toBeNull();
+  });
+
+  it("adds a member locally without reloading the tree data", async () => {
+    const user = userEvent.setup();
+    renderSubject({
+      viewportWidth: 1280,
+      initialMemberCount: 1,
+      fetchedMemberCount: 1,
+    });
+
+    const fetchMock = vi.mocked(fetch);
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(3));
+
+    expect(screen.getByText("1 members")).not.toBeNull();
+    expect(screen.getByTestId("tree-canvas").getAttribute("data-member-count")).toBe(
+      "1",
+    );
+
+    await user.click(screen.getByRole("button", { name: "Add Member" }));
+    await user.click(screen.getByRole("button", { name: "Complete add member" }));
+
+    await waitFor(() => {
+      expect(screen.getByText("2 members")).not.toBeNull();
+      expect(
+        screen.getByTestId("tree-canvas").getAttribute("data-member-count"),
+      ).toBe("2");
+    });
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+  });
+
+  it("adds a relationship locally without reloading the tree data", async () => {
+    const user = userEvent.setup();
+    renderSubject({
+      viewportWidth: 1280,
+      initialMemberCount: 2,
+      fetchedMemberCount: 2,
+    });
+
+    const fetchMock = vi.mocked(fetch);
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(3));
+
+    expect(
+      screen.getByTestId("tree-canvas").getAttribute("data-relationship-count"),
+    ).toBe("0");
+
+    await user.click(screen.getByRole("button", { name: "Add Relationship" }));
+    await user.click(
+      screen.getByRole("button", { name: "Complete add relationship" }),
+    );
+
+    await waitFor(() => {
+      expect(
+        screen.getByTestId("tree-canvas").getAttribute("data-relationship-count"),
+      ).toBe("1");
+    });
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+  });
+
+  it("deletes a member locally without reloading the tree data", async () => {
+    const user = userEvent.setup();
+    renderSubject({
+      viewportWidth: 1280,
+      initialMemberCount: 1,
+      fetchedMemberCount: 1,
+    });
+
+    const fetchMock = vi.mocked(fetch);
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(3));
+
+    await user.click(await screen.findByRole("button", { name: "Select member" }));
+    await user.click(screen.getByRole("button", { name: "Delete selected member" }));
+
+    await waitFor(() => {
+      expect(screen.queryByTestId("member-side-panel")).toBeNull();
+      expect(screen.getByText("0 members")).not.toBeNull();
+      expect(
+        screen.getByTestId("tree-canvas").getAttribute("data-member-count"),
+      ).toBe("0");
+    });
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+  });
+
+  it("deletes a relationship locally without reloading the tree data", async () => {
+    const user = userEvent.setup();
+    renderSubject({
+      viewportWidth: 1280,
+      initialMemberCount: 2,
+      fetchedMemberCount: 2,
+    });
+
+    const fetchMock = vi.mocked(fetch);
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(3));
+
+    await user.click(screen.getByRole("button", { name: "Add Relationship" }));
+    await user.click(
+      screen.getByRole("button", { name: "Complete add relationship" }),
+    );
+    await waitFor(() => {
+      expect(
+        screen.getByTestId("tree-canvas").getAttribute("data-relationship-count"),
+      ).toBe("1");
+    });
+
+    await user.click(await screen.findByRole("button", { name: "Select member" }));
+    await user.click(
+      screen.getByRole("button", { name: "Remove selected relationship" }),
+    );
+
+    await waitFor(() => {
+      expect(
+        screen.getByTestId("tree-canvas").getAttribute("data-relationship-count"),
+      ).toBe("0");
+      expect(
+        screen.getByTestId("member-side-panel").getAttribute("data-relationship-count"),
+      ).toBe("0");
+    });
+    expect(fetchMock).toHaveBeenCalledTimes(3);
   });
 });
 

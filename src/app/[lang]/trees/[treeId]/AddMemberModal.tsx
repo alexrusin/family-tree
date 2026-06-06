@@ -8,6 +8,7 @@ import {
   validateMemberPhotoSelection,
 } from "./member-form-state";
 import MemberDateSection from "./MemberDateSection";
+import type { TreeMemberData } from "@/lib/tree-domain/tree-layout";
 
 interface MemberT {
   addTitle: string;
@@ -55,7 +56,7 @@ interface AddMemberModalProps {
   isOpen: boolean;
   treeId: string;
   onClose: () => void;
-  onMemberCreated: () => void;
+  onMemberCreated: (member: TreeMemberData) => void;
   t: MemberT;
 }
 
@@ -189,16 +190,22 @@ export default function AddMemberModal({
         body: formData,
       });
 
+      const data = (await response.json().catch(() => null)) as {
+        member?: TreeMemberData;
+        errorCode?: string;
+      } | null;
+
       if (!response.ok) {
-        const data = (await response.json().catch(() => null)) as {
-          errorCode?: string;
-        } | null;
         throw new Error(data?.errorCode ?? "ERR_UNKNOWN");
+      }
+
+      if (!data?.member) {
+        throw new Error("ERR_UNKNOWN");
       }
 
       resetForm();
       onClose();
-      onMemberCreated();
+      onMemberCreated(data.member);
     } catch (submitError) {
       const errorCode =
         submitError instanceof Error ? submitError.message : null;

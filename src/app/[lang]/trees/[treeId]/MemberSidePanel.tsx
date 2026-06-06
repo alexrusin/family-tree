@@ -48,8 +48,8 @@ interface MemberSidePanelProps {
   treeId: string;
   onClose: () => void;
   onEditClick: () => void;
-  onDeleted: () => void;
-  onRelationshipRemoved: () => void;
+  onDeleted: (memberId: string) => void;
+  onRelationshipRemoved: (relationshipId: string) => void;
   presentation?: MemberSidePanelPresentation;
   t: SidePanelT;
 }
@@ -114,7 +114,7 @@ export default function MemberSidePanel({
         method: "DELETE",
       });
       if (!res.ok) throw new Error("failed");
-      onDeleted();
+      onDeleted(member.id);
     } catch {
       setDeleteError(t.deleteFailed);
     } finally {
@@ -130,7 +130,7 @@ export default function MemberSidePanel({
         method: "DELETE",
       });
       if (!res.ok) throw new Error("failed");
-      onRelationshipRemoved();
+      onRelationshipRemoved(relId);
     } catch {
       setRemoveError(t.removeFailed);
     } finally {
