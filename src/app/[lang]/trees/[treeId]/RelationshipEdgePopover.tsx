@@ -11,7 +11,7 @@ interface RelationshipEdgePopoverProps {
   typeLabel: string;
   relationshipId: string;
   treeId: string;
-  onRemoved: () => void;
+  onRemoved: (relationshipId: string) => void;
   onClose: () => void;
   t: {
     close: string;
@@ -58,7 +58,7 @@ export default function RelationshipEdgePopover({
         { method: "DELETE" },
       );
       if (!res.ok) throw new Error("failed");
-      onRemoved();
+      onRemoved(relationshipId);
     } catch {
       setError(t.removeFailed);
     } finally {

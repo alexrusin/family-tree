@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { X } from "lucide-react";
+import type { TreeRelationship } from "@/lib/tree-domain/tree-layout";
 
 type RelationshipType = "parent" | "child" | "spouse" | "sibling";
 
@@ -44,7 +45,7 @@ interface AddRelationshipModalProps {
   treeId: string;
   members: MemberOption[];
   onClose: () => void;
-  onRelationshipCreated: () => void;
+  onRelationshipCreated: (relationship: TreeRelationship) => void;
   t: RelationshipT;
 }
 
@@ -124,16 +125,22 @@ export default function AddRelationshipModal({
         }),
       });
 
+      const data = (await response.json().catch(() => null)) as {
+        relationship?: TreeRelationship;
+        errorCode?: string;
+      } | null;
+
       if (!response.ok) {
-        const data = (await response.json().catch(() => null)) as {
-          errorCode?: string;
-        } | null;
         throw new Error(data?.errorCode || "ERR_UNKNOWN");
+      }
+
+      if (!data?.relationship) {
+        throw new Error("ERR_UNKNOWN");
       }
 
       resetForm();
       onClose();
-      onRelationshipCreated();
+      onRelationshipCreated(data.relationship);
     } catch (submitError) {
       const errorCode =
         submitError instanceof Error ? submitError.message : null;

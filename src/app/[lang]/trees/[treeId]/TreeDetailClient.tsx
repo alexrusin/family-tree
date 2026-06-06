@@ -15,6 +15,7 @@ import MemberSidePanel, {
 import RelationshipEdgePopover from "./RelationshipEdgePopover";
 import { buildPublicUrl } from "./share-link-form-state";
 import {
+  pruneArrangement,
   type TreeMemberData,
   type TreeRelationship,
   type TreeFlowEdge,
@@ -435,15 +436,48 @@ export default function TreeDetailClient({
     [canEdit, getMemberName, t.panel.parentOf, t.panel.spouseOf],
   );
 
-  const handleRelationshipRemoved = useCallback(() => {
-    setActiveEdgePopover(null);
-    void loadTreeData();
-  }, [loadTreeData]);
+  const handleMemberCreated = useCallback((member: TreeMemberData) => {
+    setMembers((prev) => [...prev, member]);
+    setLoadError(null);
+  }, []);
 
-  const handleMemberDeleted = useCallback(() => {
-    setSelectedMemberId(null);
-    void loadTreeData();
-  }, [loadTreeData]);
+  const handleRelationshipCreated = useCallback(
+    (relationship: TreeRelationship) => {
+      setRelationships((prev) => [...prev, relationship]);
+      setLoadError(null);
+    },
+    [],
+  );
+
+  const handleRelationshipRemoved = useCallback((relationshipId: string) => {
+    setActiveEdgePopover(null);
+    setRelationships((prev) => prev.filter((item) => item.id !== relationshipId));
+    setLoadError(null);
+  }, []);
+
+  const handleMemberDeleted = useCallback(
+    (memberId: string) => {
+      const nextMembers = members.filter((member) => member.id !== memberId);
+
+      setSelectedMemberId((current) => (current === memberId ? null : current));
+      setEditingMember((current) => (current?.id === memberId ? null : current));
+      setMembers(nextMembers);
+      setRelationships((prev) =>
+        prev.filter(
+          (relationship) =>
+            relationship.fromMemberId !== memberId &&
+            relationship.toMemberId !== memberId,
+        ),
+      );
+      setArrangement((current) =>
+        current === null
+          ? null
+          : pruneArrangement(current, new Set(nextMembers.map((member) => member.id))),
+      );
+      setLoadError(null);
+    },
+    [members],
+  );
 
   const handleNodeDragStop = useCallback(
     async (memberId: string, position: { x: number; y: number }) => {
@@ -646,7 +680,7 @@ export default function TreeDetailClient({
           onClose={() => setSelectedMemberId(null)}
           onEditClick={() => setEditingMember(selectedMember)}
           onDeleted={handleMemberDeleted}
-          onRelationshipRemoved={() => void loadTreeData()}
+          onRelationshipRemoved={handleRelationshipRemoved}
           presentation={memberPanelPresentation}
           t={{
             ...t.panel,
@@ -738,7 +772,7 @@ export default function TreeDetailClient({
         isOpen={isAddMemberOpen}
         treeId={treeId}
         onClose={() => setIsAddMemberOpen(false)}
-        onMemberCreated={loadTreeData}
+        onMemberCreated={handleMemberCreated}
         t={{
           ...t.member,
           cancel: t.cancel,
@@ -755,7 +789,7 @@ export default function TreeDetailClient({
         treeId={treeId}
         members={members}
         onClose={() => setIsAddRelationshipOpen(false)}
-        onRelationshipCreated={loadTreeData}
+        onRelationshipCreated={handleRelationshipCreated}
         t={{
           ...t.relationship,
           cancel: t.cancel,
