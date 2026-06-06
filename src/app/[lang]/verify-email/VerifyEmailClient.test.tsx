@@ -79,7 +79,7 @@ describe('VerifyEmailClient', () => {
     await waitFor(() => {
       expect(sendVerificationEmailMock).toHaveBeenCalledWith({
         email: 'person@example.com',
-        callbackURL: '/en/dashboard?emailVerified=1&welcome=create-tree',
+        callbackURL: '/en/dashboard?emailVerified=1',
       })
     })
 

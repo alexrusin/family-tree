@@ -48,30 +48,21 @@ describe("resolvePostAuthRedirect", () => {
 });
 
 describe("buildPostVerificationRedirect", () => {
-  it("preserves explicit callbacks without adding welcome state", () => {
-    expect(
-      buildPostVerificationRedirect("en", "/en/invitations/accept/token"),
-    ).toBe("/en/invitations/accept/token");
-    expect(buildPostVerificationRedirect("en", "/en/dashboard")).toBe(
-      "/en/dashboard",
+  it("always redirects to the localized dashboard with only emailVerified", () => {
+    expect(buildPostVerificationRedirect("en")).toBe(
+      "/en/dashboard?emailVerified=1",
+    );
+    expect(buildPostVerificationRedirect("ru")).toBe(
+      "/ru/dashboard?emailVerified=1",
+    );
+    expect(buildPostVerificationRedirect("es")).toBe(
+      "/es/dashboard?emailVerified=1",
     );
   });
 
-  it("falls back to dashboard welcome state when callback is missing", () => {
-    expect(buildPostVerificationRedirect("en", null)).toBe(
-      "/en/dashboard?emailVerified=1&welcome=create-tree",
-    );
-    expect(buildPostVerificationRedirect("ru", "")).toBe(
-      "/ru/dashboard?emailVerified=1&welcome=create-tree",
-    );
-    expect(buildPostVerificationRedirect("es", null)).toBe(
-      "/es/dashboard?emailVerified=1&welcome=create-tree",
-    );
-  });
-
-  it("falls back to dashboard welcome state for unsafe callbacks", () => {
-    expect(buildPostVerificationRedirect("en", "https://evil.com")).toBe(
-      "/en/dashboard?emailVerified=1&welcome=create-tree",
+  it("falls back to the default locale for unsupported languages", () => {
+    expect(buildPostVerificationRedirect("de")).toBe(
+      "/en/dashboard?emailVerified=1",
     );
   });
 });

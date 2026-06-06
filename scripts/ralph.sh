@@ -10,7 +10,7 @@
 
 set -euo pipefail
 
-MODEL=${RALPH_MODEL-claude-sonnet-4.6}
+# MODEL=${RALPH_MODEL-claude-sonnet-4.6}
 
 if [[ $# -lt 1 ]]; then
   echo "usage: $0 <issues-dir>" >&2

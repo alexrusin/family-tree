@@ -67,7 +67,7 @@ describe("DashboardLayout", () => {
 
   it("shows the email verified message after verification without opening the modal", () => {
     useSearchParamsMock.mockReturnValue(
-      new URLSearchParams("emailVerified=1&welcome=create-tree"),
+      new URLSearchParams("emailVerified=1"),
     );
 
     render(
@@ -91,7 +91,7 @@ describe("DashboardLayout", () => {
 
   it("shows the email verified message even when the user already owns a tree", () => {
     useSearchParamsMock.mockReturnValue(
-      new URLSearchParams("emailVerified=1&welcome=create-tree"),
+      new URLSearchParams("emailVerified=1"),
     );
 
     render(

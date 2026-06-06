@@ -29,14 +29,13 @@ type VerifyEmailStatus = "idle" | "success" | "error";
 export default function VerifyEmailClient({ lang, t }: VerifyEmailClientProps) {
   const searchParams = useSearchParams();
   const email = searchParams.get("email")?.trim() ?? "";
-  const rawCallback = searchParams.get("callback");
   const [isResending, setIsResending] = useState(false);
   const [status, setStatus] = useState<VerifyEmailStatus>("idle");
 
   const registerHref = useMemo(() => `/${lang}/register`, [lang]);
   const verificationCallback = useMemo(
-    () => buildPostVerificationRedirect(lang, rawCallback),
-    [lang, rawCallback],
+    () => buildPostVerificationRedirect(lang),
+    [lang],
   );
 
   let statusCopy: { body: string; className: string } | null = null;
