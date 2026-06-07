@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { X } from "lucide-react";
 import type { TreeRelationship } from "@/lib/tree-domain/tree-layout";
 
@@ -23,6 +23,8 @@ interface RelationshipT {
   child: string;
   spouse: string;
   sibling: string;
+  searchMembers: string;
+  noMembersFound: string;
   needTwoMembers: string;
   closeModal: string;
   cancel: string;
@@ -47,6 +49,206 @@ interface AddRelationshipModalProps {
   onClose: () => void;
   onRelationshipCreated: (relationship: TreeRelationship) => void;
   t: RelationshipT;
+}
+
+interface SelectOption {
+  id: string;
+  label: string;
+}
+
+interface MemberComboboxProps {
+  label: string;
+  value: string;
+  options: SelectOption[];
+  placeholder: string;
+  searchPlaceholder: string;
+  emptyState: string;
+  disabled?: boolean;
+  onChange: (memberId: string) => void;
+}
+
+function MemberCombobox({
+  label,
+  value,
+  options,
+  placeholder,
+  searchPlaceholder,
+  emptyState,
+  disabled = false,
+  onChange,
+}: MemberComboboxProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const [highlightedIndex, setHighlightedIndex] = useState(0);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const inputRef = useRef<HTMLInputElement | null>(null);
+
+  const selectedOption = useMemo(
+    () => options.find((option) => option.id === value) ?? null,
+    [options, value],
+  );
+
+  const filteredOptions = useMemo(() => {
+    const normalizedQuery = query.trim().toLowerCase();
+    if (!normalizedQuery) {
+      return options;
+    }
+    return options.filter((option) =>
+      option.label.toLowerCase().includes(normalizedQuery),
+    );
+  }, [options, query]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    inputRef.current?.focus();
+  }, [isOpen]);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (!containerRef.current?.contains(event.target as Node)) {
+        setIsOpen(false);
+        setQuery("");
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isOpen]);
+
+  const listboxId = `${label.replace(/\s+/g, "-").toLowerCase()}-listbox`;
+
+  const closeDropdown = () => {
+    setIsOpen(false);
+    setQuery("");
+  };
+
+  const handleSelect = (memberId: string) => {
+    onChange(memberId);
+    closeDropdown();
+  };
+
+  const handleToggle = () => {
+    if (isOpen) {
+      closeDropdown();
+      return;
+    }
+    const activeIndex = options.findIndex((option) => option.id === value);
+    setHighlightedIndex(activeIndex >= 0 ? activeIndex : 0);
+    setIsOpen(true);
+  };
+
+  const handleInputKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    const clampedHighlightedIndex =
+      filteredOptions.length === 0
+        ? 0
+        : Math.min(highlightedIndex, filteredOptions.length - 1);
+
+    if (event.key === "ArrowDown") {
+      event.preventDefault();
+      if (!filteredOptions.length) return;
+      setHighlightedIndex((clampedHighlightedIndex + 1) % filteredOptions.length);
+      return;
+    }
+
+    if (event.key === "ArrowUp") {
+      event.preventDefault();
+      if (!filteredOptions.length) return;
+      setHighlightedIndex(
+        (clampedHighlightedIndex - 1 + filteredOptions.length) %
+          filteredOptions.length,
+      );
+      return;
+    }
+
+    if (event.key === "Enter") {
+      event.preventDefault();
+      const highlightedOption = filteredOptions[clampedHighlightedIndex];
+      if (highlightedOption) {
+        handleSelect(highlightedOption.id);
+      }
+      return;
+    }
+
+    if (event.key === "Escape") {
+      event.preventDefault();
+      closeDropdown();
+    }
+  };
+
+  return (
+    <div ref={containerRef}>
+      <label className="block text-sm font-semibold text-stone-900 mb-2">
+        {label}
+      </label>
+      {!isOpen ? (
+        <button
+          type="button"
+          className="w-full px-4 py-2 bg-stone-50 border border-stone-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-900 focus:border-transparent transition-all text-left text-stone-900 disabled:opacity-60 disabled:cursor-not-allowed"
+          onClick={handleToggle}
+          aria-haspopup="listbox"
+          aria-expanded={false}
+          aria-controls={listboxId}
+          disabled={disabled}
+        >
+          {selectedOption?.label ?? placeholder}
+        </button>
+      ) : (
+        <div className="relative">
+          <input
+            ref={inputRef}
+            type="text"
+            value={query}
+            onChange={(event) => {
+              setQuery(event.target.value);
+              setHighlightedIndex(0);
+            }}
+            onKeyDown={handleInputKeyDown}
+            placeholder={searchPlaceholder}
+            role="combobox"
+            aria-expanded={true}
+            aria-controls={listboxId}
+            className="w-full px-4 py-2 bg-stone-50 border border-stone-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-900 focus:border-transparent transition-all text-stone-900"
+          />
+          <div className="absolute z-10 mt-1 w-full rounded-lg border border-stone-200 bg-white shadow-lg">
+            <ul id={listboxId} role="listbox" className="max-h-56 overflow-y-auto py-1">
+              {filteredOptions.length ? (
+                filteredOptions.map((option, index) => {
+                  const isHighlighted =
+                    index ===
+                    Math.min(highlightedIndex, filteredOptions.length - 1);
+                  const isSelected = option.id === value;
+                  return (
+                    <li key={option.id} role="none">
+                      <button
+                        type="button"
+                        role="option"
+                        aria-selected={isSelected}
+                        onMouseEnter={() => setHighlightedIndex(index)}
+                        onClick={() => handleSelect(option.id)}
+                        className={`w-full px-3 py-2 text-left text-sm ${
+                          isHighlighted
+                            ? "bg-amber-100 text-stone-900"
+                            : "text-stone-700 hover:bg-stone-100"
+                        }`}
+                      >
+                        {option.label}
+                      </button>
+                    </li>
+                  );
+                })
+              ) : (
+                <li className="px-3 py-2 text-sm text-stone-500">{emptyState}</li>
+              )}
+            </ul>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }
 
 function mapRelationshipErrorCode(
@@ -88,6 +290,16 @@ export default function AddRelationshipModal({
         label: `${member.firstName}${member.lastName ? ` ${member.lastName}` : ""}`,
       })),
     [members],
+  );
+
+  const fromMemberOptions = useMemo(
+    () => memberOptions.filter((member) => member.id !== toMemberId),
+    [memberOptions, toMemberId],
+  );
+
+  const toMemberOptions = useMemo(
+    () => memberOptions.filter((member) => member.id !== fromMemberId),
+    [fromMemberId, memberOptions],
   );
 
   const handleClose = () => {
@@ -156,7 +368,7 @@ export default function AddRelationshipModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-amber-900/10 backdrop-blur-sm px-4">
-      <div className="w-full max-w-lg bg-white rounded-xl shadow-xl border border-stone-100 overflow-hidden">
+      <div className="w-full max-w-lg bg-white rounded-xl shadow-xl border border-stone-100 overflow-visible">
         <div className="flex items-center justify-between px-6 py-4 border-b border-stone-100">
           <div>
             <h2 className="text-xl font-semibold text-stone-900">
@@ -174,43 +386,32 @@ export default function AddRelationshipModal({
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
-          <div>
-            <label className="block text-sm font-semibold text-stone-900 mb-2">
-              {t.memberA}
-            </label>
-            <select
-              value={fromMemberId}
-              onChange={(event) => setFromMemberId(event.target.value)}
-              className="w-full px-4 py-2 bg-stone-50 border border-stone-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-900 focus:border-transparent transition-all text-stone-900"
-              disabled={isLoading}
-            >
-              <option value="">{t.selectMember}</option>
-              {memberOptions.map((member) => (
-                <option key={member.id} value={member.id}>
-                  {member.label}
-                </option>
-              ))}
-            </select>
-          </div>
+          <MemberCombobox
+            label={t.memberA}
+            value={fromMemberId}
+            options={fromMemberOptions}
+            placeholder={t.selectMember}
+            searchPlaceholder={t.searchMembers}
+            emptyState={t.noMembersFound}
+            disabled={isLoading}
+            onChange={(memberId) => {
+              setFromMemberId(memberId);
+              if (memberId === toMemberId) {
+                setToMemberId("");
+              }
+            }}
+          />
 
-          <div>
-            <label className="block text-sm font-semibold text-stone-900 mb-2">
-              {t.memberB}
-            </label>
-            <select
-              value={toMemberId}
-              onChange={(event) => setToMemberId(event.target.value)}
-              className="w-full px-4 py-2 bg-stone-50 border border-stone-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-900 focus:border-transparent transition-all text-stone-900"
-              disabled={isLoading}
-            >
-              <option value="">{t.selectMember}</option>
-              {memberOptions.map((member) => (
-                <option key={member.id} value={member.id}>
-                  {member.label}
-                </option>
-              ))}
-            </select>
-          </div>
+          <MemberCombobox
+            label={t.memberB}
+            value={toMemberId}
+            options={toMemberOptions}
+            placeholder={t.selectMember}
+            searchPlaceholder={t.searchMembers}
+            emptyState={t.noMembersFound}
+            disabled={isLoading}
+            onChange={(memberId) => setToMemberId(memberId)}
+          />
 
           <div>
             <label className="block text-sm font-semibold text-stone-900 mb-2">
