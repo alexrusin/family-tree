@@ -80,6 +80,8 @@ interface RelationshipSubT {
   child: string;
   spouse: string;
   sibling: string;
+  searchMembers: string;
+  noMembersFound: string;
   needTwoMembers: string;
   closeModal: string;
   remove: string;

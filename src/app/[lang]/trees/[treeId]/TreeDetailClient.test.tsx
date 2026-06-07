@@ -297,6 +297,8 @@ const translations = {
     child: "Child",
     spouse: "Spouse",
     sibling: "Sibling",
+    searchMembers: "Search members",
+    noMembersFound: "No members found.",
     needTwoMembers: "At least two members are required to create a relationship.",
     closeModal: "Close modal",
     remove: "Remove",
