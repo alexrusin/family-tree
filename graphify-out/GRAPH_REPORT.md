@@ -5,12 +5,12 @@
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 3138 nodes · 3714 edges · 352 communities (212 shown, 140 thin omitted)
-- Extraction: 98% EXTRACTED · 2% INFERRED · 0% AMBIGUOUS · INFERRED: 83 edges (avg confidence: 0.81)
+- 3138 nodes · 3672 edges · 389 communities (210 shown, 179 thin omitted)
+- Extraction: 98% EXTRACTED · 2% INFERRED · 0% AMBIGUOUS · INFERRED: 58 edges (avg confidence: 0.8)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `b398e676`
+- Built from commit: `9d580859`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -359,6 +359,43 @@
 - [[_COMMUNITY_Community 346|Community 346]]
 - [[_COMMUNITY_Community 347|Community 347]]
 - [[_COMMUNITY_Community 348|Community 348]]
+- [[_COMMUNITY_Community 349|Community 349]]
+- [[_COMMUNITY_Community 351|Community 351]]
+- [[_COMMUNITY_Community 352|Community 352]]
+- [[_COMMUNITY_Community 353|Community 353]]
+- [[_COMMUNITY_Community 354|Community 354]]
+- [[_COMMUNITY_Community 355|Community 355]]
+- [[_COMMUNITY_Community 356|Community 356]]
+- [[_COMMUNITY_Community 357|Community 357]]
+- [[_COMMUNITY_Community 358|Community 358]]
+- [[_COMMUNITY_Community 359|Community 359]]
+- [[_COMMUNITY_Community 360|Community 360]]
+- [[_COMMUNITY_Community 361|Community 361]]
+- [[_COMMUNITY_Community 362|Community 362]]
+- [[_COMMUNITY_Community 363|Community 363]]
+- [[_COMMUNITY_Community 364|Community 364]]
+- [[_COMMUNITY_Community 365|Community 365]]
+- [[_COMMUNITY_Community 366|Community 366]]
+- [[_COMMUNITY_Community 367|Community 367]]
+- [[_COMMUNITY_Community 369|Community 369]]
+- [[_COMMUNITY_Community 370|Community 370]]
+- [[_COMMUNITY_Community 371|Community 371]]
+- [[_COMMUNITY_Community 372|Community 372]]
+- [[_COMMUNITY_Community 373|Community 373]]
+- [[_COMMUNITY_Community 374|Community 374]]
+- [[_COMMUNITY_Community 375|Community 375]]
+- [[_COMMUNITY_Community 376|Community 376]]
+- [[_COMMUNITY_Community 377|Community 377]]
+- [[_COMMUNITY_Community 378|Community 378]]
+- [[_COMMUNITY_Community 380|Community 380]]
+- [[_COMMUNITY_Community 381|Community 381]]
+- [[_COMMUNITY_Community 382|Community 382]]
+- [[_COMMUNITY_Community 383|Community 383]]
+- [[_COMMUNITY_Community 384|Community 384]]
+- [[_COMMUNITY_Community 385|Community 385]]
+- [[_COMMUNITY_Community 386|Community 386]]
+- [[_COMMUNITY_Community 387|Community 387]]
+- [[_COMMUNITY_Community 388|Community 388]]
 
 ## God Nodes (most connected - your core abstractions)
 1. `getDictionary()` - 36 edges
@@ -373,16 +410,16 @@
 10. `Family Tree Domain Glossary` - 32 edges
 
 ## Surprising Connections (you probably didn't know these)
-- `Strategic Suspense Boundaries` --conceptually_related_to--> `Promise.all() for Independent Operations`  [AMBIGUOUS]
-  .agents/skills/vercel-react-best-practices/rules/async-suspense-boundaries.md → .claude/skills/vercel-react-best-practices/rules/async-parallel.md
-- `Conditional Module Loading` --semantically_similar_to--> `Preload Based on User Intent`  [INFERRED] [semantically similar]
-  .agents/skills/vercel-react-best-practices/rules/bundle-conditional.md → .claude/skills/vercel-react-best-practices/rules/bundle-preload.md
-- `Use Set/Map for O(1) Lookups` --semantically_similar_to--> `Build Index Maps for Repeated Lookups`  [INFERRED] [semantically similar]
-  .claude/skills/vercel-react-best-practices/rules/js-set-map-lookups.md → .agents/skills/vercel-react-best-practices/rules/js-index-maps.md
-- `Per-Request Deduplication with React.cache()` --semantically_similar_to--> `Cross-Request LRU Caching`  [INFERRED] [semantically similar]
-  .claude/skills/vercel-react-best-practices/rules/server-cache-react.md → .agents/skills/vercel-react-best-practices/rules/server-cache-lru.md
 - `Deduplicate Global Event Listeners` --semantically_similar_to--> `Store Event Handlers in Refs`  [AMBIGUOUS] [semantically similar]
   .agents/skills/vercel-react-best-practices/rules/client-event-listeners.md → .agents/skills/vercel-react-best-practices/rules/advanced-event-handler-refs.md
+- `Postgres Service (deploy)` --shares_data_with--> `Postgres Service (local)`  [INFERRED]
+  docker-compose-deploy.yaml → docker-compose.yaml
+- `Next.js Version-Specific Agent Rule` --conceptually_related_to--> `Vercel React Best Practices Skill`  [INFERRED]
+  .github/copilot-instructions.md → .agents/skills/vercel-react-best-practices/SKILL.md
+- `AddMemberModalProps` --references--> `TreeMemberData`  [EXTRACTED]
+  src/app/[lang]/trees/[treeId]/AddMemberModal.tsx → src/lib/tree-domain/tree-layout.ts
+- `AddRelationshipModalProps` --references--> `TreeRelationship`  [EXTRACTED]
+  src/app/[lang]/trees/[treeId]/AddRelationshipModal.tsx → src/lib/tree-domain/tree-layout.ts
 
 ## Import Cycles
 - None detected.
@@ -404,7 +441,7 @@
 - **Graphify Query and Update Modes** — references_query_graph_query, references_query_bfs_mode, references_query_dfs_mode, references_query_path_query, references_query_explain_query, references_update_incremental_update_pipeline, references_add_watch_graphify_watch_mode [INFERRED 0.85]
 - **Family Tree Sharing Model** — context_invitation, context_collaborator, context_share_token, context_public_share_link, context_guest_viewer, context_share_link_regeneration [EXTRACTED 1.00]
 
-## Communities (352 total, 140 thin omitted)
+## Communities (389 total, 179 thin omitted)
 
 ### Community 0 - "Tsx Formerrors"
 Cohesion: 0.05
@@ -419,8 +456,8 @@ Cohesion: 0.05
 Nodes (40): dependencies, @aws-sdk/client-s3, better-auth, @dagrejs/dagre, dotenv, lucide-react, mailtrap, next (+32 more)
 
 ### Community 3 - "Photo Route"
-Cohesion: 0.14
-Nodes (32): DELETE(), getPrismaClient(), PATCH(), toOptionalInt(), toResponseMember(), VALID_GENDERS, VALID_PRECISIONS, GET() (+24 more)
+Cohesion: 0.27
+Nodes (11): GET(), getPrismaClient(), POST(), toOptionalInt(), toResponseMember(), VALID_GENDERS, VALID_PRECISIONS, resolveTreeMemberPhotoUrl() (+3 more)
 
 ### Community 4 - "Avatarcardbody Dictionaries_en_account_a"
 Cohesion: 0.06
@@ -447,16 +484,16 @@ Cohesion: 0.06
 Nodes (32): addPhoto, addSubtitle, addTitle, bio, bioPlaceholder, birthSection, closeModal, currentPhotoAlt (+24 more)
 
 ### Community 10 - "Json Meta"
-Cohesion: 0.09
-Nodes (21): meta, description, title, nav, login, logo, signup, meta (+13 more)
+Cohesion: 0.22
+Nodes (7): meta, description, title, nav, login, logo, signup
 
 ### Community 11 - "Tsx Page"
-Cohesion: 0.22
-Nodes (15): AccountSettingsPage(), CollaboratorsPage(), Header(), HeaderProps, DashboardPage(), hasLocale, notFound, LocaleLayout() (+7 more)
+Cohesion: 0.05
+Nodes (61): AccountSettingsPage(), CollaboratorsPage(), Header(), HeaderProps, LanguagePicker(), LanguagePickerErrorMessages, LanguagePickerProps, LOCALE_LABELS (+53 more)
 
 ### Community 12 - "Changepasswordbody Dictionaries_en_secur"
-Cohesion: 0.08
-Nodes (26): changePasswordBody, changePasswordTitle, confirmPasswordLabel, confirmPasswordPlaceholder, currentPasswordLabel, currentPasswordPlaceholder, dangerZoneBody, dangerZoneTitle (+18 more)
+Cohesion: 0.06
+Nodes (33): account, language, security, changePasswordBody, changePasswordTitle, confirmPasswordLabel, confirmPasswordPlaceholder, currentPasswordLabel (+25 more)
 
 ### Community 13 - "Changepasswordbody Dictionaries_es_secur"
 Cohesion: 0.04
@@ -468,7 +505,7 @@ Nodes (45): cardBody, cardTitle, description, discard, optionEnglish, optionRuss
 
 ### Community 15 - "Tsx Membersidepanel"
 Cohesion: 0.16
-Nodes (16): buildTreeGraph(), formatMemberDateRange(), MemberNodeData, MemberPosition, pruneArrangement(), TreeArrangement, TreeMemberData, TreeRelationship (+8 more)
+Nodes (9): getBaseUrl(), TreeMemberData, TreeRelationship, MemberSidePanelPresentation, MemberSidePanelProps, SidePanelT, member, relationships (+1 more)
 
 ### Community 16 - "Tsx Dashboardlayout"
 Cohesion: 0.08
@@ -500,27 +537,27 @@ Nodes (24): about, born, childOf, close, deleteCancel, deleteConfirm, deleteConf
 
 ### Community 23 - "Tsx Relationshipedgepopover"
 Cohesion: 0.09
-Nodes (13): TreeFlowEdge, RelationshipEdgePopoverProps, buildPublicUrl(), isShareSettingsAction(), ShareSettingsAction, ErrorsSubT, MemberSubT, RelationshipSubT (+5 more)
+Nodes (12): RelationshipEdgePopoverProps, buildPublicUrl(), isShareSettingsAction(), ShareSettingsAction, ErrorsSubT, MemberSubT, RelationshipSubT, TreeCanvas (+4 more)
 
 ### Community 24 - "Description Eyebrow"
-Cohesion: 0.06
-Nodes (33): footer, copyright, exploreTitle, legalLinks, legalTitle, links, informationalPages, backToHome (+25 more)
+Cohesion: 0.15
+Nodes (13): informationalPages, backToHome, pages, privacy, description, eyebrow, sectionOneBody, sectionOneTitle (+5 more)
 
 ### Community 25 - "Description Eyebrow"
 Cohesion: 0.09
 Nodes (23): informationalPages, backToHome, pages, privacy, support, description, eyebrow, sectionOneBody (+15 more)
 
 ### Community 26 - "Description Eyebrow"
-Cohesion: 0.06
-Nodes (33): footer, copyright, exploreTitle, legalLinks, legalTitle, links, informationalPages, backToHome (+25 more)
+Cohesion: 0.15
+Nodes (13): informationalPages, backToHome, pages, privacy, description, eyebrow, sectionOneBody, sectionOneTitle (+5 more)
 
 ### Community 27 - "Tsx Membernode"
-Cohesion: 0.12
-Nodes (12): TreeFlowNode, UnionNodeData, MemberNode, MemberNodeType, ParentEdge, ParentEdgeType, SpouseEdge, SpouseEdgeType (+4 more)
+Cohesion: 0.13
+Nodes (13): TreeArrangement, TreeFlowEdge, TreeFlowNode, UnionNodeData, ParentEdge, ParentEdgeType, SpouseEdge, SpouseEdgeType (+5 more)
 
 ### Community 28 - "Event Useeffectevent"
-Cohesion: 0.05
-Nodes (30): Do Not Put Effect Events in Dependency Arrays, Store Event Handlers in Refs, useEffectEvent for Stable Callback Refs, Dependency-Based Parallelization, Strategic Suspense Boundaries, Avoid Barrel File Imports, Conditional Module Loading, Deduplicate Global Event Listeners (+22 more)
+Cohesion: 0.13
+Nodes (10): Do Not Put Effect Events in Dependency Arrays, Store Event Handlers in Refs, useEffectEvent for Stable Callback Refs, Deduplicate Global Event Listeners, Version and Minimize localStorage Data, Use Passive Event Listeners for Scrolling Performance, event listener optimization, useEffectEvent pattern (+2 more)
 
 ### Community 29 - "Collaboratorsclient Tsx"
 Cohesion: 0.12
@@ -531,8 +568,8 @@ Cohesion: 0.08
 Nodes (23): For /graphify add and --watch, For /graphify query, For the commit hook and native CLAUDE.md integration, For --update and --cluster-only, /graphify, Honesty Rules, Interpreter guard for subcommands, Part A - Structural extraction for code files (+15 more)
 
 ### Community 31 - "Tsx Addmembermodal"
-Cohesion: 0.12
-Nodes (18): AddMemberModal(), AddMemberModalProps, mapMemberErrorCode(), MemberT, EditMemberModal(), EditMemberModalProps, EditMemberT, mapError() (+10 more)
+Cohesion: 0.15
+Nodes (16): AddMemberModal(), AddMemberModalProps, mapMemberErrorCode(), MemberT, EditMemberModal(), EditMemberModalProps, EditMemberT, mapError() (+8 more)
 
 ### Community 32 - "Dashboard Dictionaries_en_dashboard"
 Cohesion: 0.10
@@ -547,8 +584,8 @@ Cohesion: 0.10
 Nodes (20): dashboard, cardMenuDelete, cardMenuRename, createFirstTreePrompt, createTree, emailVerifiedBody, emailVerifiedTitle, emptyBody (+12 more)
 
 ### Community 35 - "Date Precision"
-Cohesion: 0.16
-Nodes (14): DELETE(), getPrismaClient(), compareLifeSpan(), DatePrecision, parsePartialDate(), PartialDate, PartialDateInput, createMember() (+6 more)
+Cohesion: 0.12
+Nodes (23): DELETE(), getPrismaClient(), PATCH(), toOptionalInt(), toResponseMember(), VALID_GENDERS, VALID_PRECISIONS, DELETE() (+15 more)
 
 ### Community 36 - "Securitysettingsclient Security"
 Cohesion: 0.14
@@ -635,8 +672,8 @@ Cohesion: 0.24
 Nodes (11): GET(), getPrismaClient(), isRelationshipType(), POST(), canonicalizeRelationship(), CanonicalRelationship, relationshipDedupKey(), RelationshipInput (+3 more)
 
 ### Community 57 - "Route Patch"
-Cohesion: 0.22
-Nodes (11): GET(), PATCH(), toProfile(), GET(), isPhotoNotFoundError(), PATCH(), toProfile(), avatarApiPath() (+3 more)
+Cohesion: 0.24
+Nodes (11): GET(), PATCH(), toProfile(), PATCH(), toProfile(), avatarApiPath(), avatarKeyForUser(), resolveAvatarUrlForUser() (+3 more)
 
 ### Community 58 - "Page Tsx"
 Cohesion: 0.08
@@ -667,16 +704,16 @@ Cohesion: 0.13
 Nodes (15): inviteModal, cancel, emailLabel, emailPlaceholder, messageCounter, messageLabel, messageOptional, messagePlaceholder (+7 more)
 
 ### Community 65 - "Email Pending"
-Cohesion: 0.26
-Nodes (12): getBaseUrl(), normalizeEmail(), PATCH(), pendingPayload(), POST(), toLocale(), buildPendingEmailChangeEmail(), COPY (+4 more)
+Cohesion: 0.54
+Nodes (7): getBaseUrl(), normalizeEmail(), PATCH(), pendingPayload(), POST(), toLocale(), sendPendingEmailChangeEmail()
 
 ### Community 66 - "Choosedifferentmembers Dictionaries_en_e"
 Cohesion: 0.14
 Nodes (14): chooseDifferentMembers, chooseTwoMembers, dragSaveFailed, ERR_DEATH_BEFORE_BIRTH, ERR_DUPLICATE_RELATIONSHIP, ERR_FIRST_NAME_REQUIRED, ERR_INVALID_PARTIAL_DATE, ERR_INVALID_RELATIONSHIP (+6 more)
 
 ### Community 67 - "Tree Dictionaries_en_tree"
-Cohesion: 0.11
-Nodes (18): tree, addMember, addRelationship, cancel, living, loadingMembers, loadingRelationships, membersSection (+10 more)
+Cohesion: 0.14
+Nodes (14): tree, addMember, addRelationship, cancel, living, loadingMembers, loadingRelationships, membersSection (+6 more)
 
 ### Community 68 - "Choosedifferentmembers Dictionaries_es_e"
 Cohesion: 0.14
@@ -695,11 +732,11 @@ Cohesion: 0.11
 Nodes (18): tree, addMember, addRelationship, cancel, living, loadingMembers, loadingRelationships, membersSection (+10 more)
 
 ### Community 72 - "Page Tsx"
-Cohesion: 0.16
-Nodes (10): getPreferredLocale(), isLocale(), LOCALES, isPublicSharePath(), getBaseUrl(), PublicTreePage(), AUTH_PATHS, config (+2 more)
+Cohesion: 0.17
+Nodes (10): buildTreeGraph(), formatMemberDateRange(), MemberNodeData, MemberPosition, pruneArrangement(), baseMember, translations, MemberNode (+2 more)
 
 ### Community 73 - "Route Get"
-Cohesion: 0.21
+Cohesion: 0.20
 Nodes (17): DELETE(), GET(), getPrismaClient(), PUT(), GET(), getPrismaClient(), InvitationPayload, parseInvitationPayload() (+9 more)
 
 ### Community 74 - "Route Getprismaclient"
@@ -723,8 +760,8 @@ Cohesion: 0.24
 Nodes (13): generic, invalidCredentials, invalidEmail, passwordMismatch, passwordStrength, requiredConfirmPassword, requiredEmail, requiredName (+5 more)
 
 ### Community 79 - "Email Invitation"
-Cohesion: 0.24
-Nodes (10): createMailClient(), EmailOptions, sendEmail(), sendEmailWithRetry(), validateEmailConfig(), buildInvitationEmail(), COPY, escapeHtml() (+2 more)
+Cohesion: 0.43
+Nodes (5): buildInvitationEmail(), COPY, escapeHtml(), getInvitationCopy(), InvitationEmailInput
 
 ### Community 80 - "Addrelationshipmodal Tsx"
 Cohesion: 0.15
@@ -759,8 +796,8 @@ Cohesion: 0.17
 Nodes (12): resetPassword, body, confirmPasswordLabel, confirmPasswordPlaceholder, invalidToken, newPasswordLabel, newPasswordPlaceholder, passwordHint (+4 more)
 
 ### Community 88 - "Cardbody Dictionaries_ru_language_cardbo"
-Cohesion: 0.50
-Nodes (4): nav, login, logo, signup
+Cohesion: 0.13
+Nodes (15): 7.10 Hoist RegExp Creation, 7.11 Use flatMap to Map and Filter in One Pass, 7.12 Use Loop for Min/Max Instead of Sort, 7.13 Use Set/Map for O(1) Lookups, 7.14 Use toSorted() Instead of sort() for Immutability, 7.1 Avoid Layout Thrashing, 7.2 Build Index Maps for Repeated Lookups, 7.3 Cache Property Access in Loops (+7 more)
 
 ### Community 89 - "Copy Dictionaries_ru_publicshare_copy"
 Cohesion: 0.17
@@ -836,15 +873,15 @@ Nodes (6): cta, badgeGdpr, badgeNoCard, body, button, headline
 
 ### Community 107 - "Footer Dictionaries_ru_footer"
 Cohesion: 0.13
-Nodes (15): 7.10 Hoist RegExp Creation, 7.11 Use flatMap to Map and Filter in One Pass, 7.12 Use Loop for Min/Max Instead of Sort, 7.13 Use Set/Map for O(1) Lookups, 7.14 Use toSorted() Instead of sort() for Immutability, 7.1 Avoid Layout Thrashing, 7.2 Build Index Maps for Repeated Lookups, 7.3 Cache Property Access in Loops (+7 more)
-
-### Community 108 - "Query Graph"
-Cohesion: 0.13
 Nodes (14): 1. Eliminating Waterfalls (CRITICAL), 2. Bundle Size Optimization (CRITICAL), 3. Server-Side Performance (HIGH), 4. Client-Side Data Fetching (MEDIUM-HIGH), 5. Re-render Optimization (MEDIUM), 6. Rendering Performance (MEDIUM), 7. JavaScript Performance (LOW-MEDIUM), 8. Advanced Patterns (LOW) (+6 more)
 
+### Community 108 - "Query Graph"
+Cohesion: 0.17
+Nodes (11): 1. Gather context, 2. Explore the codebase (optional), 3. Draft vertical slices, 4. Quiz the user, 5. Publish the issues to the issue tracker, Acceptance criteria, Blocked by, Parent (+3 more)
+
 ### Community 109 - "Get Isphotonotfounderror"
-Cohesion: 0.53
-Nodes (5): GET(), getPrismaClient(), isPhotoNotFoundError(), downloadPhotoByKey(), hasTransformToByteArray()
+Cohesion: 0.21
+Nodes (17): GET(), isPhotoNotFoundError(), GET(), getPrismaClient(), isPhotoNotFoundError(), ALLOWED_TYPES, createS3Client(), downloadPhotoByKey() (+9 more)
 
 ### Community 110 - "Addfirstmember Dictionaries_en_canvas_ad"
 Cohesion: 0.22
@@ -883,40 +920,36 @@ Cohesion: 0.33
 Nodes (8): mediaQueries, mockMatchMedia(), queryMatchesViewport(), renderSubject(), setupFetchForReset(), setupFetchWithArrangementHandler(), setViewportWidth(), translations
 
 ### Community 119 - "Refactor Deep"
-Cohesion: 0.20
-Nodes (8): Refactor Candidates, Interface Design for Testability, Deep Module, Boundary-Only Mocking, Behavior over Implementation Testing, Red-Green-Refactor Loop, Vertical Slicing via Tracer Bullets, Integration-Style Tests
-
-### Community 120 - "Docs Next"
-Cohesion: 0.20
-Nodes (9): File-System Paths, Import Paths, Prefer Statically Analyzable Paths, esbuild API docs, Next.js dynamic imports docs, Next.js output config docs, Rollup dynamic import vars docs, Vite features docs (+1 more)
+Cohesion: 0.29
+Nodes (6): Refactor Candidates, Boundary-Only Mocking, Behavior over Implementation Testing, Red-Green-Refactor Loop, Vertical Slicing via Tracer Bullets, Integration-Style Tests
 
 ### Community 121 - "Hero Dictionaries_en_hero"
 Cohesion: 0.29
 Nodes (7): hero, badge, body, ctaPrimary, ctaSecondary, headline, headlineSub
 
 ### Community 122 - "Account Dictionaries_en_sections_account"
-Cohesion: 0.29
-Nodes (7): account, language, security, settings, sections, subtitle, title
+Cohesion: 0.17
+Nodes (12): 6.10 Use React DOM Resource Hints, 6.11 Use useTransition Over Manual Loading States, 6.1 Animate SVG Wrapper Instead of SVG Element, 6.2 CSS content-visibility for Long Lists, 6.3 Hoist Static JSX Elements, 6.4 Optimize SVG Precision, 6.5 Prevent Hydration Mismatch Without Flickering, 6.6 Suppress Expected Hydration Mismatches (+4 more)
 
 ### Community 123 - "Hero Dictionaries_es_hero"
-Cohesion: 0.29
-Nodes (7): hero, badge, body, ctaPrimary, ctaSecondary, headline, headlineSub
+Cohesion: 0.12
+Nodes (14): hero, badge, body, ctaPrimary, ctaSecondary, headline, headlineSub, meta (+6 more)
 
 ### Community 124 - "Account Dictionaries_es_sections_account"
-Cohesion: 0.25
-Nodes (8): dictionaries, getDictionary(), ForgotPasswordPage(), LoginPage(), RegisterPage(), ResetPasswordPage(), VerifyEmailChangePage(), VerifyEmailPage()
+Cohesion: 0.18
+Nodes (10): 3.10 Use after() for Non-Blocking Operations, 3.1 Authenticate Server Actions Like API Routes, 3.2 Avoid Duplicate Serialization in RSC Props, 3.3 Avoid Shared Module State for Request Data, 3.4 Cross-Request LRU Caching, 3.5 Hoist Static I/O to Module Level, 3.6 Minimize Serialization at RSC Boundaries, 3.7 Parallel Data Fetching with Component Composition (+2 more)
 
 ### Community 125 - "Hero Dictionaries_ru_hero"
 Cohesion: 0.29
 Nodes (7): hero, badge, body, ctaPrimary, ctaSecondary, headline, headlineSub
 
 ### Community 126 - "Account Dictionaries_ru_sections_account"
-Cohesion: 0.25
-Nodes (11): Dictionary, generateInformationalPageMetadata(), getInformationalPageData(), getInformationalSections(), InformationalPageContent, InformationalPageKey, renderInformationalPage(), generateMetadata() (+3 more)
+Cohesion: 0.20
+Nodes (10): footer, copyright, exploreTitle, legalLinks, legalTitle, links, privacy, support (+2 more)
 
 ### Community 127 - "Tsx Settingssectionnav"
-Cohesion: 0.17
-Nodes (8): LanguagePicker(), LanguagePickerErrorMessages, LanguagePickerProps, LOCALE_LABELS, localizedErrors, { pushMock, pathnameMock }, toLocale(), Locale
+Cohesion: 0.20
+Nodes (10): support, description, eyebrow, sectionOneBody, sectionOneTitle, sectionThreeBody, sectionThreeTitle, sectionTwoBody (+2 more)
 
 ### Community 128 - "Emailchangeemail Dictionaries_en_account"
 Cohesion: 0.33
@@ -951,8 +984,8 @@ Cohesion: 0.33
 Nodes (6): treeDemo, grandparent1, grandparent2, parent1, parent2, you
 
 ### Community 136 - "React Usetransition"
-Cohesion: 0.22
-Nodes (6): Use useTransition Over Manual Loading States, Use Transitions for Non-Urgent Updates, Use useDeferredValue for Expensive Derived Renders, React useTransition API, React startTransition API, React useDeferredValue API
+Cohesion: 0.33
+Nodes (4): Use useTransition Over Manual Loading States, Use Transitions for Non-Urgent Updates, React useTransition API, React startTransition API
 
 ### Community 137 - "Verifyemailchangeclient Tsx"
 Cohesion: 0.40
@@ -983,20 +1016,20 @@ Cohesion: 0.22
 Nodes (8): Deploy on Vercel, Docker deployment, Getting Started, Learn More, Next.js Project, Next.js Standalone Server, PostgreSQL Service, Prisma Migrate Deploy on Startup
 
 ### Community 144 - "Acceptinvitationclient Tsx"
-Cohesion: 0.50
-Nodes (4): AcceptInvitationClient(), AcceptInvitationClientProps, AcceptState, getCopy()
+Cohesion: 0.20
+Nodes (10): footer, copyright, exploreTitle, legalLinks, legalTitle, links, privacy, support (+2 more)
 
 ### Community 145 - "Account Deletion"
-Cohesion: 0.17
-Nodes (11): 1. Gather context, 2. Explore the codebase (optional), 3. Draft vertical slices, 4. Quiz the user, 5. Publish the issues to the issue tracker, Acceptance criteria, Blocked by, Parent (+3 more)
+Cohesion: 0.20
+Nodes (10): support, description, eyebrow, sectionOneBody, sectionOneTitle, sectionThreeBody, sectionThreeTitle, sectionTwoBody (+2 more)
 
 ### Community 146 - "Roles Dictionaries_en_collaboration_role"
 Cohesion: 0.50
 Nodes (4): roles, editor, owner, viewer
 
 ### Community 147 - "Treemenu Dictionaries_en_tree_treemenu"
-Cohesion: 0.17
-Nodes (12): 6.10 Use React DOM Resource Hints, 6.11 Use useTransition Over Manual Loading States, 6.1 Animate SVG Wrapper Instead of SVG Element, 6.2 CSS content-visibility for Long Lists, 6.3 Hoist Static JSX Elements, 6.4 Optimize SVG Precision, 6.5 Prevent Hydration Mismatch Without Flickering, 6.6 Suppress Expected Hydration Mismatches (+4 more)
+Cohesion: 0.20
+Nodes (9): Challenge against the glossary, Cross-reference with code, Discuss concrete scenarios, Domain awareness, During the session, File structure, Offer ADRs sparingly, Sharpen fuzzy language (+1 more)
 
 ### Community 148 - "Roles Dictionaries_es_collaboration_role"
 Cohesion: 0.50
@@ -1027,16 +1060,8 @@ Cohesion: 0.50
 Nodes (3): BASE_ENV, MockMailtrapClient, mockSend
 
 ### Community 155 - "Defer State"
-Cohesion: 0.18
-Nodes (10): 3.10 Use after() for Non-Blocking Operations, 3.1 Authenticate Server Actions Like API Routes, 3.2 Avoid Duplicate Serialization in RSC Props, 3.3 Avoid Shared Module State for Request Data, 3.4 Cross-Request LRU Caching, 3.5 Hoist Static I/O to Module Level, 3.6 Minimize Serialization at RSC Boundaries, 3.7 Parallel Data Fetching with Component Composition (+2 more)
-
-### Community 156 - "After Server"
-Cohesion: 0.33
-Nodes (4): Use after() for Non-Blocking Operations, Authenticate Server Actions Like API Routes, Next.js after() API, Server Actions security model
-
-### Community 157 - "Cache Request"
-Cohesion: 0.33
-Nodes (4): Cross-Request LRU Caching, Per-Request Deduplication with React.cache(), lru-cache library, React.cache API
+Cohesion: 0.20
+Nodes (9): 1. Eliminating Waterfalls (async), 2. Bundle Size Optimization (bundle), 3. Server-Side Performance (server), 4. Client-Side Data Fetching (client), 5. Re-render Optimization (rerender), 6. Rendering Performance (rendering), 7. JavaScript Performance (js), 8. Advanced Patterns (advanced) (+1 more)
 
 ### Community 161 - "Language Picker"
 Cohesion: 0.20
@@ -1056,23 +1081,19 @@ Nodes (9): 1. Eliminating Waterfalls (async), 2. Bundle Size Optimization (bundl
 
 ### Community 168 - "Hydration Explicit"
 Cohesion: 0.20
-Nodes (9): Challenge against the glossary, Cross-reference with code, Discuss concrete scenarios, Domain awareness, During the session, File structure, Offer ADRs sparingly, Sharpen fuzzy language (+1 more)
+Nodes (9): 1. Planning, 2. Tracer Bullet, 3. Incremental Loop, 4. Refactor, Anti-Pattern: Horizontal Slices, Checklist Per Cycle, Philosophy, Test-Driven Development (+1 more)
 
 ### Community 169 - "Script Next"
 Cohesion: 0.40
 Nodes (3): Use defer or async on Script Tags, Optimize SVG Precision, next/script component
 
-### Community 170 - "Useref Lazy"
-Cohesion: 0.40
-Nodes (3): Use Lazy State Initialization, Use useRef for Transient Values, React useRef API
-
 ### Community 171 - "Components Extract"
 Cohesion: 0.20
-Nodes (9): 1. Planning, 2. Tracer Bullet, 3. Incremental Loop, 4. Refactor, Anti-Pattern: Horizontal Slices, Checklist Per Cycle, Philosophy, Test-Driven Development (+1 more)
+Nodes (9): 4.1 Deduplicate Global Event Listeners, 4.2 Use Passive Event Listeners for Scrolling Performance, 4.3 Use SWR for Automatic Deduplication, 4.4 Version and Minimize localStorage Data, 4. Client-Side Data Fetching, Abstract, React Best Practices, References (+1 more)
 
 ### Community 179 - "Check Cheap"
-Cohesion: 0.20
-Nodes (9): 4.1 Deduplicate Global Event Listeners, 4.2 Use Passive Event Listeners for Scrolling Performance, 4.3 Use SWR for Automatic Deduplication, 4.4 Version and Minimize localStorage Data, 4. Client-Side Data Fetching, Abstract, React Best Practices, References (+1 more)
+Cohesion: 0.22
+Nodes (7): meta, description, title, nav, login, logo, signup
 
 ### Community 189 - "Informational Page"
 Cohesion: 0.22
@@ -1093,10 +1114,6 @@ Nodes (8): Further Notes, Implementation Decisions, Out of Scope, Problem Statem
 ### Community 204 - "Hoist Regexp"
 Cohesion: 0.25
 Nodes (7): graphify reference: extra exports and benchmark, Step 6b - Wiki (only if --wiki flag), Step 7 - Neo4j export (only if --neo4j or --neo4j-push flag), Step 7b - SVG export (only if --svg flag), Step 7c - GraphML export (only if --graphml flag), Step 7d - MCP server (only if --mcp flag), Step 8 - Token reduction benchmark (only if total_words > 5000)
-
-### Community 205 - "Lookups Build"
-Cohesion: 0.25
-Nodes (4): Defer State Reads to Usage Point, Use Functional setState Updates, Put Interaction Logic in Event Handlers, Narrow Effect Dependencies
 
 ### Community 206 - "Defer Non"
 Cohesion: 0.25
@@ -1119,16 +1136,16 @@ Cohesion: 0.29
 Nodes (6): ADR Format, Numbering, Optional sections, Template, What qualifies, When to offer an ADR
 
 ### Community 212 - "Parallel Fetching"
-Cohesion: 0.29
-Nodes (7): 1.1 Check Cheap Conditions Before Async Flags, 1.2 Defer Await Until Needed, 1.3 Dependency-Based Parallelization, 1.4 Prevent Waterfall Chains in API Routes, 1.5 Promise.all() for Independent Operations, 1.6 Strategic Suspense Boundaries, 1. Eliminating Waterfalls
+Cohesion: 0.43
+Nodes (5): buildPendingEmailChangeEmail(), COPY, escapeHtml(), getCopy(), PendingEmailChangeEmailInput
 
 ### Community 217 - "Defer Non"
 Cohesion: 0.29
-Nodes (7): 2.1 Avoid Barrel File Imports, 2.2 Conditional Module Loading, 2.3 Defer Non-Critical Third-Party Libraries, 2.4 Dynamic Imports for Heavy Components, 2.5 Prefer Statically Analyzable Paths, 2.6 Preload Based on User Intent, 2. Bundle Size Optimization
+Nodes (7): 1.1 Check Cheap Conditions Before Async Flags, 1.2 Defer Await Until Needed, 1.3 Dependency-Based Parallelization, 1.4 Prevent Waterfall Chains in API Routes, 1.5 Promise.all() for Independent Operations, 1.6 Strategic Suspense Boundaries, 1. Eliminating Waterfalls
 
 ### Community 221 - "Flatmap Map"
 Cohesion: 0.29
-Nodes (4): SettingsLayout(), SECTION_ORDER, SettingsSection, SettingsSectionNavProps
+Nodes (7): 2.1 Avoid Barrel File Imports, 2.2 Conditional Module Loading, 2.3 Defer Non-Critical Third-Party Libraries, 2.4 Dynamic Imports for Heavy Components, 2.5 Prefer Statically Analyzable Paths, 2.6 Preload Based on User Intent, 2. Bundle Size Optimization
 
 ### Community 223 - "Community 223"
 Cohesion: 0.33
@@ -1142,25 +1159,17 @@ Nodes (5): Creating a New Rule, Getting Started, React Best Practices, Rule File
 Cohesion: 0.33
 Nodes (3): Cache Property Access in Loops, Combine Multiple Array Iterations, Use Loop for Min/Max Instead of Sort
 
-### Community 226 - "Community 226"
-Cohesion: 0.33
-Nodes (3): Early Length Check for Array Comparisons, Use toSorted() Instead of sort() for Immutability, Early Return from Functions
-
-### Community 227 - "Community 227"
-Cohesion: 0.33
-Nodes (3): Use Explicit Conditional Rendering, Prevent Hydration Mismatch Without Flickering, Suppress Expected Hydration Mismatches
-
 ### Community 228 - "Community 228"
 Cohesion: 0.33
 Nodes (3): Extract to Memoized Components, Extract Default Non-primitive Parameter Value from Memoized Component to Constant, Don't Define Components Inside Components
 
 ### Community 229 - "Community 229"
-Cohesion: 0.33
-Nodes (5): abstract, date, organization, references, version
+Cohesion: 0.53
+Nodes (5): createMailClient(), EmailOptions, sendEmail(), sendEmailWithRetry(), validateEmailConfig()
 
 ### Community 230 - "Community 230"
-Cohesion: 0.33
-Nodes (5): Creating a New Rule, Getting Started, React Best Practices, Rule File Structure, Structure
+Cohesion: 0.40
+Nodes (4): buildResetPasswordEmail(), CONTENT, ResetPasswordEmailInput, SUBJECTS
 
 ### Community 231 - "Community 231"
 Cohesion: 0.40
@@ -1171,12 +1180,16 @@ Cohesion: 0.40
 Nodes (5): 8.1 Do Not Put Effect Events in Dependency Arrays, 8.2 Initialize App Once, Not Per Mount, 8.3 Store Event Handlers in Refs, 8.4 useEffectEvent for Stable Callback Refs, 8. Advanced Patterns
 
 ### Community 233 - "Community 233"
-Cohesion: 0.40
-Nodes (4): CONTEXT.md Format, Rules, Single vs multi-context repos, Structure
+Cohesion: 0.33
+Nodes (5): abstract, date, organization, references, version
 
 ### Community 234 - "Community 234"
+Cohesion: 0.33
+Nodes (5): Creating a New Rule, Getting Started, React Best Practices, Rule File Structure, Structure
+
+### Community 235 - "Community 235"
 Cohesion: 0.40
-Nodes (5): 8.1 Do Not Put Effect Events in Dependency Arrays, 8.2 Initialize App Once, Not Per Mount, 8.3 Store Event Handlers in Refs, 8.4 useEffectEvent for Stable Callback Refs, 8. Advanced Patterns
+Nodes (4): CONTEXT.md Format, Rules, Single vs multi-context repos, Structure
 
 ### Community 236 - "Community 236"
 Cohesion: 0.50
@@ -1203,50 +1216,64 @@ Cohesion: 0.50
 Nodes (3): File-System Paths, Import Paths, Prefer Statically Analyzable Paths
 
 ### Community 249 - "Community 249"
-Cohesion: 0.50
-Nodes (3): For /graphify add, For --watch, graphify reference: add a URL and watch a folder
+Cohesion: 0.40
+Nodes (5): 8.1 Do Not Put Effect Events in Dependency Arrays, 8.2 Initialize App Once, Not Per Mount, 8.3 Store Event Handlers in Refs, 8.4 useEffectEvent for Stable Callback Refs, 8. Advanced Patterns
 
 ### Community 250 - "Community 250"
 Cohesion: 0.50
-Nodes (3): For git commit hook, For native CLAUDE.md integration, graphify reference: commit hook and native CLAUDE.md integration
+Nodes (3): Dependency-Based Parallelization, better-all repository, async parallelization
 
 ### Community 251 - "Community 251"
 Cohesion: 0.50
-Nodes (3): For /graphify explain, For /graphify path, graphify reference: query, path, explain
+Nodes (4): treeMenu, close, dialogLabel, trigger
 
 ### Community 252 - "Community 252"
 Cohesion: 0.50
-Nodes (3): For --cluster-only, For --update (incremental re-extraction), graphify reference: incremental update and cluster-only
+Nodes (3): For /graphify add, For --watch, graphify reference: add a URL and watch a folder
 
 ### Community 253 - "Community 253"
+Cohesion: 0.50
+Nodes (3): For git commit hook, For native CLAUDE.md integration, graphify reference: commit hook and native CLAUDE.md integration
+
+### Community 254 - "Community 254"
+Cohesion: 0.50
+Nodes (3): For /graphify explain, For /graphify path, graphify reference: query, path, explain
+
+### Community 255 - "Community 255"
+Cohesion: 0.50
+Nodes (3): For --cluster-only, For --update (incremental re-extraction), graphify reference: incremental update and cluster-only
+
+### Community 256 - "Community 256"
+Cohesion: 0.50
+Nodes (3): File-System Paths, Import Paths, Prefer Statically Analyzable Paths
+
+### Community 257 - "Community 257"
 Cohesion: 0.50
 Nodes (3): Bad Tests, Good and Bad Tests, Good Tests
 
 ## Ambiguous Edges - Review These
 - `Store Event Handlers in Refs` → `Deduplicate Global Event Listeners`  [AMBIGUOUS]
   .agents/skills/vercel-react-best-practices/rules/client-event-listeners.md · relation: semantically_similar_to
-- `Strategic Suspense Boundaries` → `Promise.all() for Independent Operations`  [AMBIGUOUS]
-  .agents/skills/vercel-react-best-practices/rules/async-suspense-boundaries.md · relation: conceptually_related_to
 
 ## Knowledge Gaps
-- **2026 isolated node(s):** `version`, `organization`, `date`, `abstract`, `references` (+2021 more)
+- **2058 isolated node(s):** `Design Thinking`, `Frontend Aesthetics Guidelines`, `Usage`, `What graphify is for`, `Step 0 - GitHub repos and multi-path merge (only if a URL or several paths)` (+2053 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **140 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **179 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
 - **What is the exact relationship between `Store Event Handlers in Refs` and `Deduplicate Global Event Listeners`?**
   _Edge tagged AMBIGUOUS (relation: semantically_similar_to) - confidence is low._
-- **What is the exact relationship between `Strategic Suspense Boundaries` and `Promise.all() for Independent Operations`?**
-  _Edge tagged AMBIGUOUS (relation: conceptually_related_to) - confidence is low._
-- **Why does `tree` connect `Tree Dictionaries_es_tree` to `Choosedifferentmembers Dictionaries_es_e`, `Addphoto Dictionaries_es_member_addphoto`, `Json Meta`, `Addsubtitle Dictionaries_es_relationship`, `Limitreached Dictionaries_es_sidebar_lim`, `Addfirstmember Dictionaries_es_canvas_ad`, `Activeempty Dictionaries_es_collaboratio`, `About Dictionaries_es_panel_about`, `Treemenu Dictionaries_es_tree_treemenu`, `Copy Dictionaries_es_publicshare_copy`?**
-  _High betweenness centrality (0.091) - this node is a cross-community bridge._
-- **Why does `tree` connect `Tree Dictionaries_en_tree` to `Choosedifferentmembers Dictionaries_en_e`, `Addphoto Dictionaries_en_member_addphoto`, `Json Meta`, `Addsubtitle Dictionaries_en_relationship`, `Limitreached Dictionaries_en_sidebar_lim`, `Addfirstmember Dictionaries_en_canvas_ad`, `Activeempty Dictionaries_en_collaboratio`, `About Dictionaries_en_panel_about`, `Copy Dictionaries_en_publicshare_copy`?**
-  _High betweenness centrality (0.085) - this node is a cross-community bridge._
-- **Why does `tree` connect `Tree Dictionaries_ru_tree` to `Choosedifferentmembers Dictionaries_ru_e`, `Addphoto Dictionaries_ru_member_addphoto`, `Json Meta`, `Addsubtitle Dictionaries_ru_relationship`, `Limitreached Dictionaries_ru_sidebar_lim`, `Addfirstmember Dictionaries_ru_canvas_ad`, `Activeempty Dictionaries_ru_collaboratio`, `About Dictionaries_ru_panel_about`, `Copy Dictionaries_ru_publicshare_copy`?**
-  _High betweenness centrality (0.084) - this node is a cross-community bridge._
+- **Why does `tree` connect `Tree Dictionaries_en_tree` to `Choosedifferentmembers Dictionaries_en_e`, `Addphoto Dictionaries_en_member_addphoto`, `Json Meta`, `Addsubtitle Dictionaries_en_relationship`, `Limitreached Dictionaries_en_sidebar_lim`, `Addfirstmember Dictionaries_en_canvas_ad`, `Activeempty Dictionaries_en_collaboratio`, `About Dictionaries_en_panel_about`, `Copy Dictionaries_en_publicshare_copy`, `Community 251`?**
+  _High betweenness centrality (0.094) - this node is a cross-community bridge._
+- **Why does `tree` connect `Tree Dictionaries_ru_tree` to `Choosedifferentmembers Dictionaries_ru_e`, `Addphoto Dictionaries_ru_member_addphoto`, `Addsubtitle Dictionaries_ru_relationship`, `Limitreached Dictionaries_ru_sidebar_lim`, `Addfirstmember Dictionaries_ru_canvas_ad`, `Check Cheap`, `Activeempty Dictionaries_ru_collaboratio`, `About Dictionaries_ru_panel_about`, `Copy Dictionaries_ru_publicshare_copy`?**
+  _High betweenness centrality (0.067) - this node is a cross-community bridge._
+- **Why does `tree` connect `Tree Dictionaries_es_tree` to `Choosedifferentmembers Dictionaries_es_e`, `Addphoto Dictionaries_es_member_addphoto`, `Addsubtitle Dictionaries_es_relationship`, `Limitreached Dictionaries_es_sidebar_lim`, `Addfirstmember Dictionaries_es_canvas_ad`, `Activeempty Dictionaries_es_collaboratio`, `About Dictionaries_es_panel_about`, `Treemenu Dictionaries_es_tree_treemenu`, `Copy Dictionaries_es_publicshare_copy`, `Hero Dictionaries_es_hero`?**
+  _High betweenness centrality (0.054) - this node is a cross-community bridge._
 - **Are the 2 inferred relationships involving `hasLocale` (e.g. with `AcceptInvitationPage()` and `VerifyEmailChangePage()`) actually correct?**
   _`hasLocale` has 2 INFERRED edges - model-reasoned connections that need verification._
-- **What connects `version`, `organization`, `date` to the rest of the system?**
-  _2030 weakly-connected nodes found - possible documentation gaps or missing edges._
+- **What connects `Design Thinking`, `Frontend Aesthetics Guidelines`, `Usage` to the rest of the system?**
+  _2063 weakly-connected nodes found - possible documentation gaps or missing edges._
+- **Should `Tsx Formerrors` be split into smaller, more focused modules?**
+  _Cohesion score 0.05333333333333334 - nodes in this community are weakly interconnected._
