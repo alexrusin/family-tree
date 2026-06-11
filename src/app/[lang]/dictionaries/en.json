@@ -112,7 +112,11 @@
       "submit": "Import",
       "submitting": "Importing...",
       "errorNoFile": "Please choose a GEDCOM file to import.",
-      "errorGeneric": "Failed to import the GEDCOM file. Please try again."
+      "errorGeneric": "Failed to import the GEDCOM file. Please try again.",
+      "errorTooManyMembers": "This file has too many individuals. Trees can have at most 300 members.",
+      "errorFileTooLarge": "This file is too large. GEDCOM files must be 5MB or smaller.",
+      "errorUnsupportedEncoding": "This file uses an unsupported text encoding. Please re-export it as UTF-8.",
+      "errorInvalidGedcom": "This file doesn't look like a valid GEDCOM file."
     },
     "importReport": {
       "title": "Import Complete",

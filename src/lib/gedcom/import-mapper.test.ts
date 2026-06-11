@@ -8,6 +8,10 @@ const baseReport = {
   droppedDateCount: 0,
   inferredLivingCount: 0,
   danglingRelationshipCount: 0,
+  skippedPlacesCount: 0,
+  skippedEventsCount: 0,
+  skippedSourcesCount: 0,
+  skippedNotesCount: 0,
 };
 
 describe("mapGedcomToMembers", () => {
@@ -439,6 +443,66 @@ describe("mapGedcomToMembers", () => {
         ),
       ).toBe(true);
       expect(report.danglingRelationshipCount).toBeGreaterThan(0);
+    });
+  });
+
+  describe("skipped data report", () => {
+    it("counts PLAC, SOUR, and NOTE under an individual's events as skipped", () => {
+      const records = parseGedcom(
+        [
+          "0 @I1@ INDI",
+          "1 NAME John /Smith/",
+          "1 BIRT",
+          "2 DATE 1 JAN 1900",
+          "2 PLAC Springfield, USA",
+          "2 SOUR @S1@",
+          "1 NOTE A note about John",
+        ].join("\n"),
+      );
+
+      const { report } = mapGedcomToMembers(records);
+
+      expect(report.skippedPlacesCount).toBe(1);
+      expect(report.skippedSourcesCount).toBe(1);
+      expect(report.skippedNotesCount).toBe(1);
+    });
+
+    it("counts unmapped event tags (e.g. OCCU, MARR) as skipped events", () => {
+      const records = parseGedcom(
+        [
+          "0 @I1@ INDI",
+          "1 NAME John /Smith/",
+          "1 OCCU Farmer",
+          "0 @I2@ INDI",
+          "1 NAME Jane /Doe/",
+          "0 @F1@ FAM",
+          "1 HUSB @I1@",
+          "1 WIFE @I2@",
+          "1 MARR",
+          "2 DATE 1920",
+        ].join("\n"),
+      );
+
+      const { report } = mapGedcomToMembers(records);
+
+      expect(report.skippedEventsCount).toBe(2);
+    });
+
+    it("does not count BIRT/DEAT or DATE as skipped events", () => {
+      const records = parseGedcom(
+        [
+          "0 @I1@ INDI",
+          "1 NAME John /Smith/",
+          "1 BIRT",
+          "2 DATE 1900",
+          "1 DEAT",
+          "2 DATE 1980",
+        ].join("\n"),
+      );
+
+      const { report } = mapGedcomToMembers(records);
+
+      expect(report.skippedEventsCount).toBe(0);
     });
   });
 });

@@ -3,7 +3,10 @@ import { PrismaClient } from "@/generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { auth } from "@/lib/auth";
 import { generateShareToken } from "@/lib/tree-utils";
-import { importGedcomTree } from "@/lib/gedcom/import-service";
+import {
+  GedcomImportError,
+  importGedcomTree,
+} from "@/lib/gedcom/import-service";
 
 function getPrismaClient() {
   return new PrismaClient({
@@ -31,7 +34,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ errorCode: "ERR_NO_FILE" }, { status: 400 });
     }
 
-    const fileContent = await file.text();
+    const fileBuffer = await file.arrayBuffer();
     const fileName = file instanceof File ? file.name : null;
     const prisma = getPrismaClient();
 
@@ -86,11 +89,18 @@ export async function POST(request: NextRequest) {
       },
       actorUserId: session.user.id,
       fileName,
-      fileContent,
+      fileBuffer,
     });
 
     return NextResponse.json({ treeId, report }, { status: 201 });
   } catch (error) {
+    if (error instanceof GedcomImportError) {
+      return NextResponse.json(
+        { errorCode: error.code, message: error.message },
+        { status: 400 },
+      );
+    }
+
     console.error("Error importing GEDCOM file:", error);
     return NextResponse.json({ errorCode: "ERR_INTERNAL" }, { status: 500 });
   }

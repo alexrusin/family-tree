@@ -112,7 +112,11 @@
       "submit": "Importar",
       "submitting": "Importando...",
       "errorNoFile": "Selecciona un archivo GEDCOM para importar.",
-      "errorGeneric": "No se pudo importar el archivo GEDCOM. Inténtalo de nuevo."
+      "errorGeneric": "No se pudo importar el archivo GEDCOM. Inténtalo de nuevo.",
+      "errorTooManyMembers": "Este archivo tiene demasiados individuos. Los árboles admiten hasta 300 miembros.",
+      "errorFileTooLarge": "Este archivo es demasiado grande. Los archivos GEDCOM deben pesar 5 MB o menos.",
+      "errorUnsupportedEncoding": "Este archivo usa una codificación de texto no compatible. Vuelve a exportarlo en UTF-8.",
+      "errorInvalidGedcom": "Este archivo no parece ser un archivo GEDCOM válido."
     },
     "importReport": {
       "title": "Importación completa",

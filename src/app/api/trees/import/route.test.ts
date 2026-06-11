@@ -117,6 +117,10 @@ describe("/api/trees/import", () => {
       droppedDateCount: 0,
       inferredLivingCount: 0,
       danglingRelationshipCount: 0,
+      skippedPlacesCount: 0,
+      skippedEventsCount: 0,
+      skippedSourcesCount: 0,
+      skippedNotesCount: 0,
     });
 
     expect(prismaMock.__tx.familyTree.create).toHaveBeenCalledWith({
@@ -147,5 +151,78 @@ describe("/api/trees/import", () => {
     });
 
     expect(prismaMock.__tx.relationship.createMany).not.toHaveBeenCalled();
+  });
+
+  it("returns ERR_TOO_MANY_MEMBERS and does not write when the file declares too many individuals", async () => {
+    const lines: string[] = [];
+    for (let i = 1; i <= 301; i += 1) {
+      lines.push(`0 @I${i}@ INDI`, "1 NAME Person /Number/");
+    }
+    const file = new File([lines.join("\n")], "big.ged");
+
+    const response = await POST(buildRequest(file));
+
+    expect(response.status).toBe(400);
+    const body = await response.json();
+    expect(body.errorCode).toBe("ERR_TOO_MANY_MEMBERS");
+    expect(prismaMock.$transaction).not.toHaveBeenCalled();
+  });
+
+  it("returns ERR_FILE_TOO_LARGE and does not write when the file exceeds the byte cap", async () => {
+    const oversized =
+      "0 @I1@ INDI\n1 NAME " + "A".repeat(5 * 1024 * 1024 + 1);
+    const file = new File([oversized], "huge.ged");
+
+    const response = await POST(buildRequest(file));
+
+    expect(response.status).toBe(400);
+    const body = await response.json();
+    expect(body.errorCode).toBe("ERR_FILE_TOO_LARGE");
+    expect(prismaMock.$transaction).not.toHaveBeenCalled();
+  });
+
+  it("returns ERR_UNSUPPORTED_ENCODING and does not write for an ANSEL-encoded file", async () => {
+    const text = [
+      "0 HEAD",
+      "1 CHAR ANSEL",
+      "0 @I1@ INDI",
+      "1 NAME John /Smith/",
+      "0 TRLR",
+    ].join("\n");
+    const file = new File([text], "ansel.ged");
+
+    const response = await POST(buildRequest(file));
+
+    expect(response.status).toBe(400);
+    const body = await response.json();
+    expect(body.errorCode).toBe("ERR_UNSUPPORTED_ENCODING");
+    expect(prismaMock.$transaction).not.toHaveBeenCalled();
+  });
+
+  it("returns ERR_INVALID_GEDCOM and does not write for a non-GEDCOM file", async () => {
+    const file = new File(["just some random text"], "notes.txt");
+
+    const response = await POST(buildRequest(file));
+
+    expect(response.status).toBe(400);
+    const body = await response.json();
+    expect(body.errorCode).toBe("ERR_INVALID_GEDCOM");
+    expect(prismaMock.$transaction).not.toHaveBeenCalled();
+  });
+
+  it("returns ERR_INTERNAL and does not return a treeId when the write transaction fails", async () => {
+    prismaMock.$transaction.mockRejectedValue(new Error("db error"));
+
+    const file = new File(
+      ["0 @I1@ INDI\n1 NAME John /Smith/"],
+      "tree.ged",
+    );
+
+    const response = await POST(buildRequest(file));
+
+    expect(response.status).toBe(500);
+    const body = await response.json();
+    expect(body.errorCode).toBe("ERR_INTERNAL");
+    expect(body.treeId).toBeUndefined();
   });
 });

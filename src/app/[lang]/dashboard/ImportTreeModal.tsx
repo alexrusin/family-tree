@@ -18,8 +18,19 @@ interface ImportTreeModalProps {
     submitting: string;
     errorNoFile: string;
     errorGeneric: string;
+    errorTooManyMembers: string;
+    errorFileTooLarge: string;
+    errorUnsupportedEncoding: string;
+    errorInvalidGedcom: string;
   };
 }
+
+const ERROR_CODE_MESSAGE_KEYS = {
+  ERR_TOO_MANY_MEMBERS: "errorTooManyMembers",
+  ERR_FILE_TOO_LARGE: "errorFileTooLarge",
+  ERR_UNSUPPORTED_ENCODING: "errorUnsupportedEncoding",
+  ERR_INVALID_GEDCOM: "errorInvalidGedcom",
+} as const;
 
 export default function ImportTreeModal({
   isOpen,
@@ -52,11 +63,15 @@ export default function ImportTreeModal({
         body: formData,
       });
 
-      if (!response.ok) {
-        throw new Error(t.errorGeneric);
-      }
-
       const data = await response.json();
+
+      if (!response.ok) {
+        const messageKey =
+          ERROR_CODE_MESSAGE_KEYS[
+            data.errorCode as keyof typeof ERROR_CODE_MESSAGE_KEYS
+          ];
+        throw new Error(messageKey ? t[messageKey] : t.errorGeneric);
+      }
 
       if (fileInputRef.current) {
         fileInputRef.current.value = "";

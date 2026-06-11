@@ -75,6 +75,10 @@ const translations = {
     submitting: "Importing...",
     errorNoFile: "Please choose a GEDCOM file to import.",
     errorGeneric: "Failed to import the GEDCOM file.",
+    errorTooManyMembers: "Too many individuals.",
+    errorFileTooLarge: "File too large.",
+    errorUnsupportedEncoding: "Unsupported encoding.",
+    errorInvalidGedcom: "Invalid GEDCOM file.",
   },
   importReport: {
     title: "Import Complete",

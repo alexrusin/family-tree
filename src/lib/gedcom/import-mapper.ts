@@ -40,11 +40,101 @@ export interface ImportReport {
   droppedDateCount: number;
   inferredLivingCount: number;
   danglingRelationshipCount: number;
+  skippedPlacesCount: number;
+  skippedEventsCount: number;
+  skippedSourcesCount: number;
+  skippedNotesCount: number;
 }
 
 const NAME_PATTERN = /^(.*?)\/(.*)\/\s*$/;
 const XREF_PATTERN = /^@(.+)@$/;
 const LIVING_AGE_LIMIT_YEARS = 100;
+
+/**
+ * GEDCOM event tags (individual and family) that the app does not store.
+ * BIRT/DEAT are excluded since they are mapped to dates separately.
+ */
+const SKIPPED_EVENT_TAGS = new Set([
+  "CHR",
+  "BURI",
+  "CREM",
+  "ADOP",
+  "BAPM",
+  "BARM",
+  "BASM",
+  "BLES",
+  "CONF",
+  "FCOM",
+  "ORDN",
+  "NATU",
+  "EMIG",
+  "IMMI",
+  "CENS",
+  "PROB",
+  "WILL",
+  "GRAD",
+  "RETI",
+  "EVEN",
+  "MARR",
+  "MARB",
+  "MARC",
+  "MARL",
+  "MARS",
+  "ANUL",
+  "DIV",
+  "DIVF",
+  "ENGA",
+  "RESI",
+  "CAST",
+  "DSCR",
+  "EDUC",
+  "IDNO",
+  "NATI",
+  "NCHI",
+  "NMR",
+  "OCCU",
+  "PROP",
+  "RELI",
+  "SSN",
+  "TITL",
+  "FACT",
+]);
+
+interface SkippedCounts {
+  places: number;
+  events: number;
+  sources: number;
+  notes: number;
+}
+
+/**
+ * Counts unmapped data (places, events, source citations, notes) under
+ * INDI/FAM records so the Import Report can be honest about what was
+ * dropped, per the "unmapped data is dropped and reported" rule.
+ */
+function countSkippedData(records: GedcomNode[]): SkippedCounts {
+  const counts: SkippedCounts = { places: 0, events: 0, sources: 0, notes: 0 };
+
+  function walk(node: GedcomNode, isEventContainer: boolean): void {
+    for (const child of node.children) {
+      if (child.tag === "PLAC") counts.places += 1;
+      else if (child.tag === "SOUR") counts.sources += 1;
+      else if (child.tag === "NOTE") counts.notes += 1;
+      else if (isEventContainer && SKIPPED_EVENT_TAGS.has(child.tag))
+        counts.events += 1;
+
+      walk(child, false);
+    }
+  }
+
+  for (const record of records) {
+    if (record.tag === "INDI" || record.tag === "FAM") {
+      walk(record, true);
+    }
+  }
+
+  return counts;
+}
 
 const GEDCOM_MONTHS: Record<string, number> = {
   JAN: 1,
@@ -305,6 +395,8 @@ export function mapGedcomToMembers(records: GedcomNode[]): {
     });
   }
 
+  const skipped = countSkippedData(records);
+
   return {
     members,
     relationships,
@@ -315,6 +407,10 @@ export function mapGedcomToMembers(records: GedcomNode[]): {
       droppedDateCount,
       inferredLivingCount,
       danglingRelationshipCount,
+      skippedPlacesCount: skipped.places,
+      skippedEventsCount: skipped.events,
+      skippedSourcesCount: skipped.sources,
+      skippedNotesCount: skipped.notes,
     },
   };
 }
