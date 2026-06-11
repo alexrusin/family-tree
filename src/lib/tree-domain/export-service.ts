@@ -1,6 +1,7 @@
 import {
-  mapMembersToGedcomIndividuals,
+  mapTreeToGedcomDocument,
   type ExportableMember,
+  type ExportableRelationship,
 } from "@/lib/gedcom/export-mapper";
 import { serializeGedcom } from "@/lib/gedcom/serializer";
 import type { TreeRole } from "./tree-access";
@@ -20,6 +21,7 @@ export async function exportTreeAsGedcom(params: {
     getRole: (treeId: string, userId: string) => Promise<TreeRole>;
     getTree: (treeId: string) => Promise<{ id: string; name: string } | null>;
     getMembers: (treeId: string) => Promise<ExportableMember[]>;
+    getRelationships: (treeId: string) => Promise<ExportableRelationship[]>;
   };
   treeId: string;
   actorUserId: string;
@@ -35,8 +37,9 @@ export async function exportTreeAsGedcom(params: {
   }
 
   const members = await params.repo.getMembers(params.treeId);
-  const individuals = mapMembersToGedcomIndividuals(members);
-  const content = serializeGedcom({ individuals });
+  const relationships = await params.repo.getRelationships(params.treeId);
+  const document = mapTreeToGedcomDocument(members, relationships);
+  const content = serializeGedcom(document);
 
   return { content, filename: buildGedcomFilename(tree.name) };
 }

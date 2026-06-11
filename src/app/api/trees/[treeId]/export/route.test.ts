@@ -14,6 +14,9 @@ const { getSessionMock, prismaMock, prismaClientCtorMock, prismaPgMock } =
       treeMember: {
         findMany: vi.fn(),
       },
+      relationship: {
+        findMany: vi.fn(),
+      },
     };
 
     return {
@@ -64,6 +67,7 @@ describe("/api/trees/[treeId]/export", () => {
       { id: "m1", firstName: "Elena", lastName: "Ivanova" },
       { id: "m2", firstName: "Madonna", lastName: null },
     ]);
+    prismaMock.relationship.findMany.mockResolvedValue([]);
   });
 
   it("returns 401 when unauthenticated", async () => {

@@ -22,6 +22,7 @@ describe("exportTreeAsGedcom", () => {
         { id: "m1", firstName: "Elena", lastName: "Ivanova" },
         { id: "m2", firstName: "Madonna", lastName: null },
       ]),
+      getRelationships: vi.fn().mockResolvedValue([]),
     };
   }
 

@@ -41,7 +41,27 @@ export async function GET(
           return prisma.treeMember.findMany({
             where: { treeId: id },
             orderBy: { createdAt: "asc" },
-            select: { id: true, firstName: true, lastName: true },
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              gender: true,
+              bio: true,
+              birthPrecision: true,
+              birthYear: true,
+              birthMonth: true,
+              birthDay: true,
+              deathPrecision: true,
+              deathYear: true,
+              deathMonth: true,
+              deathDay: true,
+            },
+          });
+        },
+        getRelationships: async (id) => {
+          return prisma.relationship.findMany({
+            where: { treeId: id },
+            select: { fromMemberId: true, toMemberId: true, type: true },
           });
         },
       },
