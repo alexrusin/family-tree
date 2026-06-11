@@ -1,16 +1,16 @@
 # Graph Report - family-tree  (2026-06-11)
 
 ## Corpus Check
-- 437 files · ~182,250 words
+- 437 files · ~181,792 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 3269 nodes · 3875 edges · 399 communities (215 shown, 184 thin omitted)
+- 3261 nodes · 3867 edges · 398 communities (216 shown, 182 thin omitted)
 - Extraction: 98% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 58 edges (avg confidence: 0.8)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `93d72436`
+- Built from commit: `29d1f502`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -400,7 +400,6 @@
 - [[_COMMUNITY_Community 390|Community 390]]
 - [[_COMMUNITY_Community 391|Community 391]]
 - [[_COMMUNITY_Community 392|Community 392]]
-- [[_COMMUNITY_Community 394|Community 394]]
 - [[_COMMUNITY_Community 395|Community 395]]
 - [[_COMMUNITY_Community 396|Community 396]]
 - [[_COMMUNITY_Community 397|Community 397]]
@@ -409,14 +408,14 @@
 ## God Nodes (most connected - your core abstractions)
 1. `getDictionary()` - 36 edges
 2. `hasLocale` - 36 edges
-3. `Family Tree Domain Glossary` - 35 edges
+3. `account` - 35 edges
 4. `account` - 35 edges
 5. `account` - 35 edges
-6. `account` - 35 edges
-7. `isLocale()` - 33 edges
+6. `isLocale()` - 33 edges
+7. `member` - 32 edges
 8. `member` - 32 edges
 9. `member` - 32 edges
-10. `member` - 32 edges
+10. `Family Tree Domain Glossary` - 32 edges
 
 ## Surprising Connections (you probably didn't know these)
 - `Deduplicate Global Event Listeners` --semantically_similar_to--> `Store Event Handlers in Refs`  [AMBIGUOUS] [semantically similar]
@@ -450,7 +449,7 @@
 - **Graphify Query and Update Modes** — references_query_graph_query, references_query_bfs_mode, references_query_dfs_mode, references_query_path_query, references_query_explain_query, references_update_incremental_update_pipeline, references_add_watch_graphify_watch_mode [INFERRED 0.85]
 - **Family Tree Sharing Model** — context_invitation, context_collaborator, context_share_token, context_public_share_link, context_guest_viewer, context_share_link_regeneration [EXTRACTED 1.00]
 
-## Communities (399 total, 184 thin omitted)
+## Communities (398 total, 182 thin omitted)
 
 ### Community 0 - "Tsx Formerrors"
 Cohesion: 0.05
@@ -493,8 +492,8 @@ Cohesion: 0.06
 Nodes (32): addPhoto, addSubtitle, addTitle, bio, bioPlaceholder, birthSection, closeModal, currentPhotoAlt (+24 more)
 
 ### Community 10 - "Json Meta"
-Cohesion: 0.09
-Nodes (20): auth, meta, description, title, auth, meta, description, title (+12 more)
+Cohesion: 0.16
+Nodes (10): meta, description, title, meta, description, title, buildResetPasswordEmail(), CONTENT (+2 more)
 
 ### Community 11 - "Tsx Page"
 Cohesion: 0.22
@@ -513,12 +512,12 @@ Cohesion: 0.08
 Nodes (26): changePasswordBody, changePasswordTitle, confirmPasswordLabel, confirmPasswordPlaceholder, currentPasswordLabel, currentPasswordPlaceholder, dangerZoneBody, dangerZoneTitle (+18 more)
 
 ### Community 15 - "Tsx Membersidepanel"
-Cohesion: 0.18
-Nodes (10): formatMemberDateRange(), TreeRelationship, AddRelationshipModalProps, MemberSidePanel(), MemberSidePanelPresentation, MemberSidePanelProps, SidePanelT, member (+2 more)
+Cohesion: 0.14
+Nodes (17): buildTreeGraph(), formatMemberDateRange(), MemberPosition, pruneArrangement(), TreeMemberData, TreeRelationship, AddMemberModalProps, EditMemberModalProps (+9 more)
 
 ### Community 16 - "Tsx Dashboardlayout"
-Cohesion: 0.21
-Nodes (7): ImportReportModalProps, baseReport, t, ERROR_CODE_MESSAGE_KEYS, ImportTreeModalProps, ImportReport, ImportGedcomResult
+Cohesion: 0.12
+Nodes (11): DashboardLayoutProps, translations, { useSearchParamsMock, useRouterMock, dashboardClientMock }, Tree, ImportReportModalProps, baseReport, t, ERROR_CODE_MESSAGE_KEYS (+3 more)
 
 ### Community 17 - "Activeempty Dictionaries_en_collaboratio"
 Cohesion: 0.08
@@ -545,8 +544,8 @@ Cohesion: 0.08
 Nodes (24): about, born, childOf, close, deleteCancel, deleteConfirm, deleteConfirmBody, deleteFailed (+16 more)
 
 ### Community 23 - "Tsx Relationshipedgepopover"
-Cohesion: 0.12
-Nodes (10): RelationshipEdgePopoverProps, buildPublicUrl(), isShareSettingsAction(), ShareSettingsAction, ErrorsSubT, MemberSubT, RelationshipSubT, TreeCanvas (+2 more)
+Cohesion: 0.09
+Nodes (12): RelationshipEdgePopoverProps, buildPublicUrl(), isShareSettingsAction(), ShareSettingsAction, ErrorsSubT, MemberSubT, RelationshipSubT, TreeCanvas (+4 more)
 
 ### Community 24 - "Description Eyebrow"
 Cohesion: 0.09
@@ -577,20 +576,20 @@ Cohesion: 0.08
 Nodes (23): For /graphify add and --watch, For /graphify query, For the commit hook and native CLAUDE.md integration, For --update and --cluster-only, /graphify, Honesty Rules, Interpreter guard for subcommands, Part A - Structural extraction for code files (+15 more)
 
 ### Community 31 - "Tsx Addmembermodal"
-Cohesion: 0.21
-Nodes (11): AddMemberModal(), mapMemberErrorCode(), MemberT, BirthPrecision, initialMemberFormState(), MemberFormState, MemberGender, SUPPORTED_MEMBER_PHOTO_TYPES (+3 more)
+Cohesion: 0.17
+Nodes (14): AddMemberModal(), mapMemberErrorCode(), MemberT, EditMemberModal(), EditMemberT, mapError(), BirthPrecision, initialMemberFormState() (+6 more)
 
 ### Community 32 - "Dashboard Dictionaries_en_dashboard"
 Cohesion: 0.04
-Nodes (49): dashboard, cardMenuDelete, cardMenuRename, createFirstTreePrompt, createTree, emailVerifiedBody, emailVerifiedTitle, emptyBody (+41 more)
+Nodes (46): dashboard, cardMenuDelete, cardMenuRename, createFirstTreePrompt, createTree, emailVerifiedBody, emailVerifiedTitle, emptyBody (+38 more)
 
 ### Community 33 - "Dashboard Dictionaries_es_dashboard"
 Cohesion: 0.04
-Nodes (49): dashboard, cardMenuDelete, cardMenuRename, createFirstTreePrompt, createTree, emailVerifiedBody, emailVerifiedTitle, emptyBody (+41 more)
+Nodes (46): dashboard, cardMenuDelete, cardMenuRename, createFirstTreePrompt, createTree, emailVerifiedBody, emailVerifiedTitle, emptyBody (+38 more)
 
 ### Community 34 - "Dashboard Dictionaries_ru_dashboard"
 Cohesion: 0.04
-Nodes (49): dashboard, cardMenuDelete, cardMenuRename, createFirstTreePrompt, createTree, emailVerifiedBody, emailVerifiedTitle, emptyBody (+41 more)
+Nodes (46): dashboard, cardMenuDelete, cardMenuRename, createFirstTreePrompt, createTree, emailVerifiedBody, emailVerifiedTitle, emptyBody (+38 more)
 
 ### Community 35 - "Date Precision"
 Cohesion: 0.23
@@ -605,16 +604,16 @@ Cohesion: 0.10
 Nodes (19): compilerOptions, allowJs, esModuleInterop, incremental, isolatedModules, jsx, lib, module (+11 more)
 
 ### Community 38 - "Route Post"
-Cohesion: 0.11
-Nodes (19): { GET, POST }, BetterAuthErrorPayload, mapDeleteError(), auth, buildFrontendResetLink(), EMAIL_SUBJECTS, getBaseURL(), getUserLocale() (+11 more)
+Cohesion: 0.14
+Nodes (12): { GET, POST }, auth, buildFrontendResetLink(), EMAIL_SUBJECTS, getBaseURL(), getUserLocale(), prisma, SupportedLocale (+4 more)
 
 ### Community 39 - "Route Public"
 Cohesion: 0.20
 Nodes (13): POST(), formatRelativeTime(), generateShareToken(), GET(), getAppUrl(), getPrismaClient(), PATCH(), { getSessionMock, prismaMock, prismaClientCtorMock, prismaPgMock } (+5 more)
 
 ### Community 40 - "Route Getprismaclient"
-Cohesion: 0.22
-Nodes (13): getPrismaClient(), POST(), DELETE(), getPrismaClient(), parseRole(), PATCH(), getPrismaClient(), POST() (+5 more)
+Cohesion: 0.24
+Nodes (12): getPrismaClient(), POST(), DELETE(), getPrismaClient(), parseRole(), PATCH(), getPrismaClient(), POST() (+4 more)
 
 ### Community 41 - "Tsx Languagesettingsclient"
 Cohesion: 0.16
@@ -633,8 +632,8 @@ Cohesion: 0.11
 Nodes (18): addSubtitle, addTitle, child, closeModal, memberA, memberB, needTwoMembers, noMembersFound (+10 more)
 
 ### Community 45 - "Tree Link"
-Cohesion: 0.09
-Nodes (35): Account Deletion Boundary, Account Deletion Confirmation, Account Section, Collaborator, Collaborator Viewer, Danger Zone, Example Dialogue, Family Tree (+27 more)
+Cohesion: 0.11
+Nodes (32): Account Deletion Boundary, Account Deletion Confirmation, Account Section, Collaborator, Collaborator Viewer, Danger Zone, Example Dialogue, Family Tree (+24 more)
 
 ### Community 46 - "Emailchangeverify Dictionaries_en_accoun"
 Cohesion: 0.12
@@ -689,24 +688,24 @@ Cohesion: 0.08
 Nodes (23): For /graphify add and --watch, For /graphify query, For the commit hook and native CLAUDE.md integration, For --update and --cluster-only, /graphify, Honesty Rules, Interpreter guard for subcommands, Part A - Structural extraction for code files (+15 more)
 
 ### Community 59 - "Login Dictionaries_en_auth_login"
-Cohesion: 0.13
-Nodes (15): login, brandBody, emailLabel, emailPlaceholder, forgotPassword, heritageTagline, noAccount, passwordLabel (+7 more)
+Cohesion: 0.12
+Nodes (17): auth, forgotPassword, login, brandBody, emailLabel, emailPlaceholder, forgotPassword, heritageTagline (+9 more)
 
 ### Community 60 - "Invitemodal Dictionaries_en_collaboratio"
 Cohesion: 0.13
 Nodes (15): inviteModal, cancel, emailLabel, emailPlaceholder, messageCounter, messageLabel, messageOptional, messagePlaceholder (+7 more)
 
 ### Community 61 - "Login Dictionaries_es_auth_login"
-Cohesion: 0.13
-Nodes (15): login, brandBody, emailLabel, emailPlaceholder, forgotPassword, heritageTagline, noAccount, passwordLabel (+7 more)
+Cohesion: 0.12
+Nodes (17): auth, forgotPassword, login, brandBody, emailLabel, emailPlaceholder, forgotPassword, heritageTagline (+9 more)
 
 ### Community 62 - "Invitemodal Dictionaries_es_collaboratio"
 Cohesion: 0.13
 Nodes (15): inviteModal, cancel, emailLabel, emailPlaceholder, messageCounter, messageLabel, messageOptional, messagePlaceholder (+7 more)
 
 ### Community 63 - "Login Dictionaries_ru_auth_login"
-Cohesion: 0.13
-Nodes (15): login, brandBody, emailLabel, emailPlaceholder, forgotPassword, heritageTagline, noAccount, passwordLabel (+7 more)
+Cohesion: 0.12
+Nodes (17): auth, forgotPassword, login, brandBody, emailLabel, emailPlaceholder, forgotPassword, heritageTagline (+9 more)
 
 ### Community 64 - "Invitemodal Dictionaries_ru_collaboratio"
 Cohesion: 0.13
@@ -729,8 +728,8 @@ Cohesion: 0.13
 Nodes (15): chooseDifferentMembers, chooseTwoMembers, dragSaveFailed, ERR_DEATH_BEFORE_BIRTH, ERR_DUPLICATE_RELATIONSHIP, ERR_FIRST_NAME_REQUIRED, ERR_INVALID_PARTIAL_DATE, ERR_INVALID_RELATIONSHIP (+7 more)
 
 ### Community 69 - "Tree Dictionaries_es_tree"
-Cohesion: 0.14
-Nodes (14): tree, addMember, addRelationship, cancel, living, loadingMembers, loadingRelationships, membersSection (+6 more)
+Cohesion: 0.11
+Nodes (18): tree, addMember, addRelationship, cancel, living, loadingMembers, loadingRelationships, membersSection (+10 more)
 
 ### Community 70 - "Choosedifferentmembers Dictionaries_ru_e"
 Cohesion: 0.13
@@ -745,8 +744,8 @@ Cohesion: 0.09
 Nodes (26): GET(), getPrismaClient(), assignSpouseSlots(), buildMemberXrefMap(), ExportableDatePrecision, ExportableGender, ExportableMember, ExportableRelationship (+18 more)
 
 ### Community 73 - "Route Get"
-Cohesion: 0.31
-Nodes (11): GET(), getPrismaClient(), InvitationPayload, parseInvitationPayload(), POST(), toLocale(), DELETE(), getPrismaClient() (+3 more)
+Cohesion: 0.14
+Nodes (22): GET(), getPrismaClient(), InvitationPayload, parseInvitationPayload(), POST(), toLocale(), DELETE(), getPrismaClient() (+14 more)
 
 ### Community 74 - "Route Getprismaclient"
 Cohesion: 0.12
@@ -757,28 +756,28 @@ Cohesion: 0.12
 Nodes (16): 5.10 Subscribe to Derived State, 5.11 Use Functional setState Updates, 5.12 Use Lazy State Initialization, 5.13 Use Transitions for Non-Urgent Updates, 5.14 Use useDeferredValue for Expensive Derived Renders, 5.15 Use useRef for Transient Values, 5.1 Calculate Derived State During Rendering, 5.2 Defer State Reads to Usage Point (+8 more)
 
 ### Community 76 - "Errors Generic"
-Cohesion: 0.27
-Nodes (10): generic, invalidEmail, passwordMismatch, passwordStrength, requiredConfirmPassword, requiredEmail, requiredName, requiredPassword (+2 more)
+Cohesion: 0.24
+Nodes (11): generic, invalidCredentials, invalidEmail, passwordMismatch, passwordStrength, requiredConfirmPassword, requiredEmail, requiredName (+3 more)
 
 ### Community 77 - "Errors Generic"
-Cohesion: 0.27
-Nodes (10): generic, invalidEmail, passwordMismatch, passwordStrength, requiredConfirmPassword, requiredEmail, requiredName, requiredPassword (+2 more)
+Cohesion: 0.24
+Nodes (11): generic, invalidCredentials, invalidEmail, passwordMismatch, passwordStrength, requiredConfirmPassword, requiredEmail, requiredName (+3 more)
 
 ### Community 78 - "Errors Generic"
-Cohesion: 0.27
-Nodes (10): generic, invalidEmail, passwordMismatch, passwordStrength, requiredConfirmPassword, requiredEmail, requiredName, requiredPassword (+2 more)
+Cohesion: 0.24
+Nodes (11): generic, invalidCredentials, invalidEmail, passwordMismatch, passwordStrength, requiredConfirmPassword, requiredEmail, requiredName (+3 more)
 
 ### Community 79 - "Email Invitation"
-Cohesion: 0.22
-Nodes (13): DELETE(), GET(), getPrismaClient(), PUT(), GET(), getPrismaClient(), withPublicHeaders(), toPrismaNodePositions() (+5 more)
+Cohesion: 0.31
+Nodes (10): DELETE(), GET(), getPrismaClient(), PUT(), GET(), getPrismaClient(), withPublicHeaders(), toPrismaNodePositions() (+2 more)
 
 ### Community 80 - "Addrelationshipmodal Tsx"
-Cohesion: 0.17
-Nodes (7): MemberComboboxProps, MemberOption, RelationshipT, RelationshipType, SelectOption, members, translations
+Cohesion: 0.15
+Nodes (8): AddRelationshipModalProps, MemberComboboxProps, MemberOption, RelationshipT, RelationshipType, SelectOption, members, translations
 
 ### Community 81 - "Resetpassword Dictionaries_en_auth_reset"
-Cohesion: 0.24
-Nodes (10): createMailClient(), EmailOptions, sendEmail(), sendEmailWithRetry(), validateEmailConfig(), buildInvitationEmail(), COPY, escapeHtml() (+2 more)
+Cohesion: 0.33
+Nodes (7): BetterAuthErrorPayload, mapDeleteError(), appendSetCookieHeaders(), BetterAuthErrorPayload, mapBetterAuthError(), PATCH(), DELETE()
 
 ### Community 82 - "Cardbody Dictionaries_en_language_cardbo"
 Cohesion: 0.36
@@ -957,12 +956,12 @@ Cohesion: 0.33
 Nodes (6): emailChangeEmail, cta, expiry, fallback, intro, subject
 
 ### Community 129 - "Cta Dictionaries_en_cta"
-Cohesion: 0.15
-Nodes (12): cta, badgeGdpr, badgeNoCard, body, button, headline, treeDemo, grandparent1 (+4 more)
+Cohesion: 0.33
+Nodes (6): cta, badgeGdpr, badgeNoCard, body, button, headline
 
 ### Community 130 - "Treedemo Dictionaries_en_treedemo"
-Cohesion: 0.24
-Nodes (8): TreeMemberData, AddMemberModalProps, EditMemberModal(), EditMemberModalProps, EditMemberT, mapError(), baseMember, translations
+Cohesion: 0.33
+Nodes (6): treeDemo, grandparent1, grandparent2, parent1, parent2, you
 
 ### Community 131 - "Emailchangeemail Dictionaries_es_account"
 Cohesion: 0.33
@@ -1021,8 +1020,8 @@ Cohesion: 0.20
 Nodes (10): footer, copyright, exploreTitle, legalLinks, legalTitle, links, privacy, support (+2 more)
 
 ### Community 145 - "Account Deletion"
-Cohesion: 0.11
-Nodes (19): cardBody, cardTitle, description, discard, optionEnglish, optionRussian, optionSpanish, save (+11 more)
+Cohesion: 0.17
+Nodes (12): cardBody, cardTitle, description, discard, optionEnglish, optionRussian, optionSpanish, save (+4 more)
 
 ### Community 146 - "Roles Dictionaries_en_collaboration_role"
 Cohesion: 0.50
@@ -1225,8 +1224,8 @@ Cohesion: 0.50
 Nodes (3): Dependency-Based Parallelization, better-all repository, async parallelization
 
 ### Community 251 - "Community 251"
-Cohesion: 0.22
-Nodes (4): DashboardLayoutProps, translations, { useSearchParamsMock, useRouterMock, dashboardClientMock }, Tree
+Cohesion: 0.29
+Nodes (7): account, language, security, settings, sections, subtitle, title
 
 ### Community 252 - "Community 252"
 Cohesion: 0.50
@@ -1258,7 +1257,11 @@ Nodes (7): account, language, security, settings, sections, subtitle, title
 
 ### Community 390 - "Community 390"
 Cohesion: 0.50
-Nodes (4): treeMenu, close, dialogLabel, trigger
+Nodes (4): nav, login, logo, signup
+
+### Community 391 - "Community 391"
+Cohesion: 0.67
+Nodes (3): meta, description, title
 
 ### Community 392 - "Community 392"
 Cohesion: 0.50
@@ -1281,9 +1284,9 @@ Nodes (4): AcceptInvitationClient(), AcceptInvitationClientProps, AcceptState, g
   .agents/skills/vercel-react-best-practices/rules/client-event-listeners.md · relation: semantically_similar_to
 
 ## Knowledge Gaps
-- **2119 isolated node(s):** `User Settings`, `Settings Section`, `Account Section`, `Pending Email Change`, `Post-Auth Redirect` (+2114 more)
+- **2112 isolated node(s):** `{ useSearchParamsMock, useRouterMock, dashboardClientMock }`, `translations`, `Tree`, `DashboardLayoutProps`, `t` (+2107 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **184 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **182 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
@@ -1291,14 +1294,14 @@ _Questions this graph is uniquely positioned to answer:_
 - **What is the exact relationship between `Store Event Handlers in Refs` and `Deduplicate Global Event Listeners`?**
   _Edge tagged AMBIGUOUS (relation: semantically_similar_to) - confidence is low._
 - **Why does `tree` connect `Tree Dictionaries_en_tree` to `Choosedifferentmembers Dictionaries_en_e`, `Auth Dictionaries_es_auth`, `Addphoto Dictionaries_en_member_addphoto`, `Json Meta`, `Addsubtitle Dictionaries_en_relationship`, `Limitreached Dictionaries_en_sidebar_lim`, `Addfirstmember Dictionaries_en_canvas_ad`, `Activeempty Dictionaries_en_collaboratio`, `About Dictionaries_en_panel_about`, `Copy Dictionaries_en_publicshare_copy`?**
-  _High betweenness centrality (0.104) - this node is a cross-community bridge._
-- **Why does `tree` connect `Tree Dictionaries_es_tree` to `Choosedifferentmembers Dictionaries_es_e`, `Community 390`, `Addphoto Dictionaries_es_member_addphoto`, `Json Meta`, `Addsubtitle Dictionaries_es_relationship`, `Limitreached Dictionaries_es_sidebar_lim`, `Addfirstmember Dictionaries_es_canvas_ad`, `Activeempty Dictionaries_es_collaboratio`, `About Dictionaries_es_panel_about`, `Copy Dictionaries_es_publicshare_copy`?**
-  _High betweenness centrality (0.102) - this node is a cross-community bridge._
+  _High betweenness centrality (0.106) - this node is a cross-community bridge._
+- **Why does `tree` connect `Tree Dictionaries_es_tree` to `Choosedifferentmembers Dictionaries_es_e`, `Addphoto Dictionaries_es_member_addphoto`, `Json Meta`, `Addsubtitle Dictionaries_es_relationship`, `Limitreached Dictionaries_es_sidebar_lim`, `Addfirstmember Dictionaries_es_canvas_ad`, `Activeempty Dictionaries_es_collaboratio`, `About Dictionaries_es_panel_about`, `Copy Dictionaries_es_publicshare_copy`?**
+  _High betweenness centrality (0.088) - this node is a cross-community bridge._
 - **Why does `tree` connect `Tree Dictionaries_ru_tree` to `Choosedifferentmembers Dictionaries_ru_e`, `Community 392`, `Addphoto Dictionaries_ru_member_addphoto`, `Json Meta`, `Addsubtitle Dictionaries_ru_relationship`, `Limitreached Dictionaries_ru_sidebar_lim`, `Addfirstmember Dictionaries_ru_canvas_ad`, `Activeempty Dictionaries_ru_collaboratio`, `About Dictionaries_ru_panel_about`, `Copy Dictionaries_ru_publicshare_copy`?**
-  _High betweenness centrality (0.067) - this node is a cross-community bridge._
+  _High betweenness centrality (0.059) - this node is a cross-community bridge._
 - **Are the 2 inferred relationships involving `hasLocale` (e.g. with `AcceptInvitationPage()` and `VerifyEmailChangePage()`) actually correct?**
   _`hasLocale` has 2 INFERRED edges - model-reasoned connections that need verification._
-- **What connects `User Settings`, `Settings Section`, `Account Section` to the rest of the system?**
-  _2124 weakly-connected nodes found - possible documentation gaps or missing edges._
+- **What connects `{ useSearchParamsMock, useRouterMock, dashboardClientMock }`, `translations`, `Tree` to the rest of the system?**
+  _2117 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Tsx Formerrors` be split into smaller, more focused modules?**
   _Cohesion score 0.05333333333333334 - nodes in this community are weakly interconnected._

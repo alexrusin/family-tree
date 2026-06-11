@@ -447,7 +447,7 @@ describe("mapGedcomToMembers", () => {
   });
 
   describe("skipped data report", () => {
-    it("counts PLAC, SOUR, and NOTE under an individual's events as skipped", () => {
+    it("counts PLAC, SOUR, and extra NOTEs under an individual as skipped", () => {
       const records = parseGedcom(
         [
           "0 @I1@ INDI",
@@ -456,15 +456,18 @@ describe("mapGedcomToMembers", () => {
           "2 DATE 1 JAN 1900",
           "2 PLAC Springfield, USA",
           "2 SOUR @S1@",
-          "1 NOTE A note about John",
+          "2 NOTE A note about his birth",
+          "1 NOTE A bio note about John",
         ].join("\n"),
       );
 
-      const { report } = mapGedcomToMembers(records);
+      const { members, report } = mapGedcomToMembers(records);
 
       expect(report.skippedPlacesCount).toBe(1);
       expect(report.skippedSourcesCount).toBe(1);
+      // The top-level NOTE is imported as the bio; the nested birth NOTE is skipped.
       expect(report.skippedNotesCount).toBe(1);
+      expect(members[0].bio).toBe("A bio note about John");
     });
 
     it("counts unmapped event tags (e.g. OCCU, MARR) as skipped events", () => {
@@ -503,6 +506,48 @@ describe("mapGedcomToMembers", () => {
       const { report } = mapGedcomToMembers(records);
 
       expect(report.skippedEventsCount).toBe(0);
+    });
+  });
+
+  describe("bio import", () => {
+    it("imports a top-level NOTE (including CONT/CONC continuation) as the bio", () => {
+      const records = parseGedcom(
+        [
+          "0 @I1@ INDI",
+          "1 NAME John /Smith/",
+          "1 NOTE A farmer who",
+          "2 CONT lived in Springfield",
+          "2 CONC  his whole life.",
+        ].join("\n"),
+      );
+
+      const { members, report } = mapGedcomToMembers(records);
+
+      expect(members[0].bio).toBe(
+        "A farmer who\nlived in Springfield his whole life.",
+      );
+      expect(report.skippedNotesCount).toBe(0);
+    });
+
+    it("truncates an over-length bio to the model limit", () => {
+      const longNote = "x".repeat(1500);
+      const records = parseGedcom(
+        ["0 @I1@ INDI", "1 NAME John /Smith/", `1 NOTE ${longNote}`].join("\n"),
+      );
+
+      const { members } = mapGedcomToMembers(records);
+
+      expect(members[0].bio).toHaveLength(1000);
+    });
+
+    it("leaves bio null when there is no NOTE", () => {
+      const records = parseGedcom(
+        ["0 @I1@ INDI", "1 NAME John /Smith/"].join("\n"),
+      );
+
+      const { members } = mapGedcomToMembers(records);
+
+      expect(members[0].bio).toBeNull();
     });
   });
 });

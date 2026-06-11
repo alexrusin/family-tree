@@ -61,6 +61,9 @@ interface DashboardLayoutProps {
       skippedEvents: string;
       skippedSources: string;
       skippedNotes: string;
+      droppedDates: string;
+      inferredLiving: string;
+      danglingRelationships: string;
       close: string;
     };
   };

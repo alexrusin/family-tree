@@ -100,6 +100,7 @@ describe("/api/trees/import", () => {
     const text = [
       "0 @I1@ INDI",
       "1 NAME John /Smith/",
+      "1 NOTE A short bio for John.",
       "0 @I2@ INDI",
       "1 SEX F",
     ].join("\n");
@@ -139,6 +140,7 @@ describe("/api/trees/import", () => {
           lastName: "Smith",
           gender: "undisclosed",
           isLiving: false,
+          bio: "A short bio for John.",
         }),
         expect.objectContaining({
           treeId: "tree-1",
@@ -146,6 +148,7 @@ describe("/api/trees/import", () => {
           lastName: null,
           gender: "female",
           isLiving: false,
+          bio: null,
         }),
       ],
     });

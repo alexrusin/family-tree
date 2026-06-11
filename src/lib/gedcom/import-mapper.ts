@@ -23,6 +23,7 @@ export interface ImportedMember {
   deathYear?: number | null;
   deathMonth?: number | null;
   deathDay?: number | null;
+  bio?: string | null;
 }
 
 export type ImportedRelationshipType = "parent" | "spouse" | "sibling";
@@ -49,6 +50,8 @@ export interface ImportReport {
 const NAME_PATTERN = /^(.*?)\/(.*)\/\s*$/;
 const XREF_PATTERN = /^@(.+)@$/;
 const LIVING_AGE_LIMIT_YEARS = 100;
+/** Matches the Member.bio column limit (`@db.VarChar(1000)`). */
+const BIO_MAX_LENGTH = 1000;
 
 /**
  * GEDCOM event tags (individual and family) that the app does not store.
@@ -110,17 +113,23 @@ interface SkippedCounts {
 /**
  * Counts unmapped data (places, events, source citations, notes) under
  * INDI/FAM records so the Import Report can be honest about what was
- * dropped, per the "unmapped data is dropped and reported" rule.
+ * dropped, per the "unmapped data is dropped and reported" rule. Notes
+ * already consumed as a member's bio are excluded so they are not
+ * double-reported as skipped.
  */
-function countSkippedData(records: GedcomNode[]): SkippedCounts {
+function countSkippedData(
+  records: GedcomNode[],
+  consumedNotes: Set<GedcomNode>,
+): SkippedCounts {
   const counts: SkippedCounts = { places: 0, events: 0, sources: 0, notes: 0 };
 
   function walk(node: GedcomNode, isEventContainer: boolean): void {
     for (const child of node.children) {
       if (child.tag === "PLAC") counts.places += 1;
       else if (child.tag === "SOUR") counts.sources += 1;
-      else if (child.tag === "NOTE") counts.notes += 1;
-      else if (isEventContainer && SKIPPED_EVENT_TAGS.has(child.tag))
+      else if (child.tag === "NOTE") {
+        if (!consumedNotes.has(child)) counts.notes += 1;
+      } else if (isEventContainer && SKIPPED_EVENT_TAGS.has(child.tag))
         counts.events += 1;
 
       walk(child, false);
@@ -253,6 +262,7 @@ export function mapGedcomToMembers(records: GedcomNode[]): {
   report: ImportReport;
 } {
   const membersByXref = new Map<string, ImportedMember>();
+  const consumedNotes = new Set<GedcomNode>();
   let unknownNameCount = 0;
   let droppedDateCount = 0;
   let inferredLivingCount = 0;
@@ -298,6 +308,14 @@ export function mapGedcomToMembers(records: GedcomNode[]): {
       inferredLivingCount += 1;
     }
 
+    const noteNode = record.children.find((child) => child.tag === "NOTE");
+    const noteText = noteNode?.value.trim();
+    let bio: string | null = null;
+    if (noteNode && noteText) {
+      bio = noteText.slice(0, BIO_MAX_LENGTH);
+      consumedNotes.add(noteNode);
+    }
+
     membersByXref.set(record.xrefId, {
       id: randomUUID(),
       xrefId: record.xrefId,
@@ -313,6 +331,7 @@ export function mapGedcomToMembers(records: GedcomNode[]): {
       deathYear: deathDate?.year ?? null,
       deathMonth: deathDate?.month ?? null,
       deathDay: deathDate?.day ?? null,
+      bio,
     });
   }
 
@@ -395,7 +414,7 @@ export function mapGedcomToMembers(records: GedcomNode[]): {
     });
   }
 
-  const skipped = countSkippedData(records);
+  const skipped = countSkippedData(records, consumedNotes);
 
   return {
     members,

@@ -48,6 +48,9 @@ describe("gedcom dictionary keys", () => {
     expect(dict.dashboard.importReport.skippedEvents).toBeTruthy();
     expect(dict.dashboard.importReport.skippedSources).toBeTruthy();
     expect(dict.dashboard.importReport.skippedNotes).toBeTruthy();
+    expect(dict.dashboard.importReport.droppedDates).toBeTruthy();
+    expect(dict.dashboard.importReport.inferredLiving).toBeTruthy();
+    expect(dict.dashboard.importReport.danglingRelationships).toBeTruthy();
     expect(dict.dashboard.importReport.close).toBeTruthy();
   });
 });

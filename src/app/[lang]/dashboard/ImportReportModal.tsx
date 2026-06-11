@@ -16,6 +16,9 @@ interface ImportReportModalProps {
     skippedEvents: string;
     skippedSources: string;
     skippedNotes: string;
+    droppedDates: string;
+    inferredLiving: string;
+    danglingRelationships: string;
     close: string;
   };
 }
@@ -32,6 +35,12 @@ export default function ImportReportModal({
     { label: t.skippedEvents, count: report.skippedEventsCount },
     { label: t.skippedSources, count: report.skippedSourcesCount },
     { label: t.skippedNotes, count: report.skippedNotesCount },
+    { label: t.droppedDates, count: report.droppedDateCount },
+    { label: t.inferredLiving, count: report.inferredLivingCount },
+    {
+      label: t.danglingRelationships,
+      count: report.danglingRelationshipCount,
+    },
   ].filter((row) => row.count > 0);
 
   return (

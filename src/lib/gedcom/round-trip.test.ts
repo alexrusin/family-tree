@@ -91,4 +91,25 @@ describe("GEDCOM round trip", () => {
     const afterReExport = signature(reimported, reimportedRelationships);
     expect(afterReExport).toEqual(before);
   });
+
+  it("preserves a member's bio across export and import", () => {
+    const members: ExportableMember[] = [
+      {
+        id: "m1",
+        firstName: "John",
+        lastName: "Smith",
+        gender: "male",
+        bio: "A farmer who lived\nin Springfield his whole life.",
+      },
+    ];
+
+    const document = mapTreeToGedcomDocument(members, []);
+    const text = serializeGedcom(document);
+    const records = parseGedcom(text);
+    const { members: imported } = mapGedcomToMembers(records);
+
+    expect(imported[0].bio).toBe(
+      "A farmer who lived\nin Springfield his whole life.",
+    );
+  });
 });

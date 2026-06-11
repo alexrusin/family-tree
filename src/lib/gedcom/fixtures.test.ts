@@ -76,12 +76,13 @@ describe("real-world export fixtures", () => {
 
     expect(members).toHaveLength(2);
     expect(relationships.some((r) => r.type === "parent")).toBe(true);
-    expect(report.skippedNotesCount).toBeGreaterThan(0);
     expect(report.skippedPlacesCount).toBeGreaterThan(0);
     expect(report.droppedDateCount).toBe(0);
     const maria = members.find((m) => m.firstName === "Maria");
     expect(maria?.birthPrecision).toBe("year");
     expect(maria?.birthYear).toBe(1955);
+    const carlos = members.find((m) => m.firstName === "Carlos");
+    expect(carlos?.bio).toBe("Family story passed down about Carlos.");
   });
 
   it("imports a FamilySearch-style (GEDCOM 7.0) export without throwing", () => {

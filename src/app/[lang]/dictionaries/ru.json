@@ -128,6 +128,9 @@
       "skippedEvents": "Пропущено событий",
       "skippedSources": "Пропущено источников",
       "skippedNotes": "Пропущено заметок",
+      "droppedDates": "Отброшено дат",
+      "inferredLiving": "Статус «жив» определён автоматически",
+      "danglingRelationships": "Отброшено связей",
       "close": "Перейти к дереву"
     }
   },

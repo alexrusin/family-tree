@@ -15,6 +15,9 @@ const t = {
   skippedEvents: "Events skipped",
   skippedSources: "Sources skipped",
   skippedNotes: "Notes skipped",
+  droppedDates: "Dates dropped",
+  inferredLiving: "Living status inferred",
+  danglingRelationships: "Relationships dropped",
   close: "Go to tree",
 };
 
@@ -77,5 +80,25 @@ describe("ImportReportModal", () => {
     expect(screen.getByText("Sources skipped")).not.toBeNull();
     expect(screen.getByText("Notes skipped")).not.toBeNull();
     expect(screen.queryByText("Events skipped")).toBeNull();
+  });
+
+  it("lists dropped dates, inferred living, and dropped relationships when non-zero", () => {
+    render(
+      <ImportReportModal
+        report={{
+          ...baseReport,
+          droppedDateCount: 3,
+          inferredLivingCount: 2,
+          danglingRelationshipCount: 1,
+        }}
+        onClose={() => {}}
+        t={t}
+      />,
+    );
+
+    expect(screen.getByText("Skipped data")).not.toBeNull();
+    expect(screen.getByText("Dates dropped")).not.toBeNull();
+    expect(screen.getByText("Living status inferred")).not.toBeNull();
+    expect(screen.getByText("Relationships dropped")).not.toBeNull();
   });
 });
