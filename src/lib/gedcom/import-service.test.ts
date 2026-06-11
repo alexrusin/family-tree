@@ -39,14 +39,30 @@ describe("importGedcomTree", () => {
       ownerId: "u1",
       name: "Smith Family",
       members: [
-        { xrefId: "I1", firstName: "John", lastName: "Smith" },
-        { xrefId: "I2", firstName: "Unknown", lastName: null },
+        expect.objectContaining({
+          xrefId: "I1",
+          firstName: "John",
+          lastName: "Smith",
+        }),
+        expect.objectContaining({
+          xrefId: "I2",
+          firstName: "Unknown",
+          lastName: null,
+        }),
       ],
+      relationships: [],
     });
 
     expect(result).toEqual({
       treeId: "t1",
-      report: { importedCount: 2, unknownNameCount: 1 },
+      report: {
+        importedCount: 2,
+        unknownNameCount: 1,
+        relationshipCount: 0,
+        droppedDateCount: 0,
+        inferredLivingCount: 0,
+        danglingRelationshipCount: 0,
+      },
     });
   });
 

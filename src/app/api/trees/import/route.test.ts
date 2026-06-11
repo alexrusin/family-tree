@@ -12,6 +12,9 @@ const { getSessionMock, prismaMock, prismaClientCtorMock, prismaPgMock } =
       treeMember: {
         createMany: vi.fn(),
       },
+      relationship: {
+        createMany: vi.fn(),
+      },
     };
 
     const prismaMock = {
@@ -74,6 +77,7 @@ describe("/api/trees/import", () => {
 
     prismaMock.__tx.familyTree.create.mockResolvedValue({ id: "tree-1" });
     prismaMock.__tx.treeMember.createMany.mockResolvedValue({ count: 2 });
+    prismaMock.__tx.relationship.createMany.mockResolvedValue({ count: 0 });
   });
 
   it("returns 401 when unauthenticated", async () => {
@@ -106,7 +110,14 @@ describe("/api/trees/import", () => {
     expect(response.status).toBe(201);
     const body = await response.json();
     expect(body.treeId).toBe("tree-1");
-    expect(body.report).toEqual({ importedCount: 2, unknownNameCount: 1 });
+    expect(body.report).toEqual({
+      importedCount: 2,
+      unknownNameCount: 1,
+      relationshipCount: 0,
+      droppedDateCount: 0,
+      inferredLivingCount: 0,
+      danglingRelationshipCount: 0,
+    });
 
     expect(prismaMock.__tx.familyTree.create).toHaveBeenCalledWith({
       data: expect.objectContaining({
@@ -118,9 +129,23 @@ describe("/api/trees/import", () => {
 
     expect(prismaMock.__tx.treeMember.createMany).toHaveBeenCalledWith({
       data: [
-        { treeId: "tree-1", firstName: "John", lastName: "Smith" },
-        { treeId: "tree-1", firstName: "Unknown", lastName: null },
+        expect.objectContaining({
+          treeId: "tree-1",
+          firstName: "John",
+          lastName: "Smith",
+          gender: "undisclosed",
+          isLiving: false,
+        }),
+        expect.objectContaining({
+          treeId: "tree-1",
+          firstName: "Unknown",
+          lastName: null,
+          gender: "female",
+          isLiving: false,
+        }),
       ],
     });
+
+    expect(prismaMock.__tx.relationship.createMany).not.toHaveBeenCalled();
   });
 });

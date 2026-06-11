@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
 
     const { treeId, report } = await importGedcomTree({
       repo: {
-        createTreeWithMembers: ({ ownerId, name, members }) =>
+        createTreeWithMembers: ({ ownerId, name, members, relationships }) =>
           prisma.$transaction(async (tx) => {
             const tree = await tx.familyTree.create({
               data: {
@@ -52,9 +52,31 @@ export async function POST(request: NextRequest) {
             if (members.length > 0) {
               await tx.treeMember.createMany({
                 data: members.map((member) => ({
+                  id: member.id,
                   treeId: tree.id,
                   firstName: member.firstName,
                   lastName: member.lastName ?? null,
+                  gender: member.gender,
+                  isLiving: member.isLiving,
+                  birthPrecision: member.birthPrecision ?? null,
+                  birthYear: member.birthYear ?? null,
+                  birthMonth: member.birthMonth ?? null,
+                  birthDay: member.birthDay ?? null,
+                  deathPrecision: member.deathPrecision ?? null,
+                  deathYear: member.deathYear ?? null,
+                  deathMonth: member.deathMonth ?? null,
+                  deathDay: member.deathDay ?? null,
+                })),
+              });
+            }
+
+            if (relationships.length > 0) {
+              await tx.relationship.createMany({
+                data: relationships.map((relationship) => ({
+                  treeId: tree.id,
+                  fromMemberId: relationship.fromMemberId,
+                  toMemberId: relationship.toMemberId,
+                  type: relationship.type,
                 })),
               });
             }

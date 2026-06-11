@@ -2,6 +2,7 @@ import { parseGedcom } from "./parser";
 import {
   mapGedcomToMembers,
   type ImportedMember,
+  type ImportedRelationship,
   type ImportReport,
 } from "./import-mapper";
 
@@ -23,6 +24,7 @@ export async function importGedcomTree(params: {
       ownerId: string;
       name: string;
       members: ImportedMember[];
+      relationships: ImportedRelationship[];
     }) => Promise<{ treeId: string }>;
   };
   actorUserId: string;
@@ -30,12 +32,13 @@ export async function importGedcomTree(params: {
   fileContent: string;
 }): Promise<ImportGedcomResult> {
   const records = parseGedcom(params.fileContent);
-  const { members, report } = mapGedcomToMembers(records);
+  const { members, relationships, report } = mapGedcomToMembers(records);
 
   const { treeId } = await params.repo.createTreeWithMembers({
     ownerId: params.actorUserId,
     name: deriveTreeName(params.fileName),
     members,
+    relationships,
   });
 
   return { treeId, report };
