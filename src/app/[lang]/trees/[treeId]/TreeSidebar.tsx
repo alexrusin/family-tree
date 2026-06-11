@@ -9,6 +9,7 @@ import {
   Users,
   Share2,
   RotateCcw,
+  Download,
 } from "lucide-react";
 
 const MEMBER_WARN_THRESHOLD = 250;
@@ -24,6 +25,7 @@ interface TreeSidebarT {
   memberCount: string;
   shareLink: string;
   resetLayout: string;
+  exportGedcom: string;
 }
 
 interface TreeSidebarProps {
@@ -38,6 +40,7 @@ interface TreeSidebarProps {
   onAddRelationship: () => void;
   onOpenShareSettings: () => void;
   onResetLayout: () => void;
+  onExportGedcom: () => void;
   className?: string;
   t: TreeSidebarT;
 }
@@ -54,6 +57,7 @@ export default function TreeSidebar({
   onAddRelationship,
   onOpenShareSettings,
   onResetLayout,
+  onExportGedcom,
   className,
   t,
 }: TreeSidebarProps) {
@@ -108,6 +112,14 @@ export default function TreeSidebar({
           <Users className="w-4 h-4" />
           {t.collaborators}
         </Link>
+
+        <button
+          onClick={onExportGedcom}
+          className="w-full px-4 py-2.5 bg-stone-100 text-stone-900 rounded-lg font-semibold hover:bg-stone-200 transition-colors flex items-center justify-center gap-2 text-sm"
+        >
+          <Download className="w-4 h-4" />
+          {t.exportGedcom}
+        </button>
 
         {canEdit ? (
           <>

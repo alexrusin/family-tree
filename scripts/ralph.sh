@@ -1,16 +1,19 @@
 #!/usr/bin/env bash
-# Ralph loop: drive `gh copilot -- -p` through a folder of issue specs, one issue per
+# Ralph loop: drive `claude -p` through a folder of issue specs, one issue per
 # fresh context window. Stops on the first failure.
 #
 # Usage: bash scripts/ralph.sh <issues-dir>
 #
 # Env vars:
-#   RALPH_MODEL           Model alias or full ID passed to `copilot --model`.
-#                         Defaults to "claude-sonnet-4.6". Set to empty to use Copilot's default.
+#   RALPH_MAX_BUDGET_USD  Per-issue spend cap passed to `claude --max-budget-usd`.
+#                         Defaults to 5. Set to 0 or empty to disable the cap.
+#   RALPH_MODEL           Model alias or full ID passed to `claude --model`.
+#                         Defaults to "sonnet". Set to empty to use claude's default.
 
 set -euo pipefail
 
-# MODEL=${RALPH_MODEL-claude-sonnet-4.6}
+MAX_BUDGET=${RALPH_MAX_BUDGET_USD-5}
+MODEL=${RALPH_MODEL-sonnet}
 
 if [[ $# -lt 1 ]]; then
   echo "usage: $0 <issues-dir>" >&2
@@ -39,54 +42,44 @@ fi
 IFS=$'\n' issues=($(printf '%s\n' "${issues[@]}" | sort))
 unset IFS
 
-repo_root=$(git rev-parse --show-toplevel)
-
 for issue in "${issues[@]}"; do
   name=$(basename "$issue")
   log="$LOG_DIR/${name%.md}.log"
-  : > "$log"
-  before_head=$(git rev-parse HEAD)
-  before_status=$(git status --porcelain=v1 --untracked-files=all)
-
-  # Path relative to repo root for the prompt (avoids embedding absolute paths
-  # and keeps the single-line prompt portable).
-  issue_rel=${issue#"$repo_root"/}
 
   echo
   echo "==================================================================="
   echo ">>> $(date -Iseconds)  $name"
   echo "==================================================================="
 
-  # IMPORTANT: keep the prompt on a single line. Passing multi-line strings
-  # via `-p` through `gh copilot --` (or `copilot` directly) on Windows gets
-  # truncated at the first newline — see issues/.ralph-logs/issue-01-*.log
-  # where the model only received "The issue spec from" before the rest was
-  # lost. Reference the spec by path and let the agent read it from disk.
-  prompt="You are implementing one vertical-slice issue end-to-end. Read the spec at $issue_rel (relative to repo root), implement it, then run npm test and npm run lint. Only commit when both are green. Follow the repository instruction files, especially .github/copilot-instructions.md. Work autonomously; if you hit a blocker you cannot resolve, stop with a clear summary instead of committing broken state."
+  prompt=$(cat <<EOF
+You are implementing one vertical-slice issue end-to-end. The issue spec
+follows below. Read it, implement it, then run \`npm test\` and \`npm run lint\`.
+Only commit when both are green. Follow CLAUDE.md for conventions. If you hit
+a blocker you cannot resolve, stop with a clear summary instead of committing
+broken state.
 
-  copilot_args=(-p "$prompt" --allow-all --no-ask-user --silent)
+--- ISSUE ---
+$(cat "$issue")
+EOF
+)
+
+  claude_args=(-p --dangerously-skip-permissions)
   if [[ -n "$MODEL" ]]; then
-    copilot_args+=(--model "$MODEL")
+    claude_args+=(--model "$MODEL")
+  fi
+  if [[ -n "$MAX_BUDGET" && "$MAX_BUDGET" != "0" ]]; then
+    claude_args+=(--max-budget-usd "$MAX_BUDGET")
   fi
 
   set +e
-  (cd "$repo_root" && gh copilot -- "${copilot_args[@]}") 2>&1 | tee "$log"
-  status=${PIPESTATUS[0]}
+  printf '%s' "$prompt" | claude "${claude_args[@]}" 2>&1 | tee "$log"
+  status=${PIPESTATUS[1]}
   set -e
 
   if [[ $status -ne 0 ]]; then
     echo
     echo "!!! $name failed (exit $status). See $log" >&2
     exit "$status"
-  fi
-
-  after_head=$(git rev-parse HEAD)
-  after_status=$(git status --porcelain=v1 --untracked-files=all)
-
-  if [[ "$before_head" == "$after_head" && "$before_status" == "$after_status" ]]; then
-    echo
-    echo "!!! $name produced no repository changes; leaving it in place. See $log" >&2
-    exit 1
   fi
 
   mv "$issue" "$DONE_DIR/"

@@ -101,7 +101,38 @@
     "cardMenuDelete": "Delete",
     "navFamilyTree": "Family Tree",
     "navGallery": "Gallery",
-    "navSettings": "Settings"
+    "navSettings": "Settings",
+    "importTree": "Import GEDCOM",
+    "importModal": {
+      "title": "Import GEDCOM File",
+      "description": "Upload a GEDCOM (.ged) file to create a new family tree from it.",
+      "fileLabel": "GEDCOM File",
+      "fileHint": "Select a .ged file exported from another genealogy app.",
+      "cancel": "Cancel",
+      "submit": "Import",
+      "submitting": "Importing...",
+      "errorNoFile": "Please choose a GEDCOM file to import.",
+      "errorGeneric": "Failed to import the GEDCOM file. Please try again.",
+      "errorTooManyMembers": "This file has too many individuals. Trees can have at most 300 members.",
+      "errorFileTooLarge": "This file is too large. GEDCOM files must be 5MB or smaller.",
+      "errorUnsupportedEncoding": "This file uses an unsupported text encoding. Please re-export it as UTF-8.",
+      "errorInvalidGedcom": "This file doesn't look like a valid GEDCOM file."
+    },
+    "importReport": {
+      "title": "Import Complete",
+      "description": "Your new family tree was created from the uploaded file.",
+      "peopleImported": "People imported",
+      "relationshipsImported": "Relationships imported",
+      "skippedSectionTitle": "Skipped data",
+      "skippedPlaces": "Places skipped",
+      "skippedEvents": "Events skipped",
+      "skippedSources": "Sources skipped",
+      "skippedNotes": "Notes skipped",
+      "droppedDates": "Dates dropped",
+      "inferredLiving": "Living status inferred",
+      "danglingRelationships": "Relationships dropped",
+      "close": "Go to tree"
+    }
   },
   "settings": {
     "title": "Settings",
@@ -330,7 +361,8 @@
       "chooseTwoMembers": "Please choose two members.",
       "chooseDifferentMembers": "Please choose two different members.",
       "dragSaveFailed": "Unable to save member position. The node has been moved back.",
-      "resetLayoutFailed": "Unable to reset layout. Please try again."
+      "resetLayoutFailed": "Unable to reset layout. Please try again.",
+      "exportFailed": "Unable to export tree. Please try again."
     },
     "canvas": {
       "emptyTitle": "No members yet",
@@ -371,7 +403,8 @@
       "warningBanner": "Approaching the 300-member limit ({count}/300).",
       "limitReached": "300-member limit reached. No more members can be added.",
       "memberCount": "{count} members",
-      "resetLayout": "Reset Layout"
+      "resetLayout": "Reset Layout",
+      "exportGedcom": "Export GEDCOM"
     },
     "treeMenu": {
       "trigger": "Tree Menu",

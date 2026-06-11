@@ -105,6 +105,7 @@ interface ErrorsSubT {
   chooseTwoMembers: string;
   chooseDifferentMembers: string;
   dragSaveFailed: string;
+  exportFailed: string;
   [key: string]: string;
 }
 interface TreeT {
@@ -153,6 +154,7 @@ interface TreeT {
     limitReached: string;
     memberCount: string;
     resetLayout: string;
+    exportGedcom: string;
   };
   treeMenu: {
     trigger: string;
@@ -529,6 +531,35 @@ export default function TreeDetailClient({
     void handleResetLayout();
   }, [closeTreeMenu, handleResetLayout]);
 
+  const handleExportGedcom = useCallback(async () => {
+    try {
+      const response = await fetch(`/api/trees/${treeId}/export`);
+      if (!response.ok) throw new Error("export failed");
+
+      const blob = await response.blob();
+      const disposition = response.headers.get("Content-Disposition") ?? "";
+      const filenameMatch = disposition.match(/filename="([^"]+)"/);
+      const filename = filenameMatch?.[1] ?? "family-tree.ged";
+
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+      setLoadError(null);
+    } catch {
+      setLoadError(t.errors.exportFailed);
+    }
+  }, [treeId, t.errors.exportFailed]);
+
+  const handleExportGedcomFromTreeMenu = useCallback(() => {
+    closeTreeMenu();
+    void handleExportGedcom();
+  }, [closeTreeMenu, handleExportGedcom]);
+
   const treeSidebarTranslations = {
     collaborators: t.collaboration.sidebarLink,
     shareLink: t.publicShare.sidebarAction,
@@ -539,6 +570,7 @@ export default function TreeDetailClient({
     limitReached: t.sidebar.limitReached,
     memberCount: t.sidebar.memberCount,
     resetLayout: t.sidebar.resetLayout,
+    exportGedcom: t.sidebar.exportGedcom,
   };
 
   return (
@@ -557,6 +589,7 @@ export default function TreeDetailClient({
           onAddRelationship={openAddRelationshipFromTreeMenu}
           onOpenShareSettings={openShareSettingsFromTreeMenu}
           onResetLayout={handleResetLayout}
+          onExportGedcom={handleExportGedcom}
           t={treeSidebarTranslations}
         />
       ) : (
@@ -622,6 +655,7 @@ export default function TreeDetailClient({
                     onAddRelationship={openAddRelationshipFromTreeMenu}
                     onOpenShareSettings={openShareSettingsFromTreeMenu}
                     onResetLayout={handleResetLayoutFromTreeMenu}
+                    onExportGedcom={handleExportGedcomFromTreeMenu}
                     className="w-full border-r-0 shadow-none"
                     t={treeSidebarTranslations}
                   />

@@ -125,6 +125,18 @@ _Avoid_: undo drag history, personal reset
 A tree-workspace panel that shows the currently selected member's profile details, relationships, and permitted actions. Its presentation can vary by viewport without changing what it represents.
 _Avoid_: member sidebar, side panel
 
+## GEDCOM Export
+
+The act, and resulting file, of taking a Family Tree out as a standard GEDCOM 5.5.1 file containing its Members, Relationships, dates, and bios. Available to any authenticated member of the tree; the export is full and unredacted.
+
+## GEDCOM Import
+
+The act of creating a new Family Tree from an uploaded GEDCOM file. Always produces a brand-new tree owned by the importer rather than merging into an existing one. Duplicate-free means individuals are de-duplicated within the file by their GEDCOM identifier.
+
+## Import Report
+
+The post-import summary shown to the user describing what was brought in (people, relationships) and what was skipped or dropped (unsupported places, events, sources, notes, dropped date ranges, inferred-living members). It is the honesty mechanism behind a lossy import.
+
 ## Example Dialogue
 
 **Developer**: A Collaborator Viewer opened the Family Tree through the app and said the branches still overlap. Will they see the Manual Tree Arrangement an editor saved yesterday?

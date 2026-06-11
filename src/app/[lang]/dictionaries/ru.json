@@ -101,7 +101,38 @@
     "cardMenuDelete": "Удалить",
     "navFamilyTree": "Семейное дерево",
     "navGallery": "Галерея",
-    "navSettings": "Настройки"
+    "navSettings": "Настройки",
+    "importTree": "Импорт GEDCOM",
+    "importModal": {
+      "title": "Импорт файла GEDCOM",
+      "description": "Загрузите файл GEDCOM (.ged), чтобы создать из него новое семейное дерево.",
+      "fileLabel": "Файл GEDCOM",
+      "fileHint": "Выберите файл .ged, экспортированный из другого генеалогического приложения.",
+      "cancel": "Отмена",
+      "submit": "Импортировать",
+      "submitting": "Импорт...",
+      "errorNoFile": "Выберите файл GEDCOM для импорта.",
+      "errorGeneric": "Не удалось импортировать файл GEDCOM. Попробуйте еще раз.",
+      "errorTooManyMembers": "В этом файле слишком много персон. В дереве может быть не более 300 участников.",
+      "errorFileTooLarge": "Файл слишком большой. Размер файла GEDCOM не должен превышать 5 МБ.",
+      "errorUnsupportedEncoding": "Этот файл использует неподдерживаемую кодировку текста. Экспортируйте его заново в UTF-8.",
+      "errorInvalidGedcom": "Этот файл не похож на корректный файл GEDCOM."
+    },
+    "importReport": {
+      "title": "Импорт завершен",
+      "description": "Новое семейное дерево создано из загруженного файла.",
+      "peopleImported": "Импортировано людей",
+      "relationshipsImported": "Импортировано связей",
+      "skippedSectionTitle": "Пропущенные данные",
+      "skippedPlaces": "Пропущено мест",
+      "skippedEvents": "Пропущено событий",
+      "skippedSources": "Пропущено источников",
+      "skippedNotes": "Пропущено заметок",
+      "droppedDates": "Отброшено дат",
+      "inferredLiving": "Статус «жив» определён автоматически",
+      "danglingRelationships": "Отброшено связей",
+      "close": "Перейти к дереву"
+    }
   },
   "settings": {
     "title": "Настройки",
@@ -330,7 +361,8 @@
       "chooseTwoMembers": "Выберите двух участников.",
       "chooseDifferentMembers": "Выберите двух разных участников.",
       "dragSaveFailed": "Не удалось сохранить позицию участника. Узел возвращён на прежнее место.",
-      "resetLayoutFailed": "Не удалось сбросить расположение. Попробуйте ещё раз."
+      "resetLayoutFailed": "Не удалось сбросить расположение. Попробуйте ещё раз.",
+      "exportFailed": "Не удалось экспортировать дерево. Попробуйте ещё раз."
     },
     "canvas": {
       "emptyTitle": "Участников пока нет",
@@ -371,7 +403,8 @@
       "warningBanner": "Приближается лимит 300 участников ({count}/300).",
       "limitReached": "Достигнут лимит 300 участников. Добавить больше нельзя.",
       "memberCount": "{count} участников",
-      "resetLayout": "Сбросить расположение"
+      "resetLayout": "Сбросить расположение",
+      "exportGedcom": "Экспорт в GEDCOM"
     },
     "treeMenu": {
       "trigger": "Tree Menu",

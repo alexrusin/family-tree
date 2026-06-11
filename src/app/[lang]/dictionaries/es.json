@@ -101,7 +101,38 @@
     "cardMenuDelete": "Eliminar",
     "navFamilyTree": "Árbol genealógico",
     "navGallery": "Galería",
-    "navSettings": "Ajustes"
+    "navSettings": "Ajustes",
+    "importTree": "Importar GEDCOM",
+    "importModal": {
+      "title": "Importar archivo GEDCOM",
+      "description": "Sube un archivo GEDCOM (.ged) para crear un nuevo árbol genealógico a partir de él.",
+      "fileLabel": "Archivo GEDCOM",
+      "fileHint": "Selecciona un archivo .ged exportado desde otra aplicación de genealogía.",
+      "cancel": "Cancelar",
+      "submit": "Importar",
+      "submitting": "Importando...",
+      "errorNoFile": "Selecciona un archivo GEDCOM para importar.",
+      "errorGeneric": "No se pudo importar el archivo GEDCOM. Inténtalo de nuevo.",
+      "errorTooManyMembers": "Este archivo tiene demasiados individuos. Los árboles admiten hasta 300 miembros.",
+      "errorFileTooLarge": "Este archivo es demasiado grande. Los archivos GEDCOM deben pesar 5 MB o menos.",
+      "errorUnsupportedEncoding": "Este archivo usa una codificación de texto no compatible. Vuelve a exportarlo en UTF-8.",
+      "errorInvalidGedcom": "Este archivo no parece ser un archivo GEDCOM válido."
+    },
+    "importReport": {
+      "title": "Importación completa",
+      "description": "Se creó un nuevo árbol genealógico a partir del archivo subido.",
+      "peopleImported": "Personas importadas",
+      "relationshipsImported": "Relaciones importadas",
+      "skippedSectionTitle": "Datos omitidos",
+      "skippedPlaces": "Lugares omitidos",
+      "skippedEvents": "Eventos omitidos",
+      "skippedSources": "Fuentes omitidas",
+      "skippedNotes": "Notas omitidas",
+      "droppedDates": "Fechas descartadas",
+      "inferredLiving": "Estado de vida inferido",
+      "danglingRelationships": "Relaciones descartadas",
+      "close": "Ir al árbol"
+    }
   },
   "settings": {
     "title": "Ajustes",
@@ -330,7 +361,8 @@
       "chooseTwoMembers": "Por favor elige dos miembros.",
       "chooseDifferentMembers": "Por favor elige dos miembros diferentes.",
       "dragSaveFailed": "No se pudo guardar la posición del miembro. El nodo ha vuelto a su lugar.",
-      "resetLayoutFailed": "No se pudo restablecer la disposición. Por favor inténtalo de nuevo."
+      "resetLayoutFailed": "No se pudo restablecer la disposición. Por favor inténtalo de nuevo.",
+      "exportFailed": "No se pudo exportar el árbol. Por favor inténtalo de nuevo."
     },
     "canvas": {
       "emptyTitle": "Aún no hay miembros",
@@ -371,7 +403,8 @@
       "warningBanner": "Se acerca al límite de 300 miembros ({count}/300).",
       "limitReached": "Se alcanzó el límite de 300 miembros. No se pueden agregar más miembros.",
       "memberCount": "{count} miembros",
-      "resetLayout": "Restablecer disposición"
+      "resetLayout": "Restablecer disposición",
+      "exportGedcom": "Exportar GEDCOM"
     },
     "treeMenu": {
       "trigger": "Menú del árbol",
