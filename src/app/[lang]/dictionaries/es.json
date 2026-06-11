@@ -122,6 +122,12 @@
       "title": "Importación completa",
       "description": "Se creó un nuevo árbol genealógico a partir del archivo subido.",
       "peopleImported": "Personas importadas",
+      "relationshipsImported": "Relaciones importadas",
+      "skippedSectionTitle": "Datos omitidos",
+      "skippedPlaces": "Lugares omitidos",
+      "skippedEvents": "Eventos omitidos",
+      "skippedSources": "Fuentes omitidas",
+      "skippedNotes": "Notas omitidas",
       "close": "Ir al árbol"
     }
   },

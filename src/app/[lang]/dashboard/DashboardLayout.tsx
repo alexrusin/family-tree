@@ -55,6 +55,12 @@ interface DashboardLayoutProps {
       title: string;
       description: string;
       peopleImported: string;
+      relationshipsImported: string;
+      skippedSectionTitle: string;
+      skippedPlaces: string;
+      skippedEvents: string;
+      skippedSources: string;
+      skippedNotes: string;
       close: string;
     };
   };

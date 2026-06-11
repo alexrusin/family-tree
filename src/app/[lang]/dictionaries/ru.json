@@ -122,6 +122,12 @@
       "title": "Импорт завершен",
       "description": "Новое семейное дерево создано из загруженного файла.",
       "peopleImported": "Импортировано людей",
+      "relationshipsImported": "Импортировано связей",
+      "skippedSectionTitle": "Пропущенные данные",
+      "skippedPlaces": "Пропущено мест",
+      "skippedEvents": "Пропущено событий",
+      "skippedSources": "Пропущено источников",
+      "skippedNotes": "Пропущено заметок",
       "close": "Перейти к дереву"
     }
   },

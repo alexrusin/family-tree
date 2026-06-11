@@ -84,6 +84,12 @@ const translations = {
     title: "Import Complete",
     description: "Your new family tree was created.",
     peopleImported: "People imported",
+    relationshipsImported: "Relationships imported",
+    skippedSectionTitle: "Skipped data",
+    skippedPlaces: "Places skipped",
+    skippedEvents: "Events skipped",
+    skippedSources: "Sources skipped",
+    skippedNotes: "Notes skipped",
     close: "Go to tree",
   },
 };

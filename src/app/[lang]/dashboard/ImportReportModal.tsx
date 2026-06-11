@@ -10,6 +10,12 @@ interface ImportReportModalProps {
     title: string;
     description: string;
     peopleImported: string;
+    relationshipsImported: string;
+    skippedSectionTitle: string;
+    skippedPlaces: string;
+    skippedEvents: string;
+    skippedSources: string;
+    skippedNotes: string;
     close: string;
   };
 }
@@ -20,6 +26,13 @@ export default function ImportReportModal({
   t,
 }: ImportReportModalProps) {
   if (!report) return null;
+
+  const skippedRows = [
+    { label: t.skippedPlaces, count: report.skippedPlacesCount },
+    { label: t.skippedEvents, count: report.skippedEventsCount },
+    { label: t.skippedSources, count: report.skippedSourcesCount },
+    { label: t.skippedNotes, count: report.skippedNotesCount },
+  ].filter((row) => row.count > 0);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-amber-900/10 backdrop-blur-sm px-4">
@@ -42,6 +55,32 @@ export default function ImportReportModal({
               </p>
             </div>
           </div>
+
+          <div className="flex items-center justify-between text-sm text-stone-600">
+            <span>{t.relationshipsImported}</span>
+            <span className="font-semibold text-stone-900">
+              {report.relationshipCount}
+            </span>
+          </div>
+
+          {skippedRows.length > 0 && (
+            <div className="border border-stone-100 rounded-lg p-4 space-y-2">
+              <p className="text-sm font-semibold text-stone-900">
+                {t.skippedSectionTitle}
+              </p>
+              {skippedRows.map((row) => (
+                <div
+                  key={row.label}
+                  className="flex items-center justify-between text-sm text-stone-600"
+                >
+                  <span>{row.label}</span>
+                  <span className="font-semibold text-stone-900">
+                    {row.count}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
 
           <button
             onClick={onClose}
