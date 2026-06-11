@@ -101,7 +101,25 @@
     "cardMenuDelete": "Eliminar",
     "navFamilyTree": "Árbol genealógico",
     "navGallery": "Galería",
-    "navSettings": "Ajustes"
+    "navSettings": "Ajustes",
+    "importTree": "Importar GEDCOM",
+    "importModal": {
+      "title": "Importar archivo GEDCOM",
+      "description": "Sube un archivo GEDCOM (.ged) para crear un nuevo árbol genealógico a partir de él.",
+      "fileLabel": "Archivo GEDCOM",
+      "fileHint": "Selecciona un archivo .ged exportado desde otra aplicación de genealogía.",
+      "cancel": "Cancelar",
+      "submit": "Importar",
+      "submitting": "Importando...",
+      "errorNoFile": "Selecciona un archivo GEDCOM para importar.",
+      "errorGeneric": "No se pudo importar el archivo GEDCOM. Inténtalo de nuevo."
+    },
+    "importReport": {
+      "title": "Importación completa",
+      "description": "Se creó un nuevo árbol genealógico a partir del archivo subido.",
+      "peopleImported": "Personas importadas",
+      "close": "Ir al árbol"
+    }
   },
   "settings": {
     "title": "Ajustes",

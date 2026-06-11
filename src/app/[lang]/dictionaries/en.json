@@ -101,7 +101,25 @@
     "cardMenuDelete": "Delete",
     "navFamilyTree": "Family Tree",
     "navGallery": "Gallery",
-    "navSettings": "Settings"
+    "navSettings": "Settings",
+    "importTree": "Import GEDCOM",
+    "importModal": {
+      "title": "Import GEDCOM File",
+      "description": "Upload a GEDCOM (.ged) file to create a new family tree from it.",
+      "fileLabel": "GEDCOM File",
+      "fileHint": "Select a .ged file exported from another genealogy app.",
+      "cancel": "Cancel",
+      "submit": "Import",
+      "submitting": "Importing...",
+      "errorNoFile": "Please choose a GEDCOM file to import.",
+      "errorGeneric": "Failed to import the GEDCOM file. Please try again."
+    },
+    "importReport": {
+      "title": "Import Complete",
+      "description": "Your new family tree was created from the uploaded file.",
+      "peopleImported": "People imported",
+      "close": "Go to tree"
+    }
   },
   "settings": {
     "title": "Settings",

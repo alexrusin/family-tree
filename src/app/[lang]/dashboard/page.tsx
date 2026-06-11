@@ -119,6 +119,9 @@ export default async function DashboardPage({
             emailVerifiedBody: t.dashboard.emailVerifiedBody,
             cardMenuRename: t.dashboard.cardMenuRename,
             cardMenuDelete: t.dashboard.cardMenuDelete,
+            importTree: t.dashboard.importTree,
+            importModal: t.dashboard.importModal,
+            importReport: t.dashboard.importReport,
           }}
           myTrees={myTrees}
           sharedTrees={sharedTrees}

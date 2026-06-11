@@ -4,13 +4,16 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import DashboardLayout from "./DashboardLayout";
 
-const { useSearchParamsMock, dashboardClientMock } = vi.hoisted(() => ({
-  useSearchParamsMock: vi.fn(),
-  dashboardClientMock: vi.fn(),
-}));
+const { useSearchParamsMock, useRouterMock, dashboardClientMock } =
+  vi.hoisted(() => ({
+    useSearchParamsMock: vi.fn(),
+    useRouterMock: vi.fn(),
+    dashboardClientMock: vi.fn(),
+  }));
 
 vi.mock("next/navigation", () => ({
   useSearchParams: () => useSearchParamsMock(),
+  useRouter: () => useRouterMock(),
 }));
 
 vi.mock("./CreateTreeButton", () => ({
@@ -19,6 +22,14 @@ vi.mock("./CreateTreeButton", () => ({
       {label}
     </button>
   ),
+}));
+
+vi.mock("./ImportTreeModal", () => ({
+  default: () => null,
+}));
+
+vi.mock("./ImportReportModal", () => ({
+  default: () => null,
 }));
 
 vi.mock("./DashboardClient", () => ({
@@ -53,12 +64,31 @@ const translations = {
   createFirstTreePrompt: "Create your first family tree to get started.",
   cardMenuRename: "Rename",
   cardMenuDelete: "Delete",
+  importTree: "Import GEDCOM",
+  importModal: {
+    title: "Import GEDCOM File",
+    description: "Upload a GEDCOM (.ged) file.",
+    fileLabel: "GEDCOM File",
+    fileHint: "Select a .ged file.",
+    cancel: "Cancel",
+    submit: "Import",
+    submitting: "Importing...",
+    errorNoFile: "Please choose a GEDCOM file to import.",
+    errorGeneric: "Failed to import the GEDCOM file.",
+  },
+  importReport: {
+    title: "Import Complete",
+    description: "Your new family tree was created.",
+    peopleImported: "People imported",
+    close: "Go to tree",
+  },
 };
 
 describe("DashboardLayout", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     useSearchParamsMock.mockReturnValue(new URLSearchParams());
+    useRouterMock.mockReturnValue({ push: vi.fn() });
   });
 
   afterEach(() => {

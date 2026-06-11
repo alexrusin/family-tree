@@ -101,7 +101,25 @@
     "cardMenuDelete": "Удалить",
     "navFamilyTree": "Семейное дерево",
     "navGallery": "Галерея",
-    "navSettings": "Настройки"
+    "navSettings": "Настройки",
+    "importTree": "Импорт GEDCOM",
+    "importModal": {
+      "title": "Импорт файла GEDCOM",
+      "description": "Загрузите файл GEDCOM (.ged), чтобы создать из него новое семейное дерево.",
+      "fileLabel": "Файл GEDCOM",
+      "fileHint": "Выберите файл .ged, экспортированный из другого генеалогического приложения.",
+      "cancel": "Отмена",
+      "submit": "Импортировать",
+      "submitting": "Импорт...",
+      "errorNoFile": "Выберите файл GEDCOM для импорта.",
+      "errorGeneric": "Не удалось импортировать файл GEDCOM. Попробуйте еще раз."
+    },
+    "importReport": {
+      "title": "Импорт завершен",
+      "description": "Новое семейное дерево создано из загруженного файла.",
+      "peopleImported": "Импортировано людей",
+      "close": "Перейти к дереву"
+    }
   },
   "settings": {
     "title": "Настройки",
