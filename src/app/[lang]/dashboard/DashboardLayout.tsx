@@ -50,6 +50,10 @@ interface DashboardLayoutProps {
       submitting: string;
       errorNoFile: string;
       errorGeneric: string;
+      errorTooManyMembers: string;
+      errorFileTooLarge: string;
+      errorUnsupportedEncoding: string;
+      errorInvalidGedcom: string;
     };
     importReport: {
       title: string;
