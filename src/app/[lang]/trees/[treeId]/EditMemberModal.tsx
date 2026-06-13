@@ -1,7 +1,7 @@
 // src/app/[lang]/trees/[treeId]/EditMemberModal.tsx
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { X } from "lucide-react";
 import {
   type MemberFormState,
@@ -9,6 +9,9 @@ import {
   validateMemberPhotoSelection,
 } from "./member-form-state";
 import MemberDateSection from "./MemberDateSection";
+import PhotoCropModal, {
+  type PhotoCropModalT,
+} from "../../components/PhotoCropModal";
 import type { TreeMemberData } from "@/lib/tree-domain/tree-layout";
 
 interface EditMemberT {
@@ -53,6 +56,7 @@ interface EditMemberT {
     memberGeneric: string;
     [key: string]: string;
   };
+  cropEditor: PhotoCropModalT;
 }
 
 interface EditMemberModalProps {
@@ -99,15 +103,26 @@ export default function EditMemberModal({
     memberToFormState(member),
   );
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [cropSourceFile, setCropSourceFile] = useState<File | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [photoError, setPhotoError] = useState<string | null>(null);
   const firstNameRef = useRef<HTMLInputElement>(null);
 
+  const croppedPreviewUrl = useMemo(
+    () => (selectedFile ? URL.createObjectURL(selectedFile) : null),
+    [selectedFile],
+  );
+
   useEffect(() => {
     if (!isOpen) return;
     setTimeout(() => firstNameRef.current?.focus(), 100);
   }, [isOpen]);
+
+  useEffect(() => {
+    if (!croppedPreviewUrl) return;
+    return () => URL.revokeObjectURL(croppedPreviewUrl);
+  }, [croppedPreviewUrl]);
 
   const handleClose = () => {
     if (isLoading) return;
@@ -116,11 +131,8 @@ export default function EditMemberModal({
 
   const handlePhotoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (!file) {
-      setSelectedFile(null);
-      setPhotoError(null);
-      return;
-    }
+    event.target.value = "";
+    if (!file) return;
 
     const validationError = validateMemberPhotoSelection({
       sizeBytes: file.size,
@@ -133,8 +145,17 @@ export default function EditMemberModal({
       return;
     }
 
-    setSelectedFile(file);
     setPhotoError(null);
+    setCropSourceFile(file);
+  };
+
+  const handleCropApply = (file: File) => {
+    setSelectedFile(file);
+    setCropSourceFile(null);
+  };
+
+  const handleCropCancel = () => {
+    setCropSourceFile(null);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -229,12 +250,12 @@ export default function EditMemberModal({
           </button>
         </div>
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
-          {(member.photoUrl || selectedFile) && (
+          {(member.photoUrl || croppedPreviewUrl) && (
             <div className="flex items-center gap-3">
-              {member.photoUrl && (
+              {(croppedPreviewUrl || member.photoUrl) && (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
-                  src={member.photoUrl}
+                  src={croppedPreviewUrl ?? member.photoUrl ?? undefined}
                   alt={t.currentPhotoAlt}
                   className="w-12 h-12 rounded-full object-cover border-2 border-stone-200"
                 />
@@ -424,6 +445,15 @@ export default function EditMemberModal({
           </div>
         </form>
       </div>
+      {cropSourceFile && (
+        <PhotoCropModal
+          isOpen
+          sourceFile={cropSourceFile}
+          onApply={handleCropApply}
+          onCancel={handleCropCancel}
+          t={t.cropEditor}
+        />
+      )}
     </div>
   );
 }

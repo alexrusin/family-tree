@@ -286,6 +286,16 @@ const translations = {
     addPhoto: "Add Photo",
     updatePhoto: "Update Photo",
   },
+  photoCropEditor: {
+    title: "Crop Photo",
+    instructions: "Drag to reposition and use the slider, mouse wheel, or pinch to zoom.",
+    zoomLabel: "Zoom",
+    apply: "Apply",
+    cancel: "Cancel",
+    closeModal: "Close crop editor",
+    processing: "Processing...",
+    error: "Unable to process this photo. Please try again.",
+  },
   relationship: {
     addTitle: "Add Relationship",
     addSubtitle: "Connect two members in this tree.",
