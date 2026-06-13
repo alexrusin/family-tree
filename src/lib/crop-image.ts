@@ -15,10 +15,26 @@ const OUTPUT_TYPE = "image/webp";
 function loadImage(src: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const image = new Image();
-    image.addEventListener("load", () => resolve(image));
     image.addEventListener("error", () =>
       reject(new Error("ERR_IMAGE_LOAD_FAILED")),
     );
+    image.addEventListener("load", () => {
+      // The "load" event fires once the bytes are downloaded, but mobile Chrome
+      // may not have decoded the bitmap yet. Drawing an undecoded image to a
+      // canvas paints a blank (black) frame, which is why uploads intermittently
+      // came out black on mobile Chrome (Firefox decodes before firing "load",
+      // so it never reproduced there). decode() resolves only once the bitmap is
+      // ready to paint. Fall back to the loaded image if decode() is unsupported
+      // (e.g. jsdom) or rejects spuriously — the bytes are already in hand.
+      if (typeof image.decode === "function") {
+        image.decode().then(
+          () => resolve(image),
+          () => resolve(image),
+        );
+      } else {
+        resolve(image);
+      }
+    });
     image.src = src;
   });
 }
