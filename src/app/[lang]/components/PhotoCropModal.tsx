@@ -100,7 +100,7 @@ export default function PhotoCropModal({
               cropShape="round"
               showGrid={false}
               minZoom={1}
-              maxZoom={5}
+              maxZoom={7}
               onCropChange={setCrop}
               onZoomChange={setZoom}
               onCropComplete={handleCropComplete}
@@ -118,7 +118,7 @@ export default function PhotoCropModal({
               id="photoCropZoom"
               type="range"
               min={1}
-              max={5}
+              max={7}
               step={0.01}
               value={zoom}
               onChange={(e) => setZoom(Number(e.target.value))}
