@@ -4,6 +4,49 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import AccountSettingsClient from "./AccountSettingsClient";
+import type { PhotoCropModalT } from "../../components/PhotoCropModal";
+
+vi.mock("../../components/PhotoCropModal", () => ({
+  default: ({
+    isOpen,
+    onApply,
+    onCancel,
+  }: {
+    isOpen: boolean;
+    onApply: (file: File) => void;
+    onCancel: () => void;
+  }) => {
+    if (!isOpen) return null;
+    return (
+      <div>
+        <button
+          type="button"
+          onClick={() =>
+            onApply(
+              new File(["cropped"], "cropped.webp", { type: "image/webp" }),
+            )
+          }
+        >
+          Mock Apply Crop
+        </button>
+        <button type="button" onClick={onCancel}>
+          Mock Cancel Crop
+        </button>
+      </div>
+    );
+  },
+}));
+
+const cropEditorTranslations: PhotoCropModalT = {
+  title: "Crop Photo",
+  instructions: "Drag to reposition and use the slider to zoom.",
+  zoomLabel: "Zoom",
+  apply: "Apply",
+  cancel: "Cancel",
+  closeModal: "Close crop editor",
+  processing: "Processing...",
+  error: "Unable to process this photo. Please try again.",
+};
 
 const translations = {
   description: "Update your profile details and review account information.",
@@ -109,6 +152,7 @@ describe("AccountSettingsClient", () => {
           lang="en"
           initialProfile={baseProfile}
           t={translations}
+          cropEditor={cropEditorTranslations}
         />,
       );
 
@@ -144,6 +188,7 @@ describe("AccountSettingsClient", () => {
           lang="en"
           initialProfile={baseProfile}
           t={translations}
+          cropEditor={cropEditorTranslations}
         />,
       );
 
@@ -193,6 +238,7 @@ describe("AccountSettingsClient", () => {
           lang="en"
           initialProfile={baseProfile}
           t={translations}
+          cropEditor={cropEditorTranslations}
         />,
       );
 
@@ -248,6 +294,7 @@ describe("AccountSettingsClient", () => {
           lang="en"
           initialProfile={baseProfile}
           t={translations}
+          cropEditor={cropEditorTranslations}
         />,
       );
 
@@ -255,6 +302,10 @@ describe("AccountSettingsClient", () => {
         'input[type="file"]',
       ) as HTMLInputElement;
       await user.upload(input, file);
+
+      await user.click(
+        screen.getByRole("button", { name: "Mock Apply Crop" }),
+      );
 
       expect(screen.getByText(/Selected file/)).not.toBeNull();
 
@@ -266,6 +317,43 @@ describe("AccountSettingsClient", () => {
           expect.objectContaining({ method: "PATCH" }),
         );
       });
+
+      const avatarCall = fetchMock.mock.calls.find(
+        ([url]) => url === "/api/account/avatar",
+      );
+      const body = avatarCall?.[1]?.body as FormData;
+      const uploadedFile = body.get("avatar") as File;
+      expect(uploadedFile.name).toBe("cropped.webp");
+      expect(uploadedFile.type).toBe("image/webp");
+    });
+
+    it("cancels the crop editor and stages nothing", async () => {
+      const user = userEvent.setup();
+      const file = new File(["avatar"], "avatar.png", { type: "image/png" });
+      const { container } = render(
+        <AccountSettingsClient
+          title="Account"
+          lang="en"
+          initialProfile={baseProfile}
+          t={translations}
+          cropEditor={cropEditorTranslations}
+        />,
+      );
+
+      const input = container.querySelector(
+        'input[type="file"]',
+      ) as HTMLInputElement;
+      await user.upload(input, file);
+
+      await user.click(
+        screen.getByRole("button", { name: "Mock Cancel Crop" }),
+      );
+
+      expect(screen.queryByText(/Selected file/)).toBeNull();
+      expect(
+        (screen.getByRole("button", { name: "Save avatar" }) as HTMLButtonElement)
+          .disabled,
+      ).toBe(true);
     });
 
     it("shows error when avatar file is too large", async () => {
@@ -282,6 +370,7 @@ describe("AccountSettingsClient", () => {
           lang="en"
           initialProfile={baseProfile}
           t={translations}
+          cropEditor={cropEditorTranslations}
         />,
       );
 
@@ -335,6 +424,7 @@ describe("AccountSettingsClient", () => {
             },
           }}
           t={translations}
+          cropEditor={cropEditorTranslations}
         />,
       );
 
