@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { X } from "lucide-react";
 import {
   initialMemberFormState,
@@ -8,6 +8,9 @@ import {
   validateMemberPhotoSelection,
 } from "./member-form-state";
 import MemberDateSection from "./MemberDateSection";
+import PhotoCropModal, {
+  type PhotoCropModalT,
+} from "../../components/PhotoCropModal";
 import type { TreeMemberData } from "@/lib/tree-domain/tree-layout";
 
 interface MemberT {
@@ -50,6 +53,7 @@ interface MemberT {
     memberGeneric: string;
     [key: string]: string;
   };
+  cropEditor: PhotoCropModalT;
 }
 
 interface AddMemberModalProps {
@@ -81,14 +85,21 @@ export default function AddMemberModal({
     initialMemberFormState(),
   );
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [cropSourceFile, setCropSourceFile] = useState<File | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [photoError, setPhotoError] = useState<string | null>(null);
   const firstNameRef = useRef<HTMLInputElement>(null);
 
+  const selectedPhotoPreviewUrl = useMemo(
+    () => (selectedFile ? URL.createObjectURL(selectedFile) : null),
+    [selectedFile],
+  );
+
   const resetForm = () => {
     setFormState(initialMemberFormState());
     setSelectedFile(null);
+    setCropSourceFile(null);
     setError(null);
     setPhotoError(null);
   };
@@ -100,6 +111,11 @@ export default function AddMemberModal({
     }, 100);
   }, [isOpen]);
 
+  useEffect(() => {
+    if (!selectedPhotoPreviewUrl) return;
+    return () => URL.revokeObjectURL(selectedPhotoPreviewUrl);
+  }, [selectedPhotoPreviewUrl]);
+
   const handleClose = () => {
     if (isLoading) {
       return;
@@ -110,21 +126,30 @@ export default function AddMemberModal({
 
   const handlePhotoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (!file) {
-      setSelectedFile(null);
-      setPhotoError(null);
-      return;
-    }
+    event.target.value = "";
+    if (!file) return;
 
     const validationError = validateMemberPhotoSelection({
       sizeBytes: file.size,
       contentType: file.type,
     });
 
-    setPhotoError(validationError);
-    if (!validationError) {
-      setSelectedFile(file);
+    if (validationError) {
+      setPhotoError(validationError);
+      return;
     }
+
+    setPhotoError(null);
+    setCropSourceFile(file);
+  };
+
+  const handleCropApply = (file: File) => {
+    setSelectedFile(file);
+    setCropSourceFile(null);
+  };
+
+  const handleCropCancel = () => {
+    setCropSourceFile(null);
   };
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -393,10 +418,24 @@ export default function AddMemberModal({
 
           {/* Photo */}
           <div>
-            <label className="block text-sm font-semibold text-stone-900 mb-2">
+            <label
+              htmlFor="addMemberPhoto"
+              className="block text-sm font-semibold text-stone-900 mb-2"
+            >
               {t.profilePhoto}
             </label>
+            {selectedPhotoPreviewUrl && (
+              <div className="flex items-center gap-3 mb-2">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={selectedPhotoPreviewUrl}
+                  alt={t.profilePhoto}
+                  className="w-12 h-12 rounded-full object-cover border-2 border-stone-200"
+                />
+              </div>
+            )}
             <input
+              id="addMemberPhoto"
               type="file"
               accept="image/jpeg,image/png,image/webp"
               onChange={handlePhotoChange}
@@ -442,6 +481,15 @@ export default function AddMemberModal({
           </div>
         </form>
       </div>
+      {cropSourceFile && (
+        <PhotoCropModal
+          isOpen
+          sourceFile={cropSourceFile}
+          onApply={handleCropApply}
+          onCancel={handleCropCancel}
+          t={t.cropEditor}
+        />
+      )}
     </div>
   );
 }

@@ -325,6 +325,16 @@
       "addPhoto": "Agregar foto",
       "updatePhoto": "Actualizar foto"
     },
+    "photoCropEditor": {
+      "title": "Recortar foto",
+      "instructions": "Arrastra para reposicionar y usa el control deslizante, la rueda del mouse o pellizca para hacer zoom.",
+      "zoomLabel": "Zoom",
+      "apply": "Aplicar",
+      "cancel": "Cancelar",
+      "closeModal": "Cerrar editor de recorte",
+      "processing": "Procesando...",
+      "error": "No se pudo procesar esta foto. Inténtalo de nuevo."
+    },
     "relationship": {
       "addTitle": "Agregar relación",
       "addSubtitle": "Conecta dos miembros en este árbol.",

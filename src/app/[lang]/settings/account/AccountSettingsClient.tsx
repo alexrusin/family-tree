@@ -6,6 +6,9 @@ import {
   validateAvatarSelection,
   validateDisplayNameInput,
 } from "./account-form-state";
+import PhotoCropModal, {
+  type PhotoCropModalT,
+} from "../../components/PhotoCropModal";
 
 interface AccountTranslations {
   description: string;
@@ -69,6 +72,7 @@ interface AccountSettingsClientProps {
   lang: string;
   initialProfile: AccountProfile;
   t: AccountTranslations;
+  cropEditor: PhotoCropModalT;
 }
 
 function mapErrorCode(
@@ -87,6 +91,7 @@ export default function AccountSettingsClient({
   lang,
   initialProfile,
   t,
+  cropEditor,
 }: AccountSettingsClientProps) {
   const [profile, setProfile] = useState(initialProfile);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -111,6 +116,17 @@ export default function AccountSettingsClient({
   );
   const [avatarError, setAvatarError] = useState<string | null>(null);
   const [isSavingAvatar, setIsSavingAvatar] = useState(false);
+  const [cropSourceFile, setCropSourceFile] = useState<File | null>(null);
+
+  const avatarPreviewUrl = useMemo(
+    () => (selectedAvatarFile ? URL.createObjectURL(selectedAvatarFile) : null),
+    [selectedAvatarFile],
+  );
+
+  useEffect(() => {
+    if (!avatarPreviewUrl) return;
+    return () => URL.revokeObjectURL(avatarPreviewUrl);
+  }, [avatarPreviewUrl]);
 
   const avatarFallback = useMemo(() => {
     const source = profile.displayName?.trim() || profile.email.trim() || "A";
@@ -230,8 +246,17 @@ export default function AccountSettingsClient({
       return;
     }
 
-    setSelectedAvatarFile(file);
     setAvatarError(null);
+    setCropSourceFile(file);
+  };
+
+  const handleAvatarCropApply = (file: File) => {
+    setSelectedAvatarFile(file);
+    setCropSourceFile(null);
+  };
+
+  const handleAvatarCropCancel = () => {
+    setCropSourceFile(null);
   };
 
   const saveAvatar = async () => {
@@ -398,10 +423,10 @@ export default function AccountSettingsClient({
 
           <div className="mt-5 flex items-center gap-4">
             <div className="h-20 w-20 overflow-hidden rounded-full bg-amber-100 text-2xl font-semibold text-amber-900 flex items-center justify-center">
-              {profile.avatarUrl ? (
+              {avatarPreviewUrl || profile.avatarUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
-                  src={profile.avatarUrl}
+                  src={avatarPreviewUrl ?? profile.avatarUrl ?? undefined}
                   alt={profile.displayName ?? profile.email}
                   className="h-full w-full object-cover"
                 />
@@ -653,6 +678,16 @@ export default function AccountSettingsClient({
           </div>
         </div>
       ) : null}
+
+      {cropSourceFile && (
+        <PhotoCropModal
+          isOpen
+          sourceFile={cropSourceFile}
+          onApply={handleAvatarCropApply}
+          onCancel={handleAvatarCropCancel}
+          t={cropEditor}
+        />
+      )}
     </div>
   );
 }

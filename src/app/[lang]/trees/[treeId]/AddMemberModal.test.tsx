@@ -3,7 +3,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import EditMemberModal from "./EditMemberModal";
+import AddMemberModal from "./AddMemberModal";
 import type { TreeMemberData } from "@/lib/tree-domain/tree-layout";
 import type { PhotoCropModalT } from "../../components/PhotoCropModal";
 
@@ -50,8 +50,8 @@ const cropEditorTranslations: PhotoCropModalT = {
 };
 
 const translations = {
-  editTitle: "Edit Member",
-  editSubtitle: "Update this person's information.",
+  addTitle: "Add Member",
+  addSubtitle: "Add a new person to this tree.",
   firstName: "First Name",
   firstNamePlaceholder: "Required",
   lastName: "Last Name",
@@ -74,26 +74,24 @@ const translations = {
   dayLabel: "Day",
   profilePhoto: "Profile Photo (Optional)",
   isLiving: "Living member",
-  update: "Save Changes",
   closeModal: "Close modal",
-  currentPhotoAlt: "Current photo",
-  addPhoto: "Add Photo",
-  updatePhoto: "Update Photo",
   cancel: "Cancel",
   saving: "Saving...",
+  add: "Add Member",
   errors: {
     ERR_FIRST_NAME_REQUIRED: "First name is required",
+    ERR_MEMBER_LIMIT_REACHED: "Member limit reached",
     ERR_IMAGE_TOO_LARGE: "Image must be 5 MB or smaller",
     ERR_UNSUPPORTED_IMAGE_TYPE: "Only JPEG, PNG, and WebP are allowed",
     ERR_FORBIDDEN: "You do not have permission",
     ERR_DEATH_BEFORE_BIRTH: "Death cannot be before birth",
     ERR_INVALID_PARTIAL_DATE: "Enter a valid date",
-    memberGeneric: "Unable to update member",
+    memberGeneric: "Unable to add member",
   },
   cropEditor: cropEditorTranslations,
 };
 
-const baseMember: TreeMemberData = {
+const createdMember: TreeMemberData = {
   id: "m1",
   firstName: "Elena",
   lastName: null,
@@ -111,7 +109,7 @@ const baseMember: TreeMemberData = {
   gender: "female",
 };
 
-describe("EditMemberModal", () => {
+describe("AddMemberModal", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     URL.createObjectURL = vi.fn(() => "blob:mock");
@@ -127,25 +125,28 @@ describe("EditMemberModal", () => {
     const user = userEvent.setup();
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
-      json: vi.fn().mockResolvedValue({ member: baseMember }),
+      json: vi.fn().mockResolvedValue({ member: createdMember }),
     });
     vi.stubGlobal("fetch", fetchMock);
 
     const onClose = vi.fn();
-    const onMemberUpdated = vi.fn();
+    const onMemberCreated = vi.fn();
     render(
-      <EditMemberModal
+      <AddMemberModal
         isOpen
         treeId="t1"
-        member={baseMember}
         onClose={onClose}
-        onMemberUpdated={onMemberUpdated}
+        onMemberCreated={onMemberCreated}
         t={translations}
       />,
     );
 
+    await user.type(screen.getByPlaceholderText("Required"), "Elena");
+
     const file = new File(["avatar"], "portrait.png", { type: "image/png" });
-    const input = screen.getByLabelText("Add Photo") as HTMLInputElement;
+    const input = screen.getByLabelText(
+      "Profile Photo (Optional)",
+    ) as HTMLInputElement;
 
     await user.upload(input, file);
 
@@ -154,12 +155,12 @@ describe("EditMemberModal", () => {
     });
     await user.click(applyButton);
 
-    await user.click(screen.getByRole("button", { name: "Save Changes" }));
+    await user.click(screen.getByRole("button", { name: "Add Member" }));
 
     await waitFor(() => {
       expect(fetchMock).toHaveBeenCalledWith(
-        "/api/trees/t1/members/m1",
-        expect.objectContaining({ method: "PATCH" }),
+        "/api/trees/t1/members",
+        expect.objectContaining({ method: "POST" }),
       );
     });
 
@@ -169,30 +170,33 @@ describe("EditMemberModal", () => {
     expect((body.get("photo") as File).name).toBe("cropped.webp");
     expect((body.get("photo") as File).type).toBe("image/webp");
     expect(onClose).toHaveBeenCalled();
-    expect(onMemberUpdated).toHaveBeenCalled();
+    expect(onMemberCreated).toHaveBeenCalled();
   });
 
   it("stages nothing when the crop editor is cancelled", async () => {
     const user = userEvent.setup();
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
-      json: vi.fn().mockResolvedValue({ member: baseMember }),
+      json: vi.fn().mockResolvedValue({ member: createdMember }),
     });
     vi.stubGlobal("fetch", fetchMock);
 
     render(
-      <EditMemberModal
+      <AddMemberModal
         isOpen
         treeId="t1"
-        member={baseMember}
         onClose={vi.fn()}
-        onMemberUpdated={vi.fn()}
+        onMemberCreated={vi.fn()}
         t={translations}
       />,
     );
 
+    await user.type(screen.getByPlaceholderText("Required"), "Elena");
+
     const file = new File(["avatar"], "portrait.png", { type: "image/png" });
-    const input = screen.getByLabelText("Add Photo") as HTMLInputElement;
+    const input = screen.getByLabelText(
+      "Profile Photo (Optional)",
+    ) as HTMLInputElement;
 
     await user.upload(input, file);
 
@@ -205,7 +209,7 @@ describe("EditMemberModal", () => {
       screen.queryByRole("button", { name: "Mock Apply Crop" }),
     ).toBeNull();
 
-    await user.click(screen.getByRole("button", { name: "Save Changes" }));
+    await user.click(screen.getByRole("button", { name: "Add Member" }));
 
     await waitFor(() => {
       expect(fetchMock).toHaveBeenCalled();
@@ -216,39 +220,36 @@ describe("EditMemberModal", () => {
     expect(body.get("photo")).toBeNull();
   });
 
-  it("shows update photo copy for members with an existing photo and blocks invalid uploads", async () => {
+  it("rejects invalid source files before opening the crop editor", async () => {
     const user = userEvent.setup();
-    const fetchMock = vi.fn();
-    vi.stubGlobal("fetch", fetchMock);
+    vi.stubGlobal("fetch", vi.fn());
 
     render(
-      <EditMemberModal
+      <AddMemberModal
         isOpen
         treeId="t1"
-        member={{ ...baseMember, photoUrl: "/api/trees/t1/members/m1/photo" }}
         onClose={vi.fn()}
-        onMemberUpdated={vi.fn()}
+        onMemberCreated={vi.fn()}
         t={translations}
       />,
     );
-
-    expect(screen.getByLabelText("Update Photo")).not.toBeNull();
-    expect(screen.getByAltText("Current photo")).not.toBeNull();
 
     const oversizedFile = new File(
       [new Uint8Array(6 * 1024 * 1024)],
       "big.png",
       { type: "image/png" },
     );
+    const input = screen.getByLabelText(
+      "Profile Photo (Optional)",
+    ) as HTMLInputElement;
 
-    await user.upload(
-      screen.getByLabelText("Update Photo") as HTMLInputElement,
-      oversizedFile,
-    );
+    await user.upload(input, oversizedFile);
 
-    expect(screen.getByText("Image must be 5 MB or smaller")).not.toBeNull();
-
-    await user.click(screen.getByRole("button", { name: "Save Changes" }));
-    expect(fetchMock).not.toHaveBeenCalled();
+    expect(
+      await screen.findByText("Image must be 5 MB or smaller"),
+    ).not.toBeNull();
+    expect(
+      screen.queryByRole("button", { name: "Mock Apply Crop" }),
+    ).toBeNull();
   });
 });

@@ -7,6 +7,7 @@ import { Menu, X } from "lucide-react";
 import AddMemberModal from "./AddMemberModal";
 import AddRelationshipModal from "./AddRelationshipModal";
 import EditMemberModal from "./EditMemberModal";
+import type { PhotoCropModalT } from "../../components/PhotoCropModal";
 import ShareLinkSettingsModal from "./ShareLinkSettingsModal";
 import TreeSidebar from "./TreeSidebar";
 import MemberSidePanel, {
@@ -177,6 +178,7 @@ interface TreeT {
   member: MemberSubT;
   relationship: RelationshipSubT;
   errors: ErrorsSubT;
+  photoCropEditor: PhotoCropModalT;
 }
 
 interface TreeDetailClientProps {
@@ -815,6 +817,7 @@ export default function TreeDetailClient({
           saving: t.saving,
           add: t.addMember,
           errors: t.errors,
+          cropEditor: t.photoCropEditor,
         }}
       />
 
@@ -849,6 +852,7 @@ export default function TreeDetailClient({
             cancel: t.cancel,
             saving: t.saving,
             errors: t.errors,
+            cropEditor: t.photoCropEditor,
           }}
         />
       )}

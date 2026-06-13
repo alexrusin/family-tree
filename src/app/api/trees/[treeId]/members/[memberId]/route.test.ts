@@ -208,7 +208,7 @@ describe("/api/trees/[treeId]/members/[memberId]", () => {
         treeId: "t1",
         firstName: "Elena",
         photoKey: "trees/t1/members/new-photo.webp",
-        photoUrl: "/api/trees/t1/members/m1/photo",
+        photoUrl: "/api/trees/t1/members/m1/photo?v=new-photo",
       }),
     });
     expect(validatePhotoFileMock).toHaveBeenCalledWith({

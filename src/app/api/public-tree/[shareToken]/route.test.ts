@@ -80,7 +80,7 @@ describe("GET /api/public-tree/[shareToken]", () => {
     expect(response.headers.get("Cache-Control")).toBe("no-store");
     const body = await response.json();
     expect(body.members[0].birthYear).toBeNull();
-    expect(body.members[0].photoUrl).toBe("/api/trees/t1/members/m1/photo");
+    expect(body.members[0].photoUrl).toBe("/api/trees/t1/members/m1/photo?v=m1");
   });
 
   it("returns es ownerLocale when owner locale is Spanish", async () => {

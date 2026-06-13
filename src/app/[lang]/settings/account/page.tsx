@@ -45,6 +45,7 @@ export default async function AccountSettingsPage({
           : null,
       }}
       t={t.settings.account}
+      cropEditor={t.tree.photoCropEditor}
     />
   );
 }
