@@ -817,6 +817,7 @@ export default function TreeDetailClient({
           saving: t.saving,
           add: t.addMember,
           errors: t.errors,
+          cropEditor: t.photoCropEditor,
         }}
       />
 
