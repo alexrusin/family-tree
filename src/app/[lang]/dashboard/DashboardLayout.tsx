@@ -118,20 +118,20 @@ export default function DashboardLayout({
             </h1>
             <p className="text-stone-600 text-base">{t.subtitle}</p>
           </div>
-          <div className="flex items-center gap-3 self-start sm:self-auto">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 self-stretch sm:self-auto">
+            <CreateTreeButton
+              label={t.createTree}
+              onClick={() => setCreateModalOpen(true)}
+            />
             <button
               onClick={() => setImportModalOpen(true)}
-              className="bg-white text-amber-900 border border-amber-900/20 px-6 py-3 rounded-xl flex items-center gap-2 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all active:scale-95 whitespace-nowrap cursor-pointer"
+              className="bg-white text-amber-900 border border-amber-900/20 px-6 py-3 rounded-xl flex items-center justify-center gap-2 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all active:scale-95 whitespace-nowrap cursor-pointer"
             >
               <Upload className="w-5 h-5" />
               <span className="text-sm font-semibold tracking-wide">
                 {t.importTree}
               </span>
             </button>
-            <CreateTreeButton
-              label={t.createTree}
-              onClick={() => setCreateModalOpen(true)}
-            />
           </div>
         </div>
 

@@ -65,7 +65,7 @@ describe("getCroppedBlob", () => {
     );
   });
 
-  it("downscales the output to the maximum edge of 1024px", async () => {
+  it("downscales the output to the maximum edge of 800px", async () => {
     const croppedAreaPixels = { x: 0, y: 0, width: 2000, height: 2000 };
 
     await getCroppedBlob("blob:source", croppedAreaPixels);
@@ -78,8 +78,8 @@ describe("getCroppedBlob", () => {
       2000,
       0,
       0,
-      1024,
-      1024,
+      800,
+      800,
     );
   });
 

@@ -98,6 +98,11 @@ A shared collection of Members and Relationships owned by one User and optionall
 
 A person represented within one Family Tree. Members participate in Relationships with other Members.
 
+## Profile Photo
+
+The single circularly-displayed image that represents a Member, or the account holder's own avatar. It is framed by the uploader from any source image — typically by cropping one person out of a group photo — rather than requiring a ready-made headshot. The same concept is currently named differently in the two places it appears (Member `photo` versus account `avatar`); this is a known naming divergence, not two different concepts.
+_Avoid_: headshot, picture
+
 ## Relationship
 
 A typed connection between two Members in one Family Tree. The canonical Relationship types are Parent Relationship, Spouse Relationship, and Sibling Relationship.

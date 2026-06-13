@@ -237,7 +237,7 @@ describe("POST /api/trees/[treeId]/members", () => {
           firstName: "Elena",
           isLiving: false,
           photoKey: "trees/t1/members/uuid.webp",
-          photoUrl: "/api/trees/t1/members/m1/photo",
+          photoUrl: "/api/trees/t1/members/m1/photo?v=uuid",
         },
         {
           id: "m2",
@@ -284,7 +284,7 @@ describe("POST /api/trees/[treeId]/members", () => {
         firstName: "Elena",
         isLiving: false,
         photoKey: "trees/t1/members/uuid.webp",
-        photoUrl: "/api/trees/t1/members/m1/photo",
+        photoUrl: "/api/trees/t1/members/m1/photo?v=uuid",
       },
     });
   });

@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { X } from "lucide-react";
 import Cropper, { type Area, type Point } from "react-easy-crop";
+import "react-easy-crop/react-easy-crop.css";
 import { getCroppedBlob, blobToPhotoFile } from "@/lib/crop-image";
 
 export interface PhotoCropModalT {
@@ -39,21 +40,24 @@ export default function PhotoCropModal({
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const imageUrl = useMemo(
-    () => URL.createObjectURL(sourceFile),
-    [sourceFile],
-  );
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
 
+  // Create the object URL inside the effect (not useMemo) so the same URL we
+  // hand to the <img> is the one we revoke. Under React Strict Mode the mount
+  // effect runs twice; revoking a useMemo'd URL on the first cleanup would
+  // leave the second mount pointing at an already-revoked (dead) blob.
   useEffect(() => {
-    return () => URL.revokeObjectURL(imageUrl);
-  }, [imageUrl]);
+    const url = URL.createObjectURL(sourceFile);
+    setImageUrl(url);
+    return () => URL.revokeObjectURL(url);
+  }, [sourceFile]);
 
   const handleCropComplete = (_area: Area, areaPixels: Area) => {
     setCroppedAreaPixels(areaPixels);
   };
 
   const handleApply = async () => {
-    if (!croppedAreaPixels) return;
+    if (!croppedAreaPixels || !imageUrl) return;
     setIsProcessing(true);
     setError(null);
     try {
@@ -87,6 +91,7 @@ export default function PhotoCropModal({
         <div className="p-6 space-y-4">
           <p className="text-sm text-stone-500">{t.instructions}</p>
           <div className="relative w-full h-64 bg-stone-900 rounded-lg overflow-hidden">
+            {imageUrl && (
             <Cropper
               image={imageUrl}
               crop={crop}
@@ -100,6 +105,7 @@ export default function PhotoCropModal({
               onZoomChange={setZoom}
               onCropComplete={handleCropComplete}
             />
+            )}
           </div>
           <div>
             <label

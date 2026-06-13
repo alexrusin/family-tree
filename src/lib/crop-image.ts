@@ -5,8 +5,11 @@ export interface CropAreaPixels {
   height: number;
 }
 
-const MAX_OUTPUT_EDGE = 1024;
-const OUTPUT_QUALITY = 0.9;
+// Match the server pipeline documented in ADR 0002
+// (sharp fit:"inside" 800x800 -> WebP@82) so the client crop flows through
+// unchanged instead of being re-downscaled and re-encoded server-side.
+const MAX_OUTPUT_EDGE = 800;
+const OUTPUT_QUALITY = 0.82;
 const OUTPUT_TYPE = "image/webp";
 
 function loadImage(src: string): Promise<HTMLImageElement> {
@@ -22,7 +25,8 @@ function loadImage(src: string): Promise<HTMLImageElement> {
 
 /**
  * Renders the cropped pixel rectangle of an image onto a square canvas,
- * downscaling to MAX_OUTPUT_EDGE, and returns it as a WebP blob.
+ * downscaling to MAX_OUTPUT_EDGE (800px, matching the server pipeline), and
+ * returns it as a WebP blob.
  */
 export async function getCroppedBlob(
   imageSrc: string,
