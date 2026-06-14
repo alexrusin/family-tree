@@ -24,6 +24,7 @@ vi.mock("next/dynamic", () => ({
     ({
       onNodeClick,
       onDragStop,
+      registerViewportCenter,
       canEdit,
       arrangement,
       members,
@@ -31,6 +32,9 @@ vi.mock("next/dynamic", () => ({
     }: {
       onNodeClick: (id: string) => void;
       onDragStop?: (memberId: string, position: { x: number; y: number }) => void;
+      registerViewportCenter?: (
+        getter: (() => { x: number; y: number } | null) | null,
+      ) => void;
       canEdit?: boolean;
       arrangement?: unknown;
       members?: Array<{ id: string }>;
@@ -52,6 +56,14 @@ vi.mock("next/dynamic", () => ({
             onClick={() => onDragStop("member-1", { x: 50, y: 100 })}
           >
             Drag member
+          </button>
+        )}
+        {registerViewportCenter && (
+          <button
+            type="button"
+            onClick={() => registerViewportCenter(() => ({ x: 200, y: 300 }))}
+          >
+            Register viewport center
           </button>
         )}
       </div>
@@ -107,6 +119,30 @@ vi.mock("./AddMemberModal", () => ({
           }
         >
           Complete add member
+        </button>
+        <button
+          type="button"
+          onClick={() =>
+            onMemberCreated({
+              id: "member-3",
+              firstName: "Member3",
+              lastName: null,
+              isLiving: true,
+              birthYear: null,
+              birthMonth: null,
+              birthDay: null,
+              birthPrecision: null,
+              deathYear: null,
+              deathMonth: null,
+              deathDay: null,
+              deathPrecision: null,
+              photoUrl: null,
+              bio: null,
+              gender: "undisclosed",
+            })
+          }
+        >
+          Complete add member 2
         </button>
       </div>
     ) : null,
@@ -736,6 +772,84 @@ describe("TreeDetailClient responsive tree workspace shell", () => {
       ).toBe("2");
     });
     expect(fetchMock).toHaveBeenCalledTimes(3);
+  });
+
+  it("places a newly created member at the current viewport center and persists it", async () => {
+    const user = userEvent.setup();
+    renderSubject({
+      viewportWidth: 1280,
+      initialMemberCount: 1,
+      fetchedMemberCount: 1,
+    });
+
+    const fetchMock = vi.mocked(fetch);
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(3));
+
+    // Simulate the canvas reporting where the user is currently looking.
+    await user.click(
+      screen.getByRole("button", { name: "Register viewport center" }),
+    );
+
+    await user.click(screen.getByRole("button", { name: "Add Member" }));
+    await user.click(screen.getByRole("button", { name: "Complete add member" }));
+
+    // The new member is positioned at the view center in the arrangement.
+    await waitFor(() => {
+      const attr = screen
+        .getByTestId("tree-canvas")
+        .getAttribute("data-arrangement");
+      expect(JSON.parse(attr ?? "null")).toMatchObject({
+        "member-2": { x: 200, y: 300 },
+      });
+    });
+
+    // And that arrangement is persisted via PUT to the arrangement endpoint.
+    await waitFor(() => {
+      const putCall = fetchMock.mock.calls.find(([input, init]) => {
+        return (
+          String(input).includes("/arrangement") &&
+          (init as RequestInit | undefined)?.method === "PUT"
+        );
+      });
+      expect(putCall).toBeDefined();
+      const body = JSON.parse(
+        String((putCall?.[1] as RequestInit).body),
+      ) as { arrangement: Record<string, { x: number; y: number }> };
+      expect(body.arrangement["member-2"]).toEqual({ x: 200, y: 300 });
+    });
+  });
+
+  it("cascades consecutive members added at the same viewport center", async () => {
+    const user = userEvent.setup();
+    renderSubject({
+      viewportWidth: 1280,
+      initialMemberCount: 1,
+      fetchedMemberCount: 1,
+    });
+
+    const fetchMock = vi.mocked(fetch);
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(3));
+
+    await user.click(
+      screen.getByRole("button", { name: "Register viewport center" }),
+    );
+
+    await user.click(screen.getByRole("button", { name: "Add Member" }));
+    await user.click(screen.getByRole("button", { name: "Complete add member" }));
+    await user.click(
+      screen.getByRole("button", { name: "Complete add member 2" }),
+    );
+
+    // First addition sits at the view center; the second is offset by one step.
+    await waitFor(() => {
+      const attr = screen
+        .getByTestId("tree-canvas")
+        .getAttribute("data-arrangement");
+      expect(JSON.parse(attr ?? "null")).toMatchObject({
+        "member-2": { x: 200, y: 300 },
+        "member-3": { x: 224, y: 324 },
+      });
+    });
   });
 
   it("adds a relationship locally without reloading the tree data", async () => {

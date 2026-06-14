@@ -48,6 +48,7 @@ export default function PhotoCropModal({
   // leave the second mount pointing at an already-revoked (dead) blob.
   useEffect(() => {
     const url = URL.createObjectURL(sourceFile);
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- synchronizing with the browser's blob URL store, not derived state
     setImageUrl(url);
     return () => URL.revokeObjectURL(url);
   }, [sourceFile]);
