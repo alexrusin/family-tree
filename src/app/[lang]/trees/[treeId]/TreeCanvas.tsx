@@ -47,6 +47,13 @@ interface TreeCanvasProps {
   onAddMember: () => void;
   onDragStop?: (memberId: string, position: { x: number; y: number }) => void;
   /**
+   * Incremented by the parent each time a new Member is added to the tree.
+   * Adding a Member forces the Drag Lock to unlocked (ADR 0003), so a change
+   * to this value (after the initial mount) unlocks dragging and persists
+   * the preference, regardless of its prior state.
+   */
+  memberAddedSignal?: number;
+  /**
    * Registers a getter that returns the current viewport center in flow
    * coordinates (top-left of a node centered on the view), or `null` if it
    * cannot be measured. Called with `null` on unmount to deregister.
@@ -194,6 +201,7 @@ export default function TreeCanvas({
   onEdgeClick,
   onAddMember,
   onDragStop,
+  memberAddedSignal,
   registerViewportCenter,
   t,
 }: TreeCanvasProps) {
@@ -216,6 +224,19 @@ export default function TreeCanvas({
       return next;
     });
   };
+
+  // Adding a Member forces the Drag Lock to unlocked, regardless of its prior
+  // state, so the new node can be positioned immediately (ADR 0003). There is
+  // no automatic re-lock afterward. Skip the initial mount, since the signal
+  // hasn't changed yet at that point.
+  const lastMemberAddedSignal = useRef(memberAddedSignal);
+  useEffect(() => {
+    if (memberAddedSignal === undefined) return;
+    if (memberAddedSignal === lastMemberAddedSignal.current) return;
+    lastMemberAddedSignal.current = memberAddedSignal;
+    setDragLocked(false);
+    setStoredDragLockPreference(window.localStorage, false);
+  }, [memberAddedSignal]);
 
   const initialNodes = useMemo(
     () => buildTreeGraph(members, relationships, arrangement).nodes,

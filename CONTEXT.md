@@ -125,6 +125,11 @@ _Avoid_: temporary layout, personal layout
 An editor action that discards the Manual Tree Arrangement and restores the automatic tree layout. It is the escape hatch when the shared arrangement has become less useful than the computed one.
 _Avoid_: undo drag history, personal reset
 
+## Drag Lock
+
+A personal, device-local editor preference that disables dragging of Member nodes so that panning or scrolling — especially on touch devices — cannot accidentally move a Member and disturb the Manual Tree Arrangement. It is remembered per device and applied globally across every Family Tree the editor opens on that device, defaulting to on for touch/coarse-pointer devices and off otherwise. It only affects an editor's own interaction; it changes no shared tree data and grants no permissions. It is distinct from the editor/viewer permission boundary (which decides whether dragging is possible at all) and from the Manual Tree Arrangement (which is shared tree data). Collaborator Viewers and Guest Viewers never encounter it.
+_Avoid_: shared lock, freeze layout, edit mode
+
 ## Member Details Panel
 
 A tree-workspace panel that shows the currently selected member's profile details, relationships, and permitted actions. Its presentation can vary by viewport without changing what it represents.
