@@ -382,6 +382,8 @@
       "zoomIn": "Zoom in",
       "zoomOut": "Zoom out",
       "addMember": "Add member",
+      "lockDragging": "Lock dragging",
+      "unlockDragging": "Unlock dragging",
       "loading": "Loading tree..."
     },
     "panel": {
