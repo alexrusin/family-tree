@@ -1,7 +1,7 @@
 // src/app/[lang]/trees/[treeId]/TreeDetailClient.tsx
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { Menu, X } from "lucide-react";
 import AddMemberModal from "./AddMemberModal";
@@ -17,6 +17,7 @@ import RelationshipEdgePopover from "./RelationshipEdgePopover";
 import { buildPublicUrl } from "./share-link-form-state";
 import {
   pruneArrangement,
+  type MemberPosition,
   type TreeMemberData,
   type TreeRelationship,
   type TreeFlowEdge,
@@ -24,6 +25,9 @@ import {
 } from "@/lib/tree-domain/tree-layout";
 
 const MEMBER_HARD_LIMIT = 300;
+// Pixel step applied to each consecutive member added at the same viewport
+// center, so a burst of new members fans out instead of stacking.
+const NEW_MEMBER_CASCADE_STEP = 24;
 const TABLET_VIEWPORT_QUERY = "(min-width: 768px)";
 const DESKTOP_VIEWPORT_QUERY = "(min-width: 1024px)";
 const TreeCanvas = dynamic(() => import("./TreeCanvas"), { ssr: false });
@@ -272,6 +276,16 @@ export default function TreeDetailClient({
     useState<MemberSidePanelPresentation>(() => getMemberPanelPresentation());
   const isDesktopViewport = memberPanelPresentation === "desktop";
 
+  // Getter (registered by TreeCanvas) for the current viewport center in flow
+  // coordinates. Used to place newly created members where the user is looking.
+  const viewportCenterRef = useRef<(() => MemberPosition | null) | null>(null);
+  // Tracks consecutive members added at the same viewport center so they cascade
+  // instead of stacking exactly on top of each other. Resets when the user pans
+  // (the reported center changes).
+  const cascadeRef = useRef<{ base: MemberPosition; count: number } | null>(
+    null,
+  );
+
   const loadTreeData = useCallback(async () => {
     setIsLoading(true);
     setLoadError(null);
@@ -442,10 +456,67 @@ export default function TreeDetailClient({
     [canEdit, getMemberName, t.panel.parentOf, t.panel.spouseOf],
   );
 
-  const handleMemberCreated = useCallback((member: TreeMemberData) => {
-    setMembers((prev) => [...prev, member]);
-    setLoadError(null);
-  }, []);
+  const registerViewportCenter = useCallback(
+    (getter: (() => MemberPosition | null) | null) => {
+      viewportCenterRef.current = getter;
+    },
+    [],
+  );
+
+  const persistArrangement = useCallback(
+    async (next: TreeArrangement): Promise<boolean> => {
+      try {
+        const response = await fetch(`/api/trees/${treeId}/arrangement`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ arrangement: next }),
+        });
+        return response.ok;
+      } catch {
+        return false;
+      }
+    },
+    [treeId],
+  );
+
+  const handleMemberCreated = useCallback(
+    (member: TreeMemberData) => {
+      setMembers((prev) => [...prev, member]);
+      setLoadError(null);
+
+      // Place the new member where the user is currently looking, instead of
+      // letting the auto-layout drop it in the default (often off-screen) spot.
+      if (!canEdit) return;
+      const center = viewportCenterRef.current?.();
+      if (!center) return;
+
+      // Cascade consecutive additions at the same view so they don't overlap.
+      const prevCascade = cascadeRef.current;
+      const sameView =
+        prevCascade !== null &&
+        Math.abs(prevCascade.base.x - center.x) < 0.5 &&
+        Math.abs(prevCascade.base.y - center.y) < 0.5;
+      const count = sameView ? prevCascade.count + 1 : 0;
+      cascadeRef.current = { base: center, count };
+
+      const position: MemberPosition = {
+        x: center.x + count * NEW_MEMBER_CASCADE_STEP,
+        y: center.y + count * NEW_MEMBER_CASCADE_STEP,
+      };
+
+      const nextArrangement = {
+        ...(arrangement ?? {}),
+        [member.id]: position,
+      } as TreeArrangement;
+      setArrangement(nextArrangement);
+      void persistArrangement(nextArrangement).then((ok) => {
+        // Keep the member visible at the view center even if the save fails;
+        // just surface the same non-blocking error used for drag saves.
+        if (!ok) setLayoutError(t.errors.dragSaveFailed);
+      });
+    },
+    [canEdit, arrangement, persistArrangement, t.errors.dragSaveFailed],
+  );
 
   const handleRelationshipCreated = useCallback(
     (relationship: TreeRelationship) => {
@@ -492,16 +563,10 @@ export default function TreeDetailClient({
         ...(arrangement ?? {}),
         [memberId]: position,
       } as TreeArrangement;
-      try {
-        const response = await fetch(`/api/trees/${treeId}/arrangement`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ arrangement: nextArrangement }),
-        });
-        if (!response.ok) throw new Error("save failed");
+      if (await persistArrangement(nextArrangement)) {
         setArrangement(nextArrangement);
         setLayoutError(null);
-      } catch {
+      } else {
         // Revert visual positions by setting a new arrangement reference with the
         // same data — this triggers the useEffect in TreeCanvas to re-sync nodes.
         setArrangement(
@@ -512,7 +577,7 @@ export default function TreeDetailClient({
         setLayoutError(t.errors.dragSaveFailed);
       }
     },
-    [arrangement, treeId, t.errors.dragSaveFailed],
+    [arrangement, persistArrangement, t.errors.dragSaveFailed],
   );
 
   const handleResetLayout = useCallback(async () => {
@@ -701,6 +766,7 @@ export default function TreeDetailClient({
             onEdgeClick={handleEdgeClick}
             onAddMember={openAddMemberModal}
             onDragStop={canEdit ? handleNodeDragStop : undefined}
+            registerViewportCenter={canEdit ? registerViewportCenter : undefined}
             t={t.canvas}
           />
         )}

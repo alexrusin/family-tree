@@ -1,7 +1,7 @@
 // src/app/[lang]/trees/[treeId]/TreeCanvas.tsx
 "use client";
 
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import {
   ReactFlow,
   Panel,
@@ -17,6 +17,9 @@ import "@xyflow/react/dist/style.css";
 
 import {
   buildTreeGraph,
+  NODE_H,
+  NODE_W,
+  type MemberPosition,
   type TreeArrangement,
   type TreeFlowEdge,
   type TreeFlowNode,
@@ -42,6 +45,14 @@ interface TreeCanvasProps {
   onEdgeClick: (event: React.MouseEvent, edge: TreeFlowEdge) => void;
   onAddMember: () => void;
   onDragStop?: (memberId: string, position: { x: number; y: number }) => void;
+  /**
+   * Registers a getter that returns the current viewport center in flow
+   * coordinates (top-left of a node centered on the view), or `null` if it
+   * cannot be measured. Called with `null` on unmount to deregister.
+   */
+  registerViewportCenter?: (
+    getter: (() => MemberPosition | null) | null,
+  ) => void;
   t: {
     emptyTitle: string;
     emptyBody: string;
@@ -116,6 +127,34 @@ function CanvasToolbar({
   );
 }
 
+// Rendered inside <ReactFlow> so it can call useReactFlow(). Exposes a getter
+// for the current viewport center (in flow coords) to the parent component.
+function ViewportCenterReporter({
+  containerRef,
+  register,
+}: {
+  containerRef: React.RefObject<HTMLDivElement | null>;
+  register: (getter: (() => MemberPosition | null) | null) => void;
+}) {
+  const { screenToFlowPosition } = useReactFlow();
+  useEffect(() => {
+    register(() => {
+      const el = containerRef.current;
+      if (!el) return null;
+      const rect = el.getBoundingClientRect();
+      if (rect.width === 0 || rect.height === 0) return null;
+      const center = screenToFlowPosition({
+        x: rect.left + rect.width / 2,
+        y: rect.top + rect.height / 2,
+      });
+      // Convert from view center to the node's top-left so the node is centered.
+      return { x: center.x - NODE_W / 2, y: center.y - NODE_H / 2 };
+    });
+    return () => register(null);
+  }, [containerRef, register, screenToFlowPosition]);
+  return null;
+}
+
 export default function TreeCanvas({
   members,
   relationships,
@@ -126,8 +165,11 @@ export default function TreeCanvas({
   onEdgeClick,
   onAddMember,
   onDragStop,
+  registerViewportCenter,
   t,
 }: TreeCanvasProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
+
   const initialNodes = useMemo(
     () => buildTreeGraph(members, relationships, arrangement).nodes,
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -192,33 +234,41 @@ export default function TreeCanvas({
   }
 
   return (
-    <ReactFlow
-      nodes={nodes}
-      edges={edges}
-      nodeTypes={nodeTypes}
-      edgeTypes={edgeTypes}
-      nodesDraggable={canEdit}
-      nodesConnectable={false}
-      onNodesChange={onNodesChange}
-      onNodeClick={handleNodeClick}
-      onEdgeClick={handleEdgeClick}
-      onNodeDragStop={handleNodeDragStop}
-      fitView
-      fitViewOptions={{ padding: 0.2 }}
-      defaultEdgeOptions={{
-        style: { stroke: "#44403C", strokeWidth: 2 },
-      }}
-      style={{
-        backgroundImage: "radial-gradient(#dcc1b6 1px, transparent 1px)",
-        backgroundSize: "40px 40px",
-        backgroundColor: "#fbf9f8",
-      }}
-    >
-      <CanvasToolbar
-        canAddMember={canAddMember}
-        onAddMember={onAddMember}
-        t={t}
-      />
-    </ReactFlow>
+    <div ref={containerRef} className="w-full h-full">
+      <ReactFlow
+        nodes={nodes}
+        edges={edges}
+        nodeTypes={nodeTypes}
+        edgeTypes={edgeTypes}
+        nodesDraggable={canEdit}
+        nodesConnectable={false}
+        onNodesChange={onNodesChange}
+        onNodeClick={handleNodeClick}
+        onEdgeClick={handleEdgeClick}
+        onNodeDragStop={handleNodeDragStop}
+        fitView
+        fitViewOptions={{ padding: 0.2 }}
+        defaultEdgeOptions={{
+          style: { stroke: "#44403C", strokeWidth: 2 },
+        }}
+        style={{
+          backgroundImage: "radial-gradient(#dcc1b6 1px, transparent 1px)",
+          backgroundSize: "40px 40px",
+          backgroundColor: "#fbf9f8",
+        }}
+      >
+        <CanvasToolbar
+          canAddMember={canAddMember}
+          onAddMember={onAddMember}
+          t={t}
+        />
+        {registerViewportCenter && (
+          <ViewportCenterReporter
+            containerRef={containerRef}
+            register={registerViewportCenter}
+          />
+        )}
+      </ReactFlow>
+    </div>
   );
 }

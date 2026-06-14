@@ -74,8 +74,8 @@ export type TreeFlowEdge =
   | Edge<{ relationshipId?: string; relationshipIds?: string[] }, "parent">
   | Edge<{ relationshipId: string }, "spouse">;
 
-const NODE_W = 120;
-const NODE_H = 150;
+export const NODE_W = 120;
+export const NODE_H = 150;
 const UNION_SIZE = 8;
 export const SPOUSE_LEFT_SOURCE_HANDLE = "spouse-left-source";
 export const SPOUSE_LEFT_TARGET_HANDLE = "spouse-left-target";
