@@ -127,6 +127,8 @@ interface TreeT {
     zoomIn: string;
     zoomOut: string;
     addMember: string;
+    lockDragging: string;
+    unlockDragging: string;
     loading: string;
   };
   panel: {
@@ -270,6 +272,9 @@ export default function TreeDetailClient({
   const [shareEnabled, setShareEnabled] = useState(false);
   const [publicUrl, setPublicUrl] = useState("");
   const [addMemberModalKey, setAddMemberModalKey] = useState(0);
+  // Bumped each time a Member is added, so TreeCanvas can force the Drag Lock
+  // to unlocked (ADR 0003).
+  const [memberAddedSignal, setMemberAddedSignal] = useState(0);
   const [addRelationshipModalKey, setAddRelationshipModalKey] = useState(0);
   const [isTreeMenuOpen, setIsTreeMenuOpen] = useState(false);
   const [memberPanelPresentation, setMemberPanelPresentation] =
@@ -483,6 +488,7 @@ export default function TreeDetailClient({
     (member: TreeMemberData) => {
       setMembers((prev) => [...prev, member]);
       setLoadError(null);
+      setMemberAddedSignal((prev) => prev + 1);
 
       // Place the new member where the user is currently looking, instead of
       // letting the auto-layout drop it in the default (often off-screen) spot.
@@ -766,6 +772,7 @@ export default function TreeDetailClient({
             onEdgeClick={handleEdgeClick}
             onAddMember={openAddMemberModal}
             onDragStop={canEdit ? handleNodeDragStop : undefined}
+            memberAddedSignal={memberAddedSignal}
             registerViewportCenter={canEdit ? registerViewportCenter : undefined}
             t={t.canvas}
           />

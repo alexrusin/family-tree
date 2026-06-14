@@ -1,7 +1,7 @@
 // src/app/[lang]/trees/[treeId]/TreeCanvas.tsx
 "use client";
 
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ReactFlow,
   Panel,
@@ -30,7 +30,8 @@ import { MemberNode } from "./MemberNode";
 import { UnionNode } from "./UnionNode";
 import { SpouseEdge } from "./SpouseEdge";
 import { ParentEdge } from "./ParentEdge";
-import { Plus, ZoomIn, ZoomOut, Maximize2 } from "lucide-react";
+import { Plus, ZoomIn, ZoomOut, Maximize2, Lock, Unlock } from "lucide-react";
+import { resolveDragLockPreference, setStoredDragLockPreference } from "@/lib/tree-domain/drag-lock-preference";
 
 const nodeTypes: NodeTypes = { member: MemberNode, union: UnionNode };
 const edgeTypes: EdgeTypes = { spouse: SpouseEdge, parent: ParentEdge };
@@ -45,6 +46,13 @@ interface TreeCanvasProps {
   onEdgeClick: (event: React.MouseEvent, edge: TreeFlowEdge) => void;
   onAddMember: () => void;
   onDragStop?: (memberId: string, position: { x: number; y: number }) => void;
+  /**
+   * Incremented by the parent each time a new Member is added to the tree.
+   * Adding a Member forces the Drag Lock to unlocked (ADR 0003), so a change
+   * to this value (after the initial mount) unlocks dragging and persists
+   * the preference, regardless of its prior state.
+   */
+  memberAddedSignal?: number;
   /**
    * Registers a getter that returns the current viewport center in flow
    * coordinates (top-left of a node centered on the view), or `null` if it
@@ -61,6 +69,8 @@ interface TreeCanvasProps {
     zoomIn: string;
     zoomOut: string;
     addMember: string;
+    lockDragging: string;
+    unlockDragging: string;
     loading?: string;
   };
 }
@@ -69,15 +79,23 @@ interface TreeCanvasProps {
 function CanvasToolbar({
   canAddMember,
   onAddMember,
+  canEdit,
+  dragLocked,
+  onToggleDragLock,
   t,
 }: {
   canAddMember: boolean;
   onAddMember: () => void;
+  canEdit: boolean;
+  dragLocked: boolean;
+  onToggleDragLock: () => void;
   t: {
     fitToScreen: string;
     zoomIn: string;
     zoomOut: string;
     addMember: string;
+    lockDragging: string;
+    unlockDragging: string;
   };
 }) {
   const { fitView, zoomIn, zoomOut } = useReactFlow();
@@ -119,6 +137,24 @@ function CanvasToolbar({
               aria-label={t.addMember}
             >
               <Plus className="w-4 h-4" />
+            </button>
+          </>
+        )}
+        {canEdit && (
+          <>
+            <div className="w-px h-5 bg-stone-200 mx-1" />
+            <button
+              onClick={onToggleDragLock}
+              className="p-2 text-stone-600 hover:bg-stone-100 rounded-lg transition-colors"
+              title={dragLocked ? t.unlockDragging : t.lockDragging}
+              aria-label={dragLocked ? t.unlockDragging : t.lockDragging}
+              aria-pressed={dragLocked}
+            >
+              {dragLocked ? (
+                <Lock className="w-4 h-4" />
+              ) : (
+                <Unlock className="w-4 h-4" />
+              )}
             </button>
           </>
         )}
@@ -165,10 +201,42 @@ export default function TreeCanvas({
   onEdgeClick,
   onAddMember,
   onDragStop,
+  memberAddedSignal,
   registerViewportCenter,
   t,
 }: TreeCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+
+  // Drag Lock is a personal, device-local preference (ADR 0003): resolve it
+  // from localStorage, falling back to the pointer-capability default
+  // (coarse/touch -> locked, fine/mouse -> unlocked). This component is only
+  // ever rendered client-side (loaded with ssr: false), so window is
+  // available on initial render.
+  const [dragLocked, setDragLocked] = useState(() => {
+    const isCoarsePointer = window.matchMedia("(pointer: coarse)").matches;
+    return resolveDragLockPreference(window.localStorage, isCoarsePointer);
+  });
+
+  const handleToggleDragLock = () => {
+    setDragLocked((prev) => {
+      const next = !prev;
+      setStoredDragLockPreference(window.localStorage, next);
+      return next;
+    });
+  };
+
+  // Adding a Member forces the Drag Lock to unlocked, regardless of its prior
+  // state, so the new node can be positioned immediately (ADR 0003). There is
+  // no automatic re-lock afterward. Skip the initial mount, since the signal
+  // hasn't changed yet at that point.
+  const lastMemberAddedSignal = useRef(memberAddedSignal);
+  useEffect(() => {
+    if (memberAddedSignal === undefined) return;
+    if (memberAddedSignal === lastMemberAddedSignal.current) return;
+    lastMemberAddedSignal.current = memberAddedSignal;
+    setDragLocked(false);
+    setStoredDragLockPreference(window.localStorage, false);
+  }, [memberAddedSignal]);
 
   const initialNodes = useMemo(
     () => buildTreeGraph(members, relationships, arrangement).nodes,
@@ -240,7 +308,7 @@ export default function TreeCanvas({
         edges={edges}
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
-        nodesDraggable={canEdit}
+        nodesDraggable={canEdit && !dragLocked}
         nodesConnectable={false}
         onNodesChange={onNodesChange}
         onNodeClick={handleNodeClick}
@@ -260,6 +328,9 @@ export default function TreeCanvas({
         <CanvasToolbar
           canAddMember={canAddMember}
           onAddMember={onAddMember}
+          canEdit={canEdit}
+          dragLocked={dragLocked}
+          onToggleDragLock={handleToggleDragLock}
           t={t}
         />
         {registerViewportCenter && (

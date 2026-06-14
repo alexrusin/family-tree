@@ -44,6 +44,8 @@ export default function PublicTreeViewClient({
       zoomIn: string;
       zoomOut: string;
       addMember: string;
+      lockDragging: string;
+      unlockDragging: string;
       loading: string;
     };
     panel: {
