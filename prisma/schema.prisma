@@ -100,6 +100,7 @@ enum InvitationStatus {
 enum RelationshipType {
   parent
   spouse
+  divorced
   sibling
 }
 

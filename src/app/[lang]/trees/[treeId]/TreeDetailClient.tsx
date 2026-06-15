@@ -84,6 +84,7 @@ interface RelationshipSubT {
   parent: string;
   child: string;
   spouse: string;
+  divorced: string;
   sibling: string;
   searchMembers: string;
   noMembersFound: string;
@@ -142,6 +143,7 @@ interface TreeT {
     parentOf: string;
     childOf: string;
     spouseOf: string;
+    divorcedOf: string;
     siblingOf: string;
     editMember: string;
     deleteMember: string;
@@ -201,7 +203,7 @@ interface TreeDetailClientProps {
 function edgeLabel(
   edge: TreeFlowEdge,
   getMemberName: (id: string) => string,
-  t: { parentOf: string; spouseOf: string },
+  t: { parentOf: string; spouseOf: string; divorcedOf: string },
 ): { fromName: string; toName: string; typeLabel: string } | null {
   const data = edge.data as {
     relationshipId?: string;
@@ -234,6 +236,14 @@ function edgeLabel(
       fromName: getMemberName(edge.source),
       toName: getMemberName(edge.target),
       typeLabel: t.spouseOf,
+    };
+  }
+
+  if (edge.type === "divorced") {
+    return {
+      fromName: getMemberName(edge.source),
+      toName: getMemberName(edge.target),
+      typeLabel: t.divorcedOf,
     };
   }
 
@@ -449,6 +459,7 @@ export default function TreeDetailClient({
       const label = edgeLabel(edge, getMemberName, {
         parentOf: t.panel.parentOf,
         spouseOf: t.panel.spouseOf,
+        divorcedOf: t.panel.divorcedOf,
       });
       if (!label) return;
       setSelectedMemberId(null);
@@ -458,7 +469,7 @@ export default function TreeDetailClient({
         label,
       });
     },
-    [canEdit, getMemberName, t.panel.parentOf, t.panel.spouseOf],
+    [canEdit, getMemberName, t.panel.parentOf, t.panel.spouseOf, t.panel.divorcedOf],
   );
 
   const registerViewportCenter = useCallback(

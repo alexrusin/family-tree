@@ -17,6 +17,7 @@ function isRelationshipType(value: unknown): value is RelationshipType {
     value === "parent" ||
     value === "child" ||
     value === "spouse" ||
+    value === "divorced" ||
     value === "sibling"
   );
 }

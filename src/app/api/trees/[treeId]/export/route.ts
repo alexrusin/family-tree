@@ -59,10 +59,15 @@ export async function GET(
           });
         },
         getRelationships: async (id) => {
-          return prisma.relationship.findMany({
+          const relationships = await prisma.relationship.findMany({
             where: { treeId: id },
             select: { fromMemberId: true, toMemberId: true, type: true },
           });
+          return relationships.filter(
+            (r): r is (typeof relationships)[number] & {
+              type: "parent" | "spouse" | "sibling";
+            } => r.type !== "divorced",
+          );
         },
       },
       treeId,

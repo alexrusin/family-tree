@@ -4,7 +4,7 @@ import {
 } from "./relationship-canonical";
 import { canEditMembers, type TreeRole } from "./tree-access";
 
-type CanonicalRelationshipType = "parent" | "spouse" | "sibling";
+type CanonicalRelationshipType = "parent" | "spouse" | "divorced" | "sibling";
 
 export async function createRelationship(params: {
   repo: {

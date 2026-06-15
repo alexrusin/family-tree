@@ -103,6 +103,23 @@ describe("buildTreeGraph", () => {
     expect(e?.targetHandle).toBe(SPOUSE_LEFT_TARGET_HANDLE);
   });
 
+  it("creates a direct divorced edge (no union node) for a childless couple", () => {
+    const members = [makeMember("a"), makeMember("b")];
+    const rels: TreeRelationship[] = [
+      { id: "rd", fromMemberId: "a", toMemberId: "b", type: "divorced" },
+    ];
+    const { nodes, edges } = buildTreeGraph(members, rels, {
+      a: { x: 0, y: 0 },
+      b: { x: 300, y: 0 },
+    });
+    expect(nodes.filter((n) => n.type === "union")).toHaveLength(0);
+    const e = edges.find((e) => e.type === "divorced");
+    expect(e).toBeDefined();
+    expect((e!.data as { relationshipId: string }).relationshipId).toBe("rd");
+    expect(e?.sourceHandle).toBe(SPOUSE_RIGHT_SOURCE_HANDLE);
+    expect(e?.targetHandle).toBe(SPOUSE_LEFT_TARGET_HANDLE);
+  });
+
   it("anchors a direct spouse edge to inward-facing side handles after manual arrangement changes", () => {
     const members = [makeMember("a"), makeMember("b")];
     const rels: TreeRelationship[] = [

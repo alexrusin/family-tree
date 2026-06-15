@@ -46,6 +46,7 @@ const translations = {
   parentOf: "Parent of",
   childOf: "Child of",
   spouseOf: "Spouse of",
+  divorcedOf: "Divorced from",
   siblingOf: "Sibling of",
   editMember: "Edit Member",
   deleteMember: "Delete Member",

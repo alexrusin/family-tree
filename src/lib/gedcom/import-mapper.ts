@@ -399,6 +399,8 @@ export function mapGedcomToMembers(records: GedcomNode[]): {
   const relationships: ImportedRelationship[] = [];
 
   for (const rel of canonicalRelationships) {
+    if (rel.type === "divorced") continue;
+
     const fromMember = membersByXref.get(rel.fromMemberId);
     const toMember = membersByXref.get(rel.toMemberId);
 

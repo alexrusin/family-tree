@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { X } from "lucide-react";
 import type { TreeRelationship } from "@/lib/tree-domain/tree-layout";
 
-type RelationshipType = "parent" | "child" | "spouse" | "sibling";
+type RelationshipType = "parent" | "child" | "spouse" | "divorced" | "sibling";
 
 interface MemberOption {
   id: string;
@@ -22,6 +22,7 @@ interface RelationshipT {
   parent: string;
   child: string;
   spouse: string;
+  divorced: string;
   sibling: string;
   searchMembers: string;
   noMembersFound: string;
@@ -428,6 +429,7 @@ export default function AddRelationshipModal({
               <option value="parent">{t.parent}</option>
               <option value="child">{t.child}</option>
               <option value="spouse">{t.spouse}</option>
+              <option value="divorced">{t.divorced}</option>
               <option value="sibling">{t.sibling}</option>
             </select>
           </div>

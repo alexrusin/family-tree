@@ -15,6 +15,7 @@ const translations = {
   parent: "Parent",
   child: "Child",
   spouse: "Spouse",
+  divorced: "Divorced",
   sibling: "Sibling",
   searchMembers: "Search members",
   noMembersFound: "No members found.",
@@ -108,6 +109,63 @@ describe("AddRelationshipModal", () => {
     });
     expect(onClose).toHaveBeenCalled();
     expect(onRelationshipCreated).toHaveBeenCalled();
+  });
+
+  it("allows selecting Divorced and submits the divorced type", async () => {
+    const user = userEvent.setup();
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: vi.fn().mockResolvedValue({
+        relationship: {
+          id: "r1",
+          fromMemberId: "m1",
+          toMemberId: "m2",
+          type: "divorced",
+        },
+      }),
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const onClose = vi.fn();
+    const onRelationshipCreated = vi.fn();
+
+    render(
+      <AddRelationshipModal
+        isOpen
+        treeId="tree-1"
+        members={members}
+        onClose={onClose}
+        onRelationshipCreated={onRelationshipCreated}
+        t={translations}
+      />,
+    );
+
+    const memberButtons = screen.getAllByRole("button", { name: "Select member" });
+    await user.click(memberButtons[0]);
+    await user.click(screen.getByRole("option", { name: "Elena Rusin" }));
+
+    await user.click(screen.getByRole("button", { name: "Select member" }));
+    await user.click(screen.getByRole("option", { name: "Marco Diaz" }));
+
+    await user.selectOptions(screen.getByRole("combobox"), "Divorced");
+
+    await user.click(screen.getByRole("button", { name: "Add Relationship" }));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        "/api/trees/tree-1/relationships",
+        expect.objectContaining({
+          method: "POST",
+        }),
+      );
+    });
+    expect(fetchMock.mock.calls[0]?.[1]).toMatchObject({
+      body: JSON.stringify({
+        fromMemberId: "m1",
+        toMemberId: "m2",
+        type: "divorced",
+      }),
+    });
   });
 
   it("shows localized empty state when search has no matches", async () => {

@@ -62,7 +62,7 @@ export interface TreeRelationship {
   id: string;
   fromMemberId: string;
   toMemberId: string;
-  type: "parent" | "spouse" | "sibling";
+  type: "parent" | "spouse" | "divorced" | "sibling";
 }
 
 export type MemberNodeData = { member: TreeMemberData };
@@ -72,7 +72,8 @@ export type TreeFlowNode =
   | Node<UnionNodeData, "union">;
 export type TreeFlowEdge =
   | Edge<{ relationshipId?: string; relationshipIds?: string[] }, "parent">
-  | Edge<{ relationshipId: string }, "spouse">;
+  | Edge<{ relationshipId: string }, "spouse">
+  | Edge<{ relationshipId: string }, "divorced">;
 
 export const NODE_W = 120;
 export const NODE_H = 150;
@@ -91,6 +92,7 @@ export function buildTreeGraph(
 
   const parentRels = relationships.filter((r) => r.type === "parent");
   const spouseRels = relationships.filter((r) => r.type === "spouse");
+  const divorcedRels = relationships.filter((r) => r.type === "divorced");
 
   // ── Dagre layout (parent edges only drive the hierarchy) ──────────────
   const g = new Dagre.graphlib.Graph();
@@ -250,6 +252,30 @@ export function buildTreeGraph(
         data: { relationshipId: r.id },
       });
     }
+  }
+
+  // Direct divorced edges (childless couples — no union node created)
+  for (const r of divorcedRels) {
+    const sourcePos = pos.get(r.fromMemberId);
+    const targetPos = pos.get(r.toMemberId);
+    const sourceIsOnLeft =
+      sourcePos !== undefined &&
+      targetPos !== undefined &&
+      sourcePos.x <= targetPos.x;
+
+    edges.push({
+      id: `e-divorced-${r.id}`,
+      source: r.fromMemberId,
+      target: r.toMemberId,
+      type: "divorced" as const,
+      sourceHandle: sourceIsOnLeft
+        ? SPOUSE_RIGHT_SOURCE_HANDLE
+        : SPOUSE_LEFT_SOURCE_HANDLE,
+      targetHandle: sourceIsOnLeft
+        ? SPOUSE_LEFT_TARGET_HANDLE
+        : SPOUSE_RIGHT_TARGET_HANDLE,
+      data: { relationshipId: r.id },
+    });
   }
 
   return { nodes: [...memberNodes, ...unionNodes], edges };

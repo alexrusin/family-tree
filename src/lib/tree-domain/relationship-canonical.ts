@@ -1,4 +1,9 @@
-export type RelationshipType = "parent" | "child" | "spouse" | "sibling";
+export type RelationshipType =
+  | "parent"
+  | "child"
+  | "spouse"
+  | "divorced"
+  | "sibling";
 
 export interface RelationshipInput {
   fromMemberId: string;
@@ -9,7 +14,7 @@ export interface RelationshipInput {
 export interface CanonicalRelationship {
   fromMemberId: string;
   toMemberId: string;
-  type: "parent" | "spouse" | "sibling";
+  type: "parent" | "spouse" | "divorced" | "sibling";
 }
 
 export function canonicalizeRelationship(
@@ -27,7 +32,11 @@ export function canonicalizeRelationship(
     };
   }
 
-  if (input.type === "spouse" || input.type === "sibling") {
+  if (
+    input.type === "spouse" ||
+    input.type === "divorced" ||
+    input.type === "sibling"
+  ) {
     const [a, b] = [input.fromMemberId, input.toMemberId].sort();
     return { fromMemberId: a, toMemberId: b, type: input.type };
   }

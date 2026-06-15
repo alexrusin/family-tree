@@ -157,7 +157,7 @@ vi.mock("./AddRelationshipModal", () => ({
       id: string;
       fromMemberId: string;
       toMemberId: string;
-      type: "parent" | "spouse" | "sibling";
+      type: "parent" | "spouse" | "divorced" | "sibling";
     }) => void;
   }) =>
     isOpen ? (
@@ -251,6 +251,7 @@ const translations = {
     parentOf: "Parent of",
     childOf: "Child of",
     spouseOf: "Spouse of",
+    divorcedOf: "Divorced from",
     siblingOf: "Sibling of",
     editMember: "Edit Member",
     deleteMember: "Delete Member",
@@ -342,6 +343,7 @@ const translations = {
     parent: "Parent",
     child: "Child",
     spouse: "Spouse",
+    divorced: "Divorced",
     sibling: "Sibling",
     searchMembers: "Search members",
     noMembersFound: "No members found.",
