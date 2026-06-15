@@ -161,6 +161,30 @@ describe("buildTreeGraph", () => {
     ).toEqual(["rpa", "rpb"]);
   });
 
+  it("creates a union node for a divorced couple with at least one shared child", () => {
+    const members = [makeMember("a"), makeMember("b"), makeMember("child")];
+    const rels: TreeRelationship[] = [
+      { id: "rd", fromMemberId: "a", toMemberId: "b", type: "divorced" },
+      { id: "rpa", fromMemberId: "a", toMemberId: "child", type: "parent" },
+      { id: "rpb", fromMemberId: "b", toMemberId: "child", type: "parent" },
+    ];
+    const { nodes, edges } = buildTreeGraph(members, rels);
+    const unionNodes = nodes.filter((n) => n.type === "union");
+    expect(unionNodes).toHaveLength(1);
+    expect(edges.filter((e) => e.type === "divorced")).toHaveLength(2);
+    expect(
+      edges
+        .filter((e) => e.type === "divorced")
+        .every((e) => !e.sourceHandle && !e.targetHandle),
+    ).toBe(true);
+    const parentEdges = edges.filter((e) => e.type === "parent");
+    expect(parentEdges).toHaveLength(1);
+    expect(parentEdges[0].target).toBe("child");
+    expect(
+      (parentEdges[0].data as { relationshipIds?: string[] }).relationshipIds,
+    ).toEqual(["rpa", "rpb"]);
+  });
+
   it("does NOT create a union node when spouses share no children", () => {
     const members = [makeMember("a"), makeMember("b"), makeMember("c")];
     const rels: TreeRelationship[] = [
