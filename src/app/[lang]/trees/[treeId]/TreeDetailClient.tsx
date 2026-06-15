@@ -89,6 +89,8 @@ interface RelationshipSubT {
   searchMembers: string;
   noMembersFound: string;
   needTwoMembers: string;
+  willReplaceSpouse: string;
+  willReplaceDivorced: string;
   closeModal: string;
   remove: string;
   removing: string;

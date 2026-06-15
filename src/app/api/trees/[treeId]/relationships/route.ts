@@ -115,18 +115,31 @@ export async function POST(
             },
             select: { id: true },
           }),
-        deleteRelationshipRecord: async (args) => {
-          await prisma.relationship.delete({ where: { id: args.id } });
-        },
-        createRelationshipRecord: (args) =>
-          prisma.relationship.create({
+        createRelationshipRecord: async (args) => {
+          const create = prisma.relationship.create({
             data: {
               treeId: args.treeId,
               fromMemberId: args.fromMemberId,
               toMemberId: args.toMemberId,
               type: args.type,
             },
-          }),
+          });
+
+          if (!args.deleteOppositeId) {
+            return create;
+          }
+
+          // Atomic swap: delete the opposite-status relationship and create the
+          // new one in a single transaction so a failure can never leave the
+          // pair with neither relationship (ADR-0002).
+          const [, created] = await prisma.$transaction([
+            prisma.relationship.delete({
+              where: { id: args.deleteOppositeId },
+            }),
+            create,
+          ]);
+          return created;
+        },
       },
       actorUserId: session.user.id,
       treeId,

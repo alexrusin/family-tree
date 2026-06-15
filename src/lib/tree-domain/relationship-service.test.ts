@@ -7,7 +7,6 @@ describe("createRelationship", () => {
       getRole: vi.fn().mockResolvedValue("editor"),
       hasRelationship: vi.fn().mockResolvedValue(false),
       findRelationship: vi.fn().mockResolvedValue(null),
-      deleteRelationshipRecord: vi.fn(),
       createRelationshipRecord: vi
         .fn()
         .mockResolvedValue({ id: "r1", type: "parent" }),
@@ -28,7 +27,6 @@ describe("createRelationship", () => {
       getRole: vi.fn().mockResolvedValue("owner"),
       hasRelationship: vi.fn().mockResolvedValue(true),
       findRelationship: vi.fn().mockResolvedValue(null),
-      deleteRelationshipRecord: vi.fn(),
       createRelationshipRecord: vi.fn(),
     };
 
@@ -47,7 +45,6 @@ describe("createRelationship", () => {
       getRole: vi.fn().mockResolvedValue("owner"),
       hasRelationship: vi.fn().mockResolvedValue(true),
       findRelationship: vi.fn().mockResolvedValue(null),
-      deleteRelationshipRecord: vi.fn(),
       createRelationshipRecord: vi.fn(),
     };
 
@@ -66,7 +63,6 @@ describe("createRelationship", () => {
       getRole: vi.fn().mockResolvedValue("editor"),
       hasRelationship: vi.fn().mockResolvedValue(false),
       findRelationship: vi.fn().mockResolvedValue({ id: "spouse-1" }),
-      deleteRelationshipRecord: vi.fn().mockResolvedValue(undefined),
       createRelationshipRecord: vi
         .fn()
         .mockResolvedValue({ id: "r2", type: "divorced" }),
@@ -85,8 +81,12 @@ describe("createRelationship", () => {
       toMemberId: "B",
       type: "spouse",
     });
-    expect(repo.deleteRelationshipRecord).toHaveBeenCalledWith({
-      id: "spouse-1",
+    expect(repo.createRelationshipRecord).toHaveBeenCalledWith({
+      treeId: "t1",
+      fromMemberId: "A",
+      toMemberId: "B",
+      type: "divorced",
+      deleteOppositeId: "spouse-1",
     });
     expect(result.type).toBe("divorced");
   });
@@ -96,7 +96,6 @@ describe("createRelationship", () => {
       getRole: vi.fn().mockResolvedValue("editor"),
       hasRelationship: vi.fn().mockResolvedValue(false),
       findRelationship: vi.fn().mockResolvedValue({ id: "divorced-1" }),
-      deleteRelationshipRecord: vi.fn().mockResolvedValue(undefined),
       createRelationshipRecord: vi
         .fn()
         .mockResolvedValue({ id: "r3", type: "spouse" }),
@@ -115,8 +114,12 @@ describe("createRelationship", () => {
       toMemberId: "B",
       type: "divorced",
     });
-    expect(repo.deleteRelationshipRecord).toHaveBeenCalledWith({
-      id: "divorced-1",
+    expect(repo.createRelationshipRecord).toHaveBeenCalledWith({
+      treeId: "t1",
+      fromMemberId: "A",
+      toMemberId: "B",
+      type: "spouse",
+      deleteOppositeId: "divorced-1",
     });
     expect(result.type).toBe("spouse");
   });
@@ -126,7 +129,6 @@ describe("createRelationship", () => {
       getRole: vi.fn().mockResolvedValue("editor"),
       hasRelationship: vi.fn().mockResolvedValue(false),
       findRelationship: vi.fn().mockResolvedValue(null),
-      deleteRelationshipRecord: vi.fn(),
       createRelationshipRecord: vi
         .fn()
         .mockResolvedValue({ id: "r4", type: "spouse" }),
@@ -139,6 +141,12 @@ describe("createRelationship", () => {
       input: { fromMemberId: "A", toMemberId: "B", type: "spouse" },
     });
 
-    expect(repo.deleteRelationshipRecord).not.toHaveBeenCalled();
+    expect(repo.createRelationshipRecord).toHaveBeenCalledWith({
+      treeId: "t1",
+      fromMemberId: "A",
+      toMemberId: "B",
+      type: "spouse",
+      deleteOppositeId: undefined,
+    });
   });
 });

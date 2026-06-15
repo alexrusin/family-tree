@@ -22,12 +22,12 @@ export async function createRelationship(params: {
       toMemberId: string;
       type: CanonicalRelationshipType;
     }) => Promise<{ id: string } | null>;
-    deleteRelationshipRecord: (args: { id: string }) => Promise<void>;
     createRelationshipRecord: (args: {
       treeId: string;
       fromMemberId: string;
       toMemberId: string;
       type: CanonicalRelationshipType;
+      deleteOppositeId?: string;
     }) => Promise<{ id: string; type: string }>;
   };
   actorUserId: string;
@@ -52,6 +52,7 @@ export async function createRelationship(params: {
   }
 
   const oppositeType = OPPOSITE_STATUS_TYPE[canonical.type];
+  let deleteOppositeId: string | undefined;
   if (oppositeType) {
     const opposite = await params.repo.findRelationship({
       treeId: params.treeId,
@@ -61,14 +62,17 @@ export async function createRelationship(params: {
     });
 
     if (opposite) {
-      await params.repo.deleteRelationshipRecord({ id: opposite.id });
+      deleteOppositeId = opposite.id;
     }
   }
 
+  // Delete-opposite + create must be atomic so a mid-swap failure can never
+  // leave the pair with neither relationship (ADR-0002).
   return params.repo.createRelationshipRecord({
     treeId: params.treeId,
     fromMemberId: canonical.fromMemberId,
     toMemberId: canonical.toMemberId,
     type: canonical.type,
+    deleteOppositeId,
   });
 }
