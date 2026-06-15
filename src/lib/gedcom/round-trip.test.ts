@@ -17,7 +17,7 @@ interface NamedMember {
 interface NamedRelationship {
   fromMemberId: string;
   toMemberId: string;
-  type: "parent" | "spouse" | "sibling";
+  type: "parent" | "spouse" | "divorced" | "sibling";
 }
 
 function signature(members: NamedMember[], relationships: NamedRelationship[]) {
@@ -61,6 +61,51 @@ describe("GEDCOM round trip", () => {
       { fromMemberId: "m1", toMemberId: "m2", type: "spouse" },
       { fromMemberId: "m5", toMemberId: "m6", type: "spouse" },
       { fromMemberId: "m7", toMemberId: "m8", type: "sibling" },
+    ];
+
+    const before = signature(members, relationships);
+
+    // export -> import
+    const document1 = mapTreeToGedcomDocument(members, relationships);
+    const text1 = serializeGedcom(document1);
+    const records1 = parseGedcom(text1);
+    const { members: imported, relationships: importedRelationships } =
+      mapGedcomToMembers(records1);
+
+    const afterImport = signature(imported, importedRelationships);
+    expect(afterImport).toEqual(before);
+
+    // re-export
+    const exportable: ExportableMember[] = imported.map((m) => ({
+      id: m.id,
+      firstName: m.firstName,
+      lastName: m.lastName,
+      gender: m.gender,
+    }));
+    const document2 = mapTreeToGedcomDocument(exportable, importedRelationships);
+    const text2 = serializeGedcom(document2);
+    const records2 = parseGedcom(text2);
+    const { members: reimported, relationships: reimportedRelationships } =
+      mapGedcomToMembers(records2);
+
+    const afterReExport = signature(reimported, reimportedRelationships);
+    expect(afterReExport).toEqual(before);
+  });
+
+  it("round-trips divorced relationships (with and without children) stably as divorced", () => {
+    const members: ExportableMember[] = [
+      { id: "m1", firstName: "Dad", lastName: "Smith", gender: "male" },
+      { id: "m2", firstName: "Mom", lastName: "Smith", gender: "female" },
+      { id: "m3", firstName: "Kid1", lastName: "Smith" },
+      { id: "m4", firstName: "Ex1", lastName: "Jones", gender: "male" },
+      { id: "m5", firstName: "Ex2", lastName: "Jones", gender: "female" },
+    ];
+
+    const relationships: ExportableRelationship[] = [
+      { fromMemberId: "m1", toMemberId: "m3", type: "parent" },
+      { fromMemberId: "m2", toMemberId: "m3", type: "parent" },
+      { fromMemberId: "m1", toMemberId: "m2", type: "divorced" },
+      { fromMemberId: "m4", toMemberId: "m5", type: "divorced" },
     ];
 
     const before = signature(members, relationships);

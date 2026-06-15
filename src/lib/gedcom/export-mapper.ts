@@ -7,7 +7,11 @@ import type {
 
 export type ExportableGender = "male" | "female" | "other" | "undisclosed";
 export type ExportableDatePrecision = "year" | "month" | "day";
-export type ExportableRelationshipType = "parent" | "spouse" | "sibling";
+export type ExportableRelationshipType =
+  | "parent"
+  | "spouse"
+  | "divorced"
+  | "sibling";
 
 export interface ExportableMember {
   id: string;
@@ -233,7 +237,14 @@ export function mapRelationshipsToGedcomFamilies(
       (memberOrder.get(b.childIds[0]) ?? 0),
   );
 
-  const coveredSpousePairs = new Set<string>();
+  // Map each spouse/divorced pair to its status for tagging FAM records.
+  const pairStatus = new Map<string, "spouse" | "divorced">();
+  for (const rel of relationships) {
+    if (rel.type !== "spouse" && rel.type !== "divorced") continue;
+    pairStatus.set(pairKey(rel.fromMemberId, rel.toMemberId), rel.type);
+  }
+
+  const coveredPairs = new Set<string>();
 
   for (const entry of parentSetEntries) {
     const parentMembers = entry.parentIds
@@ -247,25 +258,31 @@ export function mapRelationshipsToGedcomFamilies(
       .sort((a, b) => (memberOrder.get(a) ?? 0) - (memberOrder.get(b) ?? 0))
       .map((id) => xrefMap.get(id)!);
 
-    families.push({
+    const family: GedcomFamily = {
       xrefId: nextFamilyXref(),
       husbandXrefId: husband ? xrefMap.get(husband.id) : undefined,
       wifeXrefId: wife ? xrefMap.get(wife.id) : undefined,
       childXrefIds,
-    });
+    };
 
     if (entry.parentIds.length === 2) {
-      coveredSpousePairs.add(pairKey(entry.parentIds[0], entry.parentIds[1]));
+      const key = pairKey(entry.parentIds[0], entry.parentIds[1]);
+      coveredPairs.add(key);
+      if (pairStatus.get(key) === "divorced") {
+        family.divorced = true;
+      }
     }
+
+    families.push(family);
   }
 
-  // Childless spouse pairs: emit a FAM with HUSB/WIFE and no CHIL.
-  const seenSpousePairs = new Set<string>();
+  // Childless spouse/divorced pairs: emit a FAM with HUSB/WIFE and no CHIL.
+  const seenPairs = new Set<string>();
   for (const rel of relationships) {
-    if (rel.type !== "spouse") continue;
+    if (rel.type !== "spouse" && rel.type !== "divorced") continue;
     const key = pairKey(rel.fromMemberId, rel.toMemberId);
-    if (seenSpousePairs.has(key) || coveredSpousePairs.has(key)) continue;
-    seenSpousePairs.add(key);
+    if (seenPairs.has(key) || coveredPairs.has(key)) continue;
+    seenPairs.add(key);
 
     const parentMembers = [rel.fromMemberId, rel.toMemberId]
       .map((id) => memberById.get(id))
@@ -278,6 +295,7 @@ export function mapRelationshipsToGedcomFamilies(
       husbandXrefId: husband ? xrefMap.get(husband.id) : undefined,
       wifeXrefId: wife ? xrefMap.get(wife.id) : undefined,
       childXrefIds: [],
+      divorced: rel.type === "divorced" ? true : undefined,
     });
   }
 
