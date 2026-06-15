@@ -17,6 +17,7 @@ function isRelationshipType(value: unknown): value is RelationshipType {
     value === "parent" ||
     value === "child" ||
     value === "spouse" ||
+    value === "divorced" ||
     value === "sibling"
   );
 }
@@ -104,15 +105,41 @@ export async function POST(
             },
             select: { id: true },
           })),
-        createRelationshipRecord: (args) =>
-          prisma.relationship.create({
+        findRelationship: (args) =>
+          prisma.relationship.findFirst({
+            where: {
+              treeId: args.treeId,
+              fromMemberId: args.fromMemberId,
+              toMemberId: args.toMemberId,
+              type: args.type,
+            },
+            select: { id: true },
+          }),
+        createRelationshipRecord: async (args) => {
+          const create = prisma.relationship.create({
             data: {
               treeId: args.treeId,
               fromMemberId: args.fromMemberId,
               toMemberId: args.toMemberId,
               type: args.type,
             },
-          }),
+          });
+
+          if (!args.deleteOppositeId) {
+            return create;
+          }
+
+          // Atomic swap: delete the opposite-status relationship and create the
+          // new one in a single transaction so a failure can never leave the
+          // pair with neither relationship (ADR-0002).
+          const [, created] = await prisma.$transaction([
+            prisma.relationship.delete({
+              where: { id: args.deleteOppositeId },
+            }),
+            create,
+          ]);
+          return created;
+        },
       },
       actorUserId: session.user.id,
       treeId,

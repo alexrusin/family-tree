@@ -44,4 +44,44 @@ describe("relationshipDedupKey", () => {
     });
     expect(k1).toBe(k2);
   });
+
+  it("creates stable key for divorced regardless of direction", () => {
+    const k1 = relationshipDedupKey({
+      fromMemberId: "A",
+      toMemberId: "B",
+      type: "divorced",
+    });
+    const k2 = relationshipDedupKey({
+      fromMemberId: "B",
+      toMemberId: "A",
+      type: "divorced",
+    });
+    expect(k1).toBe(k2);
+  });
+});
+
+describe("canonicalizeRelationship divorced", () => {
+  it("normalizes divorced relation with sorted member ids", () => {
+    const canonical = canonicalizeRelationship({
+      fromMemberId: "B",
+      toMemberId: "A",
+      type: "divorced",
+    });
+
+    expect(canonical).toEqual({
+      fromMemberId: "A",
+      toMemberId: "B",
+      type: "divorced",
+    });
+  });
+
+  it("throws on self relationship", () => {
+    expect(() =>
+      canonicalizeRelationship({
+        fromMemberId: "A",
+        toMemberId: "A",
+        type: "divorced",
+      }),
+    ).toThrow("ERR_SELF_RELATIONSHIP");
+  });
 });

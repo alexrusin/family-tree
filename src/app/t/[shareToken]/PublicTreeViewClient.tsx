@@ -59,6 +59,7 @@ export default function PublicTreeViewClient({
       parentOf: string;
       childOf: string;
       spouseOf: string;
+      divorcedOf: string;
       siblingOf: string;
       editMember: string;
       deleteMember: string;

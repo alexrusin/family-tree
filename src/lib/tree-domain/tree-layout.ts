@@ -62,7 +62,7 @@ export interface TreeRelationship {
   id: string;
   fromMemberId: string;
   toMemberId: string;
-  type: "parent" | "spouse" | "sibling";
+  type: "parent" | "spouse" | "divorced" | "sibling";
 }
 
 export type MemberNodeData = { member: TreeMemberData };
@@ -72,7 +72,8 @@ export type TreeFlowNode =
   | Node<UnionNodeData, "union">;
 export type TreeFlowEdge =
   | Edge<{ relationshipId?: string; relationshipIds?: string[] }, "parent">
-  | Edge<{ relationshipId: string }, "spouse">;
+  | Edge<{ relationshipId: string }, "spouse">
+  | Edge<{ relationshipId: string }, "divorced">;
 
 export const NODE_W = 120;
 export const NODE_H = 150;
@@ -91,6 +92,7 @@ export function buildTreeGraph(
 
   const parentRels = relationships.filter((r) => r.type === "parent");
   const spouseRels = relationships.filter((r) => r.type === "spouse");
+  const divorcedRels = relationships.filter((r) => r.type === "divorced");
 
   // ── Dagre layout (parent edges only drive the hierarchy) ──────────────
   const g = new Dagre.graphlib.Graph();
@@ -139,18 +141,21 @@ export function buildTreeGraph(
     parentRelIdByPair.set(`${r.fromMemberId}::${r.toMemberId}`, r.id);
   }
 
-  // ── Union nodes (spouse pairs with children) ──────────────────────────
+  // ── Union nodes (spouse/divorced pairs with shared children) ──────────
   const unionNodes: TreeFlowNode[] = [];
   const unionMap = new Map<
     string,
     { spouseA: string; spouseB: string; children: Set<string> }
   >();
-  const spousePairRelId = new Map<string, string>();
+  const couplePairRelId = new Map<string, string>();
+  const couplePairType = new Map<string, "spouse" | "divorced">();
+  const coupleRels = [...spouseRels, ...divorcedRels];
 
-  for (const r of spouseRels) {
+  for (const r of coupleRels) {
     const [a, b] = [r.fromMemberId, r.toMemberId].sort();
     const key = `${a}::${b}`;
-    spousePairRelId.set(key, r.id);
+    couplePairRelId.set(key, r.id);
+    couplePairType.set(key, r.type as "spouse" | "divorced");
     const kidsA = childrenOf.get(a) ?? new Set<string>();
     const kidsB = childrenOf.get(b) ?? new Set<string>();
     const kids = new Set([...kidsA].filter((k) => kidsB.has(k)));
@@ -195,19 +200,20 @@ export function buildTreeGraph(
       handledPairs.add(`${spouseA}::${cid}`);
       handledPairs.add(`${spouseB}::${cid}`);
     }
-    const relId = spousePairRelId.get(key)!;
+    const relId = couplePairRelId.get(key)!;
+    const coupleType = couplePairType.get(key)!;
     edges.push({
       id: `e-${key}-sa`,
       source: spouseA,
       target: uid,
-      type: "spouse" as const,
+      type: coupleType,
       data: { relationshipId: relId },
     });
     edges.push({
       id: `e-${key}-sb`,
       source: spouseB,
       target: uid,
-      type: "spouse" as const,
+      type: coupleType,
       data: { relationshipId: relId },
     });
   }
@@ -250,6 +256,32 @@ export function buildTreeGraph(
         data: { relationshipId: r.id },
       });
     }
+  }
+
+  // Direct divorced edges (childless couples — no union node created)
+  for (const r of divorcedRels) {
+    const [a, b] = [r.fromMemberId, r.toMemberId].sort();
+    if (unionMap.has(`${a}::${b}`)) continue;
+    const sourcePos = pos.get(r.fromMemberId);
+    const targetPos = pos.get(r.toMemberId);
+    const sourceIsOnLeft =
+      sourcePos !== undefined &&
+      targetPos !== undefined &&
+      sourcePos.x <= targetPos.x;
+
+    edges.push({
+      id: `e-divorced-${r.id}`,
+      source: r.fromMemberId,
+      target: r.toMemberId,
+      type: "divorced" as const,
+      sourceHandle: sourceIsOnLeft
+        ? SPOUSE_RIGHT_SOURCE_HANDLE
+        : SPOUSE_LEFT_SOURCE_HANDLE,
+      targetHandle: sourceIsOnLeft
+        ? SPOUSE_LEFT_TARGET_HANDLE
+        : SPOUSE_RIGHT_TARGET_HANDLE,
+      data: { relationshipId: r.id },
+    });
   }
 
   return { nodes: [...memberNodes, ...unionNodes], edges };

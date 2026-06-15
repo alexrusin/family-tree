@@ -22,6 +22,7 @@ interface SidePanelT {
   parentOf: string;
   childOf: string;
   spouseOf: string;
+  divorcedOf: string;
   siblingOf: string;
   editMember: string;
   deleteMember: string;
@@ -100,6 +101,11 @@ export default function MemberSidePanel({
       const otherId =
         r.fromMemberId === member.id ? r.toMemberId : r.fromMemberId;
       return { label: t.spouseOf, otherName: getMemberName(otherId) };
+    }
+    if (r.type === "divorced") {
+      const otherId =
+        r.fromMemberId === member.id ? r.toMemberId : r.fromMemberId;
+      return { label: t.divorcedOf, otherName: getMemberName(otherId) };
     }
     const otherId =
       r.fromMemberId === member.id ? r.toMemberId : r.fromMemberId;

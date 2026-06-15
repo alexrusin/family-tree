@@ -15,10 +15,15 @@ const translations = {
   parent: "Parent",
   child: "Child",
   spouse: "Spouse",
+  divorced: "Divorced",
   sibling: "Sibling",
   searchMembers: "Search members",
   noMembersFound: "No members found.",
   needTwoMembers: "At least two members are required to create a relationship.",
+  willReplaceSpouse:
+    "This pair is currently recorded as Spouse. Saving will replace it with Divorced.",
+  willReplaceDivorced:
+    "This pair is currently recorded as Divorced. Saving will replace it with Spouse.",
   closeModal: "Close modal",
   cancel: "Cancel",
   saving: "Saving...",
@@ -73,6 +78,7 @@ describe("AddRelationshipModal", () => {
         isOpen
         treeId="tree-1"
         members={members}
+        relationships={[]}
         onClose={onClose}
         onRelationshipCreated={onRelationshipCreated}
         t={translations}
@@ -110,6 +116,98 @@ describe("AddRelationshipModal", () => {
     expect(onRelationshipCreated).toHaveBeenCalled();
   });
 
+  it("allows selecting Divorced and submits the divorced type", async () => {
+    const user = userEvent.setup();
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: vi.fn().mockResolvedValue({
+        relationship: {
+          id: "r1",
+          fromMemberId: "m1",
+          toMemberId: "m2",
+          type: "divorced",
+        },
+      }),
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const onClose = vi.fn();
+    const onRelationshipCreated = vi.fn();
+
+    render(
+      <AddRelationshipModal
+        isOpen
+        treeId="tree-1"
+        members={members}
+        relationships={[]}
+        onClose={onClose}
+        onRelationshipCreated={onRelationshipCreated}
+        t={translations}
+      />,
+    );
+
+    const memberButtons = screen.getAllByRole("button", { name: "Select member" });
+    await user.click(memberButtons[0]);
+    await user.click(screen.getByRole("option", { name: "Elena Rusin" }));
+
+    await user.click(screen.getByRole("button", { name: "Select member" }));
+    await user.click(screen.getByRole("option", { name: "Marco Diaz" }));
+
+    await user.selectOptions(screen.getByRole("combobox"), "Divorced");
+
+    await user.click(screen.getByRole("button", { name: "Add Relationship" }));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        "/api/trees/tree-1/relationships",
+        expect.objectContaining({
+          method: "POST",
+        }),
+      );
+    });
+    expect(fetchMock.mock.calls[0]?.[1]).toMatchObject({
+      body: JSON.stringify({
+        fromMemberId: "m1",
+        toMemberId: "m2",
+        type: "divorced",
+      }),
+    });
+  });
+
+  it("shows a notice that an existing spouse relationship will be replaced when switching to Divorced", async () => {
+    const user = userEvent.setup();
+    vi.stubGlobal("fetch", vi.fn());
+
+    render(
+      <AddRelationshipModal
+        isOpen
+        treeId="tree-1"
+        members={members}
+        relationships={[
+          { id: "r1", fromMemberId: "m1", toMemberId: "m2", type: "spouse" },
+        ]}
+        onClose={vi.fn()}
+        onRelationshipCreated={vi.fn()}
+        t={translations}
+      />,
+    );
+
+    const memberButtons = screen.getAllByRole("button", { name: "Select member" });
+    await user.click(memberButtons[0]);
+    await user.click(screen.getByRole("option", { name: "Elena Rusin" }));
+
+    await user.click(screen.getByRole("button", { name: "Select member" }));
+    await user.click(screen.getByRole("option", { name: "Marco Diaz" }));
+
+    await user.selectOptions(screen.getByRole("combobox"), "Divorced");
+
+    expect(
+      screen.getByText(
+        "This pair is currently recorded as Spouse. Saving will replace it with Divorced.",
+      ),
+    ).not.toBeNull();
+  });
+
   it("shows localized empty state when search has no matches", async () => {
     const user = userEvent.setup();
     vi.stubGlobal("fetch", vi.fn());
@@ -119,6 +217,7 @@ describe("AddRelationshipModal", () => {
         isOpen
         treeId="tree-1"
         members={members}
+        relationships={[]}
         onClose={vi.fn()}
         onRelationshipCreated={vi.fn()}
         t={translations}

@@ -29,12 +29,17 @@ import {
 import { MemberNode } from "./MemberNode";
 import { UnionNode } from "./UnionNode";
 import { SpouseEdge } from "./SpouseEdge";
+import { DivorcedEdge } from "./DivorcedEdge";
 import { ParentEdge } from "./ParentEdge";
 import { Plus, ZoomIn, ZoomOut, Maximize2, Lock, Unlock } from "lucide-react";
 import { resolveDragLockPreference, setStoredDragLockPreference } from "@/lib/tree-domain/drag-lock-preference";
 
 const nodeTypes: NodeTypes = { member: MemberNode, union: UnionNode };
-const edgeTypes: EdgeTypes = { spouse: SpouseEdge, parent: ParentEdge };
+const edgeTypes: EdgeTypes = {
+  spouse: SpouseEdge,
+  divorced: DivorcedEdge,
+  parent: ParentEdge,
+};
 
 interface TreeCanvasProps {
   members: TreeMemberData[];

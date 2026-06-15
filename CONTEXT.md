@@ -105,15 +105,19 @@ _Avoid_: headshot, picture
 
 ## Relationship
 
-A typed connection between two Members in one Family Tree. The canonical Relationship types are Parent Relationship, Spouse Relationship, and Sibling Relationship.
+A typed connection between two Members in one Family Tree. The canonical Relationship types are Parent Relationship, Spouse Relationship, Divorced Relationship, and Sibling Relationship.
 
 ## Spouse Relationship
 
-A mutual Relationship between two Members who are spouses. It is non-directional in the workspace even when a stored record happens to list one Member first.
+A mutual Relationship between two Members who are spouses. It is non-directional in the workspace even when a stored record happens to list one Member first. It is mutually exclusive with a Divorced Relationship for the same pair — a couple is recorded as one or the other, never both.
+
+## Divorced Relationship
+
+A mutual Relationship between two Members who were spouses and are now divorced. Like a Spouse Relationship it is non-directional, and it is mutually exclusive with a Spouse Relationship for the same pair: recording one for a pair replaces the other. It is drawn as a dotted line to distinguish it from a Spouse Relationship's solid line.
 
 ## Union
 
-A shared parental pairing between two Members who have at least one child in common. A Union groups the shared-child connection and is distinct from a Spouse Relationship by itself.
+A shared parental pairing between two Members who have at least one child in common. A Union groups the shared-child connection and is distinct from the marital relationship by itself. The partners may be in a Spouse Relationship or a Divorced Relationship (or neither) — divorcing a couple does not dissolve their Union.
 
 ## Manual Tree Arrangement
 

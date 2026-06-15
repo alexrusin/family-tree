@@ -15,6 +15,7 @@ export interface GedcomFamily {
   husbandXrefId?: string;
   wifeXrefId?: string;
   childXrefIds: string[];
+  divorced?: boolean;
 }
 
 export interface GedcomDocument {
@@ -98,6 +99,10 @@ export function serializeGedcom(document: GedcomDocument): string {
 
     for (const childXrefId of family.childXrefIds) {
       lines.push(`1 CHIL @${childXrefId}@`);
+    }
+
+    if (family.divorced) {
+      lines.push("1 DIV Y");
     }
   }
 

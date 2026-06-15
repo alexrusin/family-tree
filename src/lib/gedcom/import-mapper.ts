@@ -26,7 +26,11 @@ export interface ImportedMember {
   bio?: string | null;
 }
 
-export type ImportedRelationshipType = "parent" | "spouse" | "sibling";
+export type ImportedRelationshipType =
+  | "parent"
+  | "spouse"
+  | "divorced"
+  | "sibling";
 
 export interface ImportedRelationship {
   fromMemberId: string;
@@ -84,7 +88,6 @@ const SKIPPED_EVENT_TAGS = new Set([
   "MARL",
   "MARS",
   "ANUL",
-  "DIV",
   "DIVF",
   "ENGA",
   "RESI",
@@ -383,7 +386,12 @@ export function mapGedcomToMembers(records: GedcomNode[]): {
     }
 
     if (parentXrefIds.length === 2) {
-      addRelationship(parentXrefIds[0], parentXrefIds[1], "spouse");
+      const hasDiv = record.children.some((child) => child.tag === "DIV");
+      addRelationship(
+        parentXrefIds[0],
+        parentXrefIds[1],
+        hasDiv ? "divorced" : "spouse",
+      );
     }
 
     if (parentXrefIds.length === 0 && childXrefIds.length >= 2) {
