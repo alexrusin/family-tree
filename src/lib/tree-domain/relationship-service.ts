@@ -1,5 +1,6 @@
 import {
   canonicalizeRelationship,
+  OPPOSITE_STATUS_TYPE,
   type RelationshipInput,
 } from "./relationship-canonical";
 import { canEditMembers, type TreeRole } from "./tree-access";
@@ -15,6 +16,13 @@ export async function createRelationship(params: {
       toMemberId: string;
       type: CanonicalRelationshipType;
     }) => Promise<boolean>;
+    findRelationship: (args: {
+      treeId: string;
+      fromMemberId: string;
+      toMemberId: string;
+      type: CanonicalRelationshipType;
+    }) => Promise<{ id: string } | null>;
+    deleteRelationshipRecord: (args: { id: string }) => Promise<void>;
     createRelationshipRecord: (args: {
       treeId: string;
       fromMemberId: string;
@@ -41,6 +49,20 @@ export async function createRelationship(params: {
 
   if (exists) {
     throw new Error("ERR_DUPLICATE_RELATIONSHIP");
+  }
+
+  const oppositeType = OPPOSITE_STATUS_TYPE[canonical.type];
+  if (oppositeType) {
+    const opposite = await params.repo.findRelationship({
+      treeId: params.treeId,
+      fromMemberId: canonical.fromMemberId,
+      toMemberId: canonical.toMemberId,
+      type: oppositeType,
+    });
+
+    if (opposite) {
+      await params.repo.deleteRelationshipRecord({ id: opposite.id });
+    }
   }
 
   return params.repo.createRelationshipRecord({

@@ -350,6 +350,8 @@
       "searchMembers": "Buscar miembros",
       "noMembersFound": "No se encontraron miembros.",
       "needTwoMembers": "Se necesitan al menos dos miembros para crear una relación.",
+      "willReplaceSpouse": "Esta pareja está registrada como Cónyuges. Al guardar se reemplazará por Divorciado/a.",
+      "willReplaceDivorced": "Esta pareja está registrada como Divorciado/a. Al guardar se reemplazará por Cónyuges.",
       "closeModal": "Cerrar modal",
       "remove": "Eliminar",
       "removing": "Eliminando...",

@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { X } from "lucide-react";
 import type { TreeRelationship } from "@/lib/tree-domain/tree-layout";
+import { OPPOSITE_STATUS_TYPE } from "@/lib/tree-domain/relationship-canonical";
 
 type RelationshipType = "parent" | "child" | "spouse" | "divorced" | "sibling";
 
@@ -27,6 +28,8 @@ interface RelationshipT {
   searchMembers: string;
   noMembersFound: string;
   needTwoMembers: string;
+  willReplaceSpouse: string;
+  willReplaceDivorced: string;
   closeModal: string;
   cancel: string;
   saving: string;
@@ -47,6 +50,7 @@ interface AddRelationshipModalProps {
   isOpen: boolean;
   treeId: string;
   members: MemberOption[];
+  relationships: TreeRelationship[];
   onClose: () => void;
   onRelationshipCreated: (relationship: TreeRelationship) => void;
   t: RelationshipT;
@@ -266,6 +270,7 @@ export default function AddRelationshipModal({
   isOpen,
   treeId,
   members,
+  relationships,
   onClose,
   onRelationshipCreated,
   t,
@@ -302,6 +307,28 @@ export default function AddRelationshipModal({
     () => memberOptions.filter((member) => member.id !== fromMemberId),
     [fromMemberId, memberOptions],
   );
+
+  const replaceNotice = useMemo(() => {
+    const oppositeType = OPPOSITE_STATUS_TYPE[relationshipType];
+    if (!oppositeType || !fromMemberId || !toMemberId) {
+      return null;
+    }
+
+    const hasOpposite = relationships.some(
+      (relationship) =>
+        relationship.type === oppositeType &&
+        ((relationship.fromMemberId === fromMemberId &&
+          relationship.toMemberId === toMemberId) ||
+          (relationship.fromMemberId === toMemberId &&
+            relationship.toMemberId === fromMemberId)),
+    );
+
+    if (!hasOpposite) {
+      return null;
+    }
+
+    return oppositeType === "spouse" ? t.willReplaceSpouse : t.willReplaceDivorced;
+  }, [relationshipType, fromMemberId, toMemberId, relationships, t]);
 
   const handleClose = () => {
     if (isLoading) {
@@ -433,6 +460,12 @@ export default function AddRelationshipModal({
               <option value="sibling">{t.sibling}</option>
             </select>
           </div>
+
+          {replaceNotice && (
+            <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
+              <p className="text-sm text-amber-800">{replaceNotice}</p>
+            </div>
+          )}
 
           {members.length < 2 && (
             <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">

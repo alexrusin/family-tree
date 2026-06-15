@@ -52,3 +52,14 @@ export function relationshipDedupKey(input: RelationshipInput): string {
   const canonical = canonicalizeRelationship(input);
   return `${canonical.type}:${canonical.fromMemberId}:${canonical.toMemberId}`;
 }
+
+/**
+ * Spouse and divorced are mutually exclusive for a given pair. Creating one
+ * swaps out an existing record of the other.
+ */
+export const OPPOSITE_STATUS_TYPE: Partial<
+  Record<RelationshipType, "spouse" | "divorced">
+> = {
+  spouse: "divorced",
+  divorced: "spouse",
+};

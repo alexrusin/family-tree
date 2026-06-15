@@ -350,6 +350,8 @@
       "searchMembers": "Search members",
       "noMembersFound": "No members found.",
       "needTwoMembers": "At least two members are required to create a relationship.",
+      "willReplaceSpouse": "This pair is currently recorded as Spouse. Saving will replace it with Divorced.",
+      "willReplaceDivorced": "This pair is currently recorded as Divorced. Saving will replace it with Spouse.",
       "closeModal": "Close modal",
       "remove": "Remove",
       "removing": "Removing...",

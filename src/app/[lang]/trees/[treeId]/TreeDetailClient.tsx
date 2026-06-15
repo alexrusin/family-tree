@@ -911,6 +911,7 @@ export default function TreeDetailClient({
         isOpen={isAddRelationshipOpen}
         treeId={treeId}
         members={members}
+        relationships={relationships}
         onClose={() => setIsAddRelationshipOpen(false)}
         onRelationshipCreated={handleRelationshipCreated}
         t={{

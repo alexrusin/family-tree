@@ -105,6 +105,19 @@ export async function POST(
             },
             select: { id: true },
           })),
+        findRelationship: (args) =>
+          prisma.relationship.findFirst({
+            where: {
+              treeId: args.treeId,
+              fromMemberId: args.fromMemberId,
+              toMemberId: args.toMemberId,
+              type: args.type,
+            },
+            select: { id: true },
+          }),
+        deleteRelationshipRecord: async (args) => {
+          await prisma.relationship.delete({ where: { id: args.id } });
+        },
         createRelationshipRecord: (args) =>
           prisma.relationship.create({
             data: {
