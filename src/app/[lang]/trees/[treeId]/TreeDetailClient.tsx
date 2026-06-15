@@ -221,13 +221,22 @@ function edgeLabel(
     return {
       fromName: getMemberName(edge.source),
       toName: getMemberName(otherId),
-      typeLabel: t.spouseOf,
+      typeLabel: edge.type === "divorced" ? t.divorcedOf : t.spouseOf,
     };
   }
 
   if (edge.type === "parent") {
+    // Union → child edges have a synthetic "union-a::b" source; resolve it to
+    // the two parents' names so the popover stays human-readable.
+    let fromName: string;
+    if (edge.source.startsWith("union-")) {
+      const [a, b] = edge.source.replace("union-", "").split("::");
+      fromName = `${getMemberName(a)} & ${getMemberName(b)}`;
+    } else {
+      fromName = getMemberName(edge.source);
+    }
     return {
-      fromName: getMemberName(edge.source),
+      fromName,
       toName: getMemberName(edge.target),
       typeLabel: t.parentOf,
     };

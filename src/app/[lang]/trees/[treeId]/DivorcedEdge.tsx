@@ -15,13 +15,18 @@ export const DivorcedEdge = memo(function DivorcedEdge({
 }: EdgeProps<DivorcedEdgeType>) {
   const [edgePath] = getStraightPath({ sourceX, sourceY, targetX, targetY });
   return (
-    <path
-      id={id}
-      d={edgePath}
-      stroke="#44403C"
-      strokeWidth={2}
-      strokeDasharray="6,6"
-      fill="none"
-    />
+    <g>
+      {/* Transparent wide hit area — makes the dashed line easy to click */}
+      <path id={id} d={edgePath} stroke="transparent" strokeWidth={20} fill="none" />
+      {/* Visible dashed line */}
+      <path
+        d={edgePath}
+        stroke="#44403C"
+        strokeWidth={2}
+        strokeDasharray="6,6"
+        fill="none"
+        pointerEvents="none"
+      />
+    </g>
   );
 });
