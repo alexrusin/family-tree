@@ -114,6 +114,54 @@ describe("mapGedcomToMembers", () => {
     expect(members[0].id.length).toBeGreaterThan(0);
   });
 
+  describe("maiden name import", () => {
+    it("parses a maiden-typed NAME into maidenName and untyped NAME into lastName", () => {
+      const records = parseGedcom(
+        [
+          "0 @I1@ INDI",
+          "1 NAME Elena /Ivanova/",
+          "1 NAME Elena /Petrova/",
+          "2 TYPE maiden",
+        ].join("\n"),
+      );
+
+      const { members } = mapGedcomToMembers(records);
+
+      expect(members[0]).toMatchObject({
+        firstName: "Elena",
+        lastName: "Ivanova",
+        maidenName: "Petrova",
+      });
+    });
+
+    it("leaves maidenName null when no maiden-typed NAME exists", () => {
+      const records = parseGedcom(
+        ["0 @I1@ INDI", "1 NAME John /Smith/"].join("\n"),
+      );
+
+      const { members } = mapGedcomToMembers(records);
+
+      expect(members[0].maidenName).toBeNull();
+    });
+
+    it("yields empty current surname when the only NAME is maiden-typed", () => {
+      const records = parseGedcom(
+        [
+          "0 @I1@ INDI",
+          "1 NAME Elena /Petrova/",
+          "2 TYPE maiden",
+        ].join("\n"),
+      );
+
+      const { members } = mapGedcomToMembers(records);
+
+      expect(members[0]).toMatchObject({
+        lastName: null,
+        maidenName: "Petrova",
+      });
+    });
+  });
+
   describe("gender mapping", () => {
     it.each([
       ["M", "male"],

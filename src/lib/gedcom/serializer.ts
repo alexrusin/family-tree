@@ -4,6 +4,7 @@ export interface GedcomIndividual {
   xrefId: string;
   givenName: string;
   surname: string;
+  maidenSurname?: string;
   sex?: GedcomSex;
   birthDate?: string;
   deathDate?: string;
@@ -66,6 +67,13 @@ export function serializeGedcom(document: GedcomDocument): string {
   for (const individual of document.individuals) {
     lines.push(`0 @${individual.xrefId}@ INDI`);
     lines.push(`1 NAME ${individual.givenName} /${individual.surname}/`);
+
+    if (individual.maidenSurname) {
+      lines.push(
+        `1 NAME ${individual.givenName} /${individual.maidenSurname}/`,
+      );
+      lines.push("2 TYPE maiden");
+    }
 
     if (individual.sex) {
       lines.push(`1 SEX ${individual.sex}`);

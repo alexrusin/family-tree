@@ -121,6 +121,35 @@ describe("serializeGedcom", () => {
     expect(output).toContain(`1 NOTE ${"a".repeat(200)}\r\n2 CONC ${"a".repeat(50)}\r\n`);
   });
 
+  it("emits a secondary NAME with TYPE maiden when maidenSurname is present", () => {
+    const output = serializeGedcom({
+      individuals: [
+        {
+          xrefId: "I1",
+          givenName: "Elena",
+          surname: "Ivanova",
+          maidenSurname: "Petrova",
+        },
+      ],
+    });
+
+    expect(output).toContain(
+      "1 NAME Elena /Ivanova/\r\n1 NAME Elena /Petrova/\r\n2 TYPE maiden\r\n",
+    );
+  });
+
+  it("does not emit a secondary NAME when maidenSurname is absent", () => {
+    const output = serializeGedcom({
+      individuals: [
+        { xrefId: "I1", givenName: "Elena", surname: "Ivanova" },
+      ],
+    });
+
+    const nameLines = output.split("\r\n").filter((l) => l.includes("NAME"));
+    expect(nameLines).toHaveLength(1);
+    expect(output).not.toContain("TYPE maiden");
+  });
+
   it("emits FAM records with HUSB, WIFE, and CHIL pointers", () => {
     const output = serializeGedcom({
       individuals: [],

@@ -13,6 +13,7 @@ export interface ImportedMember {
   xrefId: string;
   firstName: string;
   lastName?: string | null;
+  maidenName?: string | null;
   gender: ImportedGender;
   isLiving: boolean;
   birthPrecision?: ImportedDatePrecision | null;
@@ -276,8 +277,21 @@ export function mapGedcomToMembers(records: GedcomNode[]): {
     if (record.tag !== "INDI" || !record.xrefId) continue;
     if (membersByXref.has(record.xrefId)) continue;
 
-    const nameNode = record.children.find((child) => child.tag === "NAME");
-    const { firstName, lastName } = parseGedcomName(nameNode?.value);
+    const nameNodes = record.children.filter((child) => child.tag === "NAME");
+    const primaryNameNode = nameNodes.find(
+      (n) =>
+        !n.children.some(
+          (c) => c.tag === "TYPE" && c.value.trim().toLowerCase() === "maiden",
+        ),
+    );
+    const maidenNameNode = nameNodes.find((n) =>
+      n.children.some(
+        (c) => c.tag === "TYPE" && c.value.trim().toLowerCase() === "maiden",
+      ),
+    );
+
+    const { firstName, lastName } = parseGedcomName(primaryNameNode?.value);
+    const maidenParsed = parseGedcomName(maidenNameNode?.value);
 
     if (!firstName) {
       unknownNameCount += 1;
@@ -324,6 +338,7 @@ export function mapGedcomToMembers(records: GedcomNode[]): {
       xrefId: record.xrefId,
       firstName: firstName ?? "Unknown",
       lastName: lastName ?? null,
+      maidenName: maidenParsed.lastName ?? null,
       gender,
       isLiving,
       birthPrecision: birthDate?.precision ?? null,

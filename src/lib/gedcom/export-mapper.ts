@@ -17,6 +17,7 @@ export interface ExportableMember {
   id: string;
   firstName: string;
   lastName?: string | null;
+  maidenName?: string | null;
   gender?: ExportableGender | null;
   bio?: string | null;
   birthPrecision?: ExportableDatePrecision | null;
@@ -97,6 +98,7 @@ export function mapMembersToGedcomIndividuals(
       xrefId: `I${index + 1}`,
       givenName: member.firstName.trim(),
       surname: member.lastName?.trim() ?? "",
+      maidenSurname: member.maidenName?.trim() || undefined,
       sex: GENDER_TO_SEX[member.gender ?? "undisclosed"],
     };
 

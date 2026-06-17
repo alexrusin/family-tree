@@ -125,6 +125,33 @@ describe("mapMembersToGedcomIndividuals", () => {
     expect(result[0].note).toBe("A long life story.");
   });
 
+  it("includes maidenSurname when member has a maidenName", () => {
+    const result = mapMembersToGedcomIndividuals([
+      { id: "m1", firstName: "Elena", lastName: "Ivanova", maidenName: "Petrova" },
+    ]);
+
+    expect(result[0]).toMatchObject({
+      surname: "Ivanova",
+      maidenSurname: "Petrova",
+    });
+  });
+
+  it("omits maidenSurname when member has no maidenName", () => {
+    const result = mapMembersToGedcomIndividuals([
+      { id: "m1", firstName: "Elena", lastName: "Ivanova" },
+    ]);
+
+    expect(result[0].maidenSurname).toBeUndefined();
+  });
+
+  it("omits maidenSurname when maidenName is empty", () => {
+    const result = mapMembersToGedcomIndividuals([
+      { id: "m1", firstName: "Elena", lastName: "Ivanova", maidenName: "" },
+    ]);
+
+    expect(result[0].maidenSurname).toBeUndefined();
+  });
+
   it("omits NOTE when bio is empty or missing", () => {
     const result = mapMembersToGedcomIndividuals([
       { id: "m1", firstName: "Elena", bio: "" },
