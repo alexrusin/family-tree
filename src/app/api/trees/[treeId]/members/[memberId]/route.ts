@@ -87,6 +87,7 @@ export async function PATCH(
     const updateData: {
       firstName?: string;
       lastName?: string | null;
+      maidenName?: string | null;
       isLiving?: boolean;
       gender?: MemberGender;
       bio?: string | null;
@@ -118,6 +119,10 @@ export async function PATCH(
       updateData.lastName =
         typeof formData.get("lastName") === "string"
           ? ((formData.get("lastName") as string).trim() || null)
+          : null;
+      updateData.maidenName =
+        typeof formData.get("maidenName") === "string"
+          ? ((formData.get("maidenName") as string).trim() || null)
           : null;
       updateData.isLiving = formData.get("isLiving") === "true";
 
@@ -199,6 +204,14 @@ export async function PATCH(
           updateData.lastName = null;
         } else if (typeof body.lastName === "string") {
           updateData.lastName = body.lastName.trim() || null;
+        }
+      }
+
+      if (body?.maidenName !== undefined) {
+        if (body.maidenName === null) {
+          updateData.maidenName = null;
+        } else if (typeof body.maidenName === "string") {
+          updateData.maidenName = body.maidenName.trim() || null;
         }
       }
 

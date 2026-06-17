@@ -36,6 +36,52 @@ describe("createMember", () => {
     ).rejects.toThrow("ERR_FORBIDDEN");
   });
 
+  it("passes trimmed maidenName through to repo", async () => {
+    const repo = {
+      getRole: vi.fn().mockResolvedValue("owner"),
+      getTreeMemberCount: vi.fn().mockResolvedValue(0),
+      createMemberRecord: vi.fn().mockResolvedValue({ id: "m2" }),
+    };
+
+    await createMember({
+      repo,
+      actorUserId: "u1",
+      treeId: "t1",
+      input: {
+        firstName: "Elena",
+        isLiving: false,
+        maidenName: "  Petrova  ",
+      },
+    });
+
+    expect(repo.createMemberRecord).toHaveBeenCalledWith(
+      expect.objectContaining({ maidenName: "  Petrova  " }),
+    );
+  });
+
+  it("passes null maidenName when empty string", async () => {
+    const repo = {
+      getRole: vi.fn().mockResolvedValue("owner"),
+      getTreeMemberCount: vi.fn().mockResolvedValue(0),
+      createMemberRecord: vi.fn().mockResolvedValue({ id: "m3" }),
+    };
+
+    await createMember({
+      repo,
+      actorUserId: "u1",
+      treeId: "t1",
+      input: {
+        firstName: "Ivan",
+        isLiving: true,
+        maidenName: "   ",
+      },
+    });
+
+    expect(repo.createMemberRecord).toHaveBeenCalledWith(
+      expect.objectContaining({ maidenName: "   " }),
+    );
+  });
+
   it("rejects when tree reached member limit", async () => {
     const repo = {
       getRole: vi.fn().mockResolvedValue("owner"),

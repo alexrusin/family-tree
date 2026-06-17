@@ -7,6 +7,7 @@ import {
   type TreeMemberData,
   type TreeRelationship,
   formatMemberDateRange,
+  formatMemberDisplayName,
 } from "@/lib/tree-domain/tree-layout";
 
 export type MemberSidePanelPresentation = "desktop" | "tablet" | "mobile";
@@ -85,7 +86,7 @@ export default function MemberSidePanel({
   const [removingRelId, setRemovingRelId] = useState<string | null>(null);
   const [removeError, setRemoveError] = useState<string | null>(null);
 
-  const displayName = `${member.firstName}${member.lastName ? ` ${member.lastName}` : ""}`;
+  const displayName = formatMemberDisplayName(member);
   const dateRange = formatMemberDateRange(member);
   const genderLabels: Record<string, string> = {
     male: t.genderMale,

@@ -12,6 +12,7 @@ const member: TreeMemberData = {
   id: "member-1",
   firstName: "Ada",
   lastName: "Lovelace",
+  maidenName: null,
   isLiving: false,
   birthYear: 1815,
   birthMonth: null,

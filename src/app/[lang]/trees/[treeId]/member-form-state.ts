@@ -4,6 +4,7 @@ export type MemberGender = "undisclosed" | "male" | "female" | "other";
 export interface MemberFormState {
   firstName: string;
   lastName: string;
+  maidenName: string;
   gender: MemberGender;
   bio: string;
   isLiving: boolean;
@@ -24,6 +25,7 @@ export function initialMemberFormState(): MemberFormState {
   return {
     firstName: "",
     lastName: "",
+    maidenName: "",
     gender: "undisclosed",
     bio: "",
     isLiving: true,

@@ -47,6 +47,7 @@ const members: TreeMemberData[] = [
     id: "m1",
     firstName: "Ada",
     lastName: "Lovelace",
+    maidenName: null,
     isLiving: false,
     birthYear: 1815,
     birthMonth: null,

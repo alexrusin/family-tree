@@ -14,6 +14,7 @@ function makeMember(
     id,
     firstName: "Test",
     lastName: null,
+    maidenName: null,
     isLiving: false,
     birthYear: null,
     birthMonth: null,

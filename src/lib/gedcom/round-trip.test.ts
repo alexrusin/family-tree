@@ -12,6 +12,7 @@ interface NamedMember {
   id: string;
   firstName: string;
   lastName?: string | null;
+  maidenName?: string | null;
 }
 
 interface NamedRelationship {
@@ -22,7 +23,10 @@ interface NamedRelationship {
 
 function signature(members: NamedMember[], relationships: NamedRelationship[]) {
   const nameById = new Map(
-    members.map((m) => [m.id, `${m.firstName}|${m.lastName ?? ""}`]),
+    members.map((m) => [
+      m.id,
+      `${m.firstName}|${m.lastName ?? ""}|${m.maidenName ?? ""}`,
+    ]),
   );
 
   const memberNames = [...nameById.values()].sort();
@@ -80,6 +84,7 @@ describe("GEDCOM round trip", () => {
       id: m.id,
       firstName: m.firstName,
       lastName: m.lastName,
+      maidenName: m.maidenName,
       gender: m.gender,
     }));
     const document2 = mapTreeToGedcomDocument(exportable, importedRelationships);
@@ -125,6 +130,7 @@ describe("GEDCOM round trip", () => {
       id: m.id,
       firstName: m.firstName,
       lastName: m.lastName,
+      maidenName: m.maidenName,
       gender: m.gender,
     }));
     const document2 = mapTreeToGedcomDocument(exportable, importedRelationships);
@@ -134,6 +140,49 @@ describe("GEDCOM round trip", () => {
       mapGedcomToMembers(records2);
 
     const afterReExport = signature(reimported, reimportedRelationships);
+    expect(afterReExport).toEqual(before);
+  });
+
+  it("round-trips both current surname and maiden name", () => {
+    const members: ExportableMember[] = [
+      {
+        id: "m1",
+        firstName: "Elena",
+        lastName: "Ivanova",
+        maidenName: "Petrova",
+        gender: "female",
+      },
+      {
+        id: "m2",
+        firstName: "John",
+        lastName: "Smith",
+        gender: "male",
+      },
+    ];
+
+    const before = signature(members, []);
+
+    const document = mapTreeToGedcomDocument(members, []);
+    const text = serializeGedcom(document);
+    const records = parseGedcom(text);
+    const { members: imported } = mapGedcomToMembers(records);
+
+    const afterImport = signature(imported, []);
+    expect(afterImport).toEqual(before);
+
+    const exportable: ExportableMember[] = imported.map((m) => ({
+      id: m.id,
+      firstName: m.firstName,
+      lastName: m.lastName,
+      maidenName: m.maidenName,
+      gender: m.gender,
+    }));
+    const document2 = mapTreeToGedcomDocument(exportable, []);
+    const text2 = serializeGedcom(document2);
+    const records2 = parseGedcom(text2);
+    const { members: reimported } = mapGedcomToMembers(records2);
+
+    const afterReExport = signature(reimported, []);
     expect(afterReExport).toEqual(before);
   });
 
