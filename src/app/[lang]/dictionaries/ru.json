@@ -413,7 +413,10 @@
       "genderMale": "Мужской",
       "genderFemale": "Женский",
       "genderOther": "Другой",
-      "genderUndisclosed": "—"
+      "genderUndisclosed": "—",
+      "collapseFamily": "Свернуть эту семью",
+      "expandFamily": "Развернуть эту семью",
+      "hiddenBadge": "+{count} скрыто"
     },
     "sidebar": {
       "warningBanner": "Приближается лимит 300 участников ({count}/300).",

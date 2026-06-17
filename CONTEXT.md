@@ -134,6 +134,20 @@ _Avoid_: undo drag history, personal reset
 A personal, device-local editor preference that disables dragging of Member nodes so that panning or scrolling — especially on touch devices — cannot accidentally move a Member and disturb the Manual Tree Arrangement. It is remembered per device and applied globally across every Family Tree the editor opens on that device, defaulting to on for touch/coarse-pointer devices and off otherwise. It only affects an editor's own interaction; it changes no shared tree data and grants no permissions. It is distinct from the editor/viewer permission boundary (which decides whether dragging is possible at all) and from the Manual Tree Arrangement (which is shared tree data). Collaborator Viewers and Guest Viewers never encounter it.
 _Avoid_: shared lock, freeze layout, edit mode
 
+## Collapsed Branch
+
+A personal, view-only state in which the family hanging off a Branch Anchor is hidden from the tree workspace, so a viewer can focus on one part of a large Family Tree. Collapsing a Member hides that Member's ancestors and the rest of that ancestral family — including the in-laws who married into it — while keeping the Member and the Member's own descendants visible. Anyone with an independent connection to the rest of the tree stays visible even if they belong to the collapsed family. Like Drag Lock it is remembered per device, applies only to the viewer's own workspace, changes no shared tree data, and is never seen by other Collaborators or Guest Viewers. It is distinct from the Manual Tree Arrangement (shared tree data) and never alters it.
+_Avoid_: pruning, deleting a branch, shared collapse, hiding people
+
+## Branch Anchor
+
+The Member from whom a Collapsed Branch is collapsed. The anchor and the anchor's own descendants stay visible while the anchor's ancestral family is hidden. A Member with no ancestors cannot be a Branch Anchor, since there would be nothing to hide.
+
+## Hidden Relatives Badge
+
+The indicator shown on a Branch Anchor announcing how many relatives the Collapsed Branch is currently hiding. Selecting it expands the branch and restores the hidden Members to view.
+_Avoid_: counter, collapse pill
+
 ## Member Details Panel
 
 A tree-workspace panel that shows the currently selected member's profile details, relationships, and permitted actions. Its presentation can vary by viewport without changing what it represents.

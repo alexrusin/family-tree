@@ -24,9 +24,14 @@ export const MemberNode = memo(function MemberNode({
   data,
   selected,
 }: NodeProps<MemberNodeType>) {
-  const { member } = data;
+  const { member, hiddenCount, onBadgeClick, badgeLabel } = data;
   const dateRange = formatMemberDateRange(member);
   const displayName = `${member.firstName}${member.lastName ? ` ${member.lastName}` : ""}`;
+
+  const handleBadgeClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onBadgeClick?.(member.id);
+  };
 
   return (
     <div className="flex flex-col items-center" style={{ width: 120 }}>
@@ -50,24 +55,37 @@ export const MemberNode = memo(function MemberNode({
         style={{ top: SPOUSE_HANDLE_MIDPOINT }}
       />
 
-      <div
-        className={`w-20 h-20 rounded-full overflow-hidden border-4 shadow-lg transition-transform duration-200 ${
-          selected
-            ? "border-amber-900 ring-2 ring-amber-900 ring-offset-2 scale-110"
-            : "border-white hover:scale-105"
-        }`}
-      >
-        {member.photoUrl ? (
-          /* eslint-disable-next-line @next/next/no-img-element */
-          <img
-            src={member.photoUrl}
-            alt={displayName}
-            className="w-full h-full object-cover"
-          />
-        ) : (
-          <div className="w-full h-full bg-amber-100 flex items-center justify-center text-amber-900 font-semibold text-lg">
-            {getInitials(member.firstName, member.lastName)}
-          </div>
+      <div className="relative">
+        <div
+          className={`w-20 h-20 rounded-full overflow-hidden border-4 shadow-lg transition-transform duration-200 ${
+            selected
+              ? "border-amber-900 ring-2 ring-amber-900 ring-offset-2 scale-110"
+              : "border-white hover:scale-105"
+          }`}
+        >
+          {member.photoUrl ? (
+            /* eslint-disable-next-line @next/next/no-img-element */
+            <img
+              src={member.photoUrl}
+              alt={displayName}
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <div className="w-full h-full bg-amber-100 flex items-center justify-center text-amber-900 font-semibold text-lg">
+              {getInitials(member.firstName, member.lastName)}
+            </div>
+          )}
+        </div>
+        {hiddenCount != null && hiddenCount > 0 && (
+          <button
+            type="button"
+            onClick={handleBadgeClick}
+            className="absolute -top-1 -right-1 min-w-[22px] h-[22px] px-1 rounded-full bg-amber-900 text-white text-[10px] font-bold flex items-center justify-center shadow-md hover:bg-amber-800 transition-colors"
+            aria-label={badgeLabel}
+            data-testid="hidden-relatives-badge"
+          >
+            +{hiddenCount}
+          </button>
         )}
       </div>
 

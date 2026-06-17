@@ -23,6 +23,11 @@ import {
   type TreeFlowEdge,
   type TreeArrangement,
 } from "@/lib/tree-domain/tree-layout";
+import { computeMultiAnchorHiddenSet } from "@/lib/tree-domain/collapse-branch";
+import {
+  getCollapsedAnchors,
+  setCollapsedAnchors as persistCollapsedAnchors,
+} from "@/lib/tree-domain/collapse-preference";
 
 const MEMBER_HARD_LIMIT = 300;
 // Pixel step applied to each consecutive member added at the same viewport
@@ -159,6 +164,9 @@ interface TreeT {
     genderFemale: string;
     genderOther: string;
     genderUndisclosed: string;
+    collapseFamily: string;
+    expandFamily: string;
+    hiddenBadge: string;
   };
   sidebar: {
     warningBanner: string;
@@ -297,6 +305,11 @@ export default function TreeDetailClient({
   // to unlocked (ADR 0003).
   const [memberAddedSignal, setMemberAddedSignal] = useState(0);
   const [addRelationshipModalKey, setAddRelationshipModalKey] = useState(0);
+  const [collapsedAnchors, setCollapsedAnchors] = useState<string[]>(() =>
+    typeof window === "undefined"
+      ? []
+      : getCollapsedAnchors(window.localStorage, treeId),
+  );
   const [isTreeMenuOpen, setIsTreeMenuOpen] = useState(false);
   const [memberPanelPresentation, setMemberPanelPresentation] =
     useState<MemberSidePanelPresentation>(() => getMemberPanelPresentation());
@@ -417,6 +430,10 @@ export default function TreeDetailClient({
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [isDesktopViewport, isTreeMenuOpen]);
 
+  useEffect(() => {
+    persistCollapsedAnchors(window.localStorage, treeId, collapsedAnchors);
+  }, [treeId, collapsedAnchors]);
+
   const memberCount = isLoading ? initialMemberCount : members.length;
   const canAddMember = canEdit && memberCount < MEMBER_HARD_LIMIT;
 
@@ -459,10 +476,34 @@ export default function TreeDetailClient({
     [members],
   );
 
+  const hiddenIds = useMemo(
+    () => computeMultiAnchorHiddenSet(collapsedAnchors, members, relationships),
+    [collapsedAnchors, members, relationships],
+  );
+
+  const handleToggleCollapse = useCallback((memberId: string) => {
+    setCollapsedAnchors((prev) =>
+      prev.includes(memberId)
+        ? prev.filter((id) => id !== memberId)
+        : [...prev, memberId],
+    );
+  }, []);
+
+  const handleBadgeClick = useCallback((memberId: string) => {
+    setCollapsedAnchors((prev) => prev.filter((id) => id !== memberId));
+  }, []);
+
   const selectedMember = useMemo(
     () => members.find((m) => m.id === selectedMemberId) ?? null,
     [members, selectedMemberId],
   );
+
+  const selectedMemberHasAncestors = useMemo(() => {
+    if (!selectedMember) return false;
+    return relationships.some(
+      (r) => r.type === "parent" && r.toMemberId === selectedMember.id,
+    );
+  }, [selectedMember, relationships]);
 
   const handleEdgeClick = useCallback(
     (event: React.MouseEvent, edge: TreeFlowEdge) => {
@@ -566,6 +607,7 @@ export default function TreeDetailClient({
 
       setSelectedMemberId((current) => (current === memberId ? null : current));
       setEditingMember((current) => (current?.id === memberId ? null : current));
+      setCollapsedAnchors((prev) => prev.filter((id) => id !== memberId));
       setMembers(nextMembers);
       setRelationships((prev) =>
         prev.filter(
@@ -796,6 +838,10 @@ export default function TreeDetailClient({
             onDragStop={canEdit ? handleNodeDragStop : undefined}
             memberAddedSignal={memberAddedSignal}
             registerViewportCenter={canEdit ? registerViewportCenter : undefined}
+            hiddenIds={hiddenIds}
+            collapsedAnchors={collapsedAnchors}
+            onBadgeClick={handleBadgeClick}
+            badgeLabelTemplate={t.panel.hiddenBadge}
             t={t.canvas}
           />
         )}
@@ -815,6 +861,9 @@ export default function TreeDetailClient({
           onDeleted={handleMemberDeleted}
           onRelationshipRemoved={handleRelationshipRemoved}
           presentation={memberPanelPresentation}
+          hasAncestors={selectedMemberHasAncestors}
+          isCollapsed={collapsedAnchors.includes(selectedMember.id)}
+          onToggleCollapse={handleToggleCollapse}
           t={{
             ...t.panel,
             remove: t.relationship.remove,
