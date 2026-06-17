@@ -75,6 +75,48 @@ export function computeHiddenSet(
   hidden.delete(anchorId);
   for (const spouseId of anchorSpouses) hidden.delete(spouseId);
 
+  // Reachability rescue: a candidate-hidden member stays visible if reachable
+  // from the kept set via a path that does not pass through the anchor.
+  const adjacency = new Map<string, Set<string>>();
+  for (const r of relationships) {
+    if (!memberIds.has(r.fromMemberId) || !memberIds.has(r.toMemberId))
+      continue;
+    if (!adjacency.has(r.fromMemberId))
+      adjacency.set(r.fromMemberId, new Set());
+    if (!adjacency.has(r.toMemberId))
+      adjacency.set(r.toMemberId, new Set());
+    adjacency.get(r.fromMemberId)!.add(r.toMemberId);
+    adjacency.get(r.toMemberId)!.add(r.fromMemberId);
+  }
+
+  const rescued = new Set<string>();
+  const visited = new Set<string>();
+  visited.add(anchorId);
+
+  const queue: string[] = [];
+  for (const desc of anchorDescendants) {
+    if (desc === anchorId) continue;
+    queue.push(desc);
+    visited.add(desc);
+  }
+
+  while (queue.length > 0) {
+    const current = queue.shift()!;
+    for (const neighbor of adjacency.get(current) ?? []) {
+      if (visited.has(neighbor)) continue;
+      visited.add(neighbor);
+      if (hidden.has(neighbor)) {
+        rescued.add(neighbor);
+      } else {
+        queue.push(neighbor);
+      }
+    }
+  }
+
+  for (const id of rescued) {
+    hidden.delete(id);
+  }
+
   return hidden;
 }
 

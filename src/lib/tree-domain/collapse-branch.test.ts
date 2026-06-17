@@ -204,6 +204,92 @@ describe("computeHiddenSet", () => {
     const members = [makeMember("a")];
     expect(computeHiddenSet("nonexistent", members, []).size).toBe(0);
   });
+
+  describe("reachability rescue", () => {
+    // Wife's-sister-married-my-brother scenario:
+    //   you-dad → you, you-dad → brother
+    //   wife-dad → wife (anchor), wife-dad → sister
+    //   you ↔ wife (spouse), brother ↔ sister (spouse)
+    //   you → kid (parent), wife → kid (parent)
+    //   brother → nephew (parent), sister → nephew (parent)
+    const rescueMembers = [
+      makeMember("you"),
+      makeMember("you-dad"),
+      makeMember("brother"),
+      makeMember("wife"),
+      makeMember("wife-dad"),
+      makeMember("sister"),
+      makeMember("kid"),
+      makeMember("nephew"),
+    ];
+    const rescueRels: TreeRelationship[] = [
+      { id: "r1", fromMemberId: "you-dad", toMemberId: "you", type: "parent" },
+      {
+        id: "r2",
+        fromMemberId: "you-dad",
+        toMemberId: "brother",
+        type: "parent",
+      },
+      {
+        id: "r3",
+        fromMemberId: "wife-dad",
+        toMemberId: "wife",
+        type: "parent",
+      },
+      {
+        id: "r4",
+        fromMemberId: "wife-dad",
+        toMemberId: "sister",
+        type: "parent",
+      },
+      { id: "r5", fromMemberId: "you", toMemberId: "wife", type: "spouse" },
+      {
+        id: "r6",
+        fromMemberId: "brother",
+        toMemberId: "sister",
+        type: "spouse",
+      },
+      { id: "r7", fromMemberId: "you", toMemberId: "kid", type: "parent" },
+      { id: "r8", fromMemberId: "wife", toMemberId: "kid", type: "parent" },
+      {
+        id: "r9",
+        fromMemberId: "brother",
+        toMemberId: "nephew",
+        type: "parent",
+      },
+      {
+        id: "r10",
+        fromMemberId: "sister",
+        toMemberId: "nephew",
+        type: "parent",
+      },
+    ];
+
+    it("keeps cross-linked relatives visible (wife's sister married my brother)", () => {
+      const hidden = computeHiddenSet("wife", rescueMembers, rescueRels);
+      expect(hidden.has("sister")).toBe(false);
+      expect(hidden.has("nephew")).toBe(false);
+      expect(hidden.has("wife")).toBe(false);
+      expect(hidden.has("kid")).toBe(false);
+      expect(hidden.has("you")).toBe(false);
+      expect(hidden.has("brother")).toBe(false);
+    });
+
+    it("hides the same relative when the cross-link does not exist (contrast)", () => {
+      const relsWithoutCrossLink = rescueRels.filter(
+        (r) => r.id !== "r6" && r.id !== "r9",
+      );
+      const hidden = computeHiddenSet("wife", rescueMembers, relsWithoutCrossLink);
+      expect(hidden.has("sister")).toBe(true);
+      expect(hidden.has("nephew")).toBe(true);
+      expect(hidden.has("wife-dad")).toBe(true);
+    });
+
+    it("keeps an ancestor hidden when reachable from kept set only via the anchor", () => {
+      const hidden = computeHiddenSet("wife", rescueMembers, rescueRels);
+      expect(hidden.has("wife-dad")).toBe(true);
+    });
+  });
 });
 
 describe("computeMultiAnchorHiddenSet", () => {
