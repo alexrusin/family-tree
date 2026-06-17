@@ -21,6 +21,8 @@ interface EditMemberT {
   firstNamePlaceholder: string;
   lastName: string;
   lastNamePlaceholder: string;
+  maidenName: string;
+  maidenNamePlaceholder: string;
   gender: string;
   genderUndisclosed: string;
   genderMale: string;
@@ -72,6 +74,7 @@ function memberToFormState(m: TreeMemberData): MemberFormState {
   return {
     firstName: m.firstName,
     lastName: m.lastName ?? "",
+    maidenName: m.maidenName ?? "",
     gender: (m.gender as MemberFormState["gender"]) ?? "undisclosed",
     bio: m.bio ?? "",
     isLiving: m.isLiving,
@@ -174,6 +177,7 @@ export default function EditMemberModal({
       const body = new FormData();
       body.append("firstName", formState.firstName.trim());
       body.append("lastName", formState.lastName.trim());
+      body.append("maidenName", formState.maidenName.trim());
       body.append("gender", formState.gender);
       body.append("bio", formState.bio.trim());
       body.append("isLiving", String(formState.isLiving));
@@ -297,6 +301,21 @@ export default function EditMemberModal({
                 disabled={isLoading}
               />
             </div>
+          </div>
+          <div>
+            <label className="block text-sm font-semibold text-stone-900 mb-2">
+              {t.maidenName}
+            </label>
+            <input
+              type="text"
+              value={formState.maidenName}
+              onChange={(e) =>
+                setFormState((p) => ({ ...p, maidenName: e.target.value }))
+              }
+              className="w-full px-4 py-2 bg-stone-50 border border-stone-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-900 focus:border-transparent text-stone-900 placeholder-stone-400"
+              placeholder={t.maidenNamePlaceholder}
+              disabled={isLoading}
+            />
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-end">
             <div>

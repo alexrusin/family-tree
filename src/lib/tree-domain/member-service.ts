@@ -9,6 +9,7 @@ export interface CreateMemberInput {
   firstName: string;
   isLiving: boolean;
   lastName?: string | null;
+  maidenName?: string | null;
   gender?: MemberGenderValue;
   bio?: string | null;
   birthPrecision?: MemberDatePrecision | null;

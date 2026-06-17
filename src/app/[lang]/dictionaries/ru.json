@@ -299,6 +299,8 @@
       "firstNamePlaceholder": "напр., Елена",
       "lastName": "Фамилия",
       "lastNamePlaceholder": "Необязательно",
+      "maidenName": "Девичья фамилия",
+      "maidenNamePlaceholder": "Необязательно",
       "gender": "Пол",
       "genderUndisclosed": "Не указан",
       "genderMale": "Мужской",

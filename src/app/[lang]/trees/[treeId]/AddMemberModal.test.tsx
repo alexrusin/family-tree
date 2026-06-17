@@ -56,6 +56,8 @@ const translations = {
   firstNamePlaceholder: "Required",
   lastName: "Last Name",
   lastNamePlaceholder: "Optional",
+  maidenName: "Maiden Name",
+  maidenNamePlaceholder: "Optional",
   gender: "Gender",
   genderUndisclosed: "Not disclosed",
   genderMale: "Male",
@@ -95,6 +97,7 @@ const createdMember: TreeMemberData = {
   id: "m1",
   firstName: "Elena",
   lastName: null,
+  maidenName: null,
   isLiving: true,
   birthYear: null,
   birthMonth: null,
@@ -218,6 +221,49 @@ describe("AddMemberModal", () => {
     const options = fetchMock.mock.calls[0]?.[1] as RequestInit;
     const body = options.body as FormData;
     expect(body.get("photo")).toBeNull();
+  });
+
+  it("renders maiden name field and includes it in form submission", async () => {
+    const user = userEvent.setup();
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: vi
+        .fn()
+        .mockResolvedValue({
+          member: { ...createdMember, maidenName: "Petrova" },
+        }),
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const onClose = vi.fn();
+    const onMemberCreated = vi.fn();
+    render(
+      <AddMemberModal
+        isOpen
+        treeId="t1"
+        onClose={onClose}
+        onMemberCreated={onMemberCreated}
+        t={translations}
+      />,
+    );
+
+    expect(screen.getByText("Maiden Name")).not.toBeNull();
+
+    await user.type(screen.getByPlaceholderText("Required"), "Elena");
+    const maidenLabel = screen.getByText("Maiden Name");
+    const maidenInput =
+      maidenLabel.closest("div")!.querySelector("input")!;
+    await user.type(maidenInput, "Petrova");
+
+    await user.click(screen.getByRole("button", { name: "Add Member" }));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalled();
+    });
+
+    const options = fetchMock.mock.calls[0]?.[1] as RequestInit;
+    const body = options.body as FormData;
+    expect(body.get("maidenName")).toBe("Petrova");
   });
 
   it("rejects invalid source files before opening the crop editor", async () => {

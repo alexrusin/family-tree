@@ -44,6 +44,7 @@ export interface TreeMemberData {
   id: string;
   firstName: string;
   lastName: string | null;
+  maidenName: string | null;
   isLiving: boolean;
   birthYear: number | null;
   birthMonth: number | null;

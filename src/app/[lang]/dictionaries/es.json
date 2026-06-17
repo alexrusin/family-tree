@@ -299,6 +299,8 @@
       "firstNamePlaceholder": "p. ej., Elena",
       "lastName": "Apellido",
       "lastNamePlaceholder": "Opcional",
+      "maidenName": "Apellido de soltera",
+      "maidenNamePlaceholder": "Opcional",
       "gender": "Género",
       "genderUndisclosed": "Sin especificar",
       "genderMale": "Masculino",

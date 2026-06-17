@@ -56,6 +56,8 @@ const translations = {
   firstNamePlaceholder: "Required",
   lastName: "Last Name",
   lastNamePlaceholder: "Optional",
+  maidenName: "Maiden Name",
+  maidenNamePlaceholder: "Optional",
   gender: "Gender",
   genderUndisclosed: "Not disclosed",
   genderMale: "Male",
@@ -97,6 +99,7 @@ const baseMember: TreeMemberData = {
   id: "m1",
   firstName: "Elena",
   lastName: null,
+  maidenName: null,
   isLiving: true,
   birthYear: null,
   birthMonth: null,
@@ -214,6 +217,43 @@ describe("EditMemberModal", () => {
     const options = fetchMock.mock.calls[0]?.[1] as RequestInit;
     const body = options.body as FormData;
     expect(body.get("photo")).toBeNull();
+  });
+
+  it("populates maiden name from member and submits it", async () => {
+    const user = userEvent.setup();
+    const memberWithMaiden = {
+      ...baseMember,
+      maidenName: "Petrova",
+    };
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: vi.fn().mockResolvedValue({ member: memberWithMaiden }),
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(
+      <EditMemberModal
+        isOpen
+        treeId="t1"
+        member={memberWithMaiden}
+        onClose={vi.fn()}
+        onMemberUpdated={vi.fn()}
+        t={translations}
+      />,
+    );
+
+    const maidenInput = screen.getByDisplayValue("Petrova");
+    expect(maidenInput).not.toBeNull();
+
+    await user.click(screen.getByRole("button", { name: "Save Changes" }));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalled();
+    });
+
+    const options = fetchMock.mock.calls[0]?.[1] as RequestInit;
+    const body = options.body as FormData;
+    expect(body.get("maidenName")).toBe("Petrova");
   });
 
   it("shows update photo copy for members with an existing photo and blocks invalid uploads", async () => {

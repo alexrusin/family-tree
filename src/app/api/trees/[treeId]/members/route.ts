@@ -120,6 +120,7 @@ export async function POST(
 
     const firstName = (formData.get("firstName") as string | null) ?? "";
     const lastName = formData.get("lastName") as string | null;
+    const maidenName = formData.get("maidenName") as string | null;
     const isLiving = formData.get("isLiving") === "true";
     const genderRaw = formData.get("gender") as string | null;
     const gender =
@@ -201,6 +202,7 @@ export async function POST(
           firstName,
           isLiving,
           lastName: lastName?.trim() || null,
+          maidenName: maidenName?.trim() || null,
           gender,
           bio: bio?.trim().slice(0, 1000) || null,
           birthPrecision,

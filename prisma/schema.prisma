@@ -195,6 +195,7 @@ model TreeMember {
   tree                  FamilyTree     @relation(fields: [treeId], references: [id], onDelete: Cascade)
   firstName             String         @map("first_name")
   lastName              String?        @map("last_name")
+  maidenName            String?        @map("maiden_name")
   gender                MemberGender   @default(undisclosed)
   isLiving              Boolean        @default(false) @map("is_living")
   bio                   String?        @db.VarChar(1000)

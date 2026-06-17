@@ -9,6 +9,10 @@ describe("member form state", () => {
     expect(initialMemberFormState().isLiving).toBe(true);
   });
 
+  it("defaults maidenName to empty string", () => {
+    expect(initialMemberFormState().maidenName).toBe("");
+  });
+
   it("rejects files over 5mb", () => {
     const error = validateMemberPhotoSelection({
       sizeBytes: 6 * 1024 * 1024,

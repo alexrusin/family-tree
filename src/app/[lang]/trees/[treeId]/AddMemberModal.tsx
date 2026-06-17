@@ -20,6 +20,8 @@ interface MemberT {
   firstNamePlaceholder: string;
   lastName: string;
   lastNamePlaceholder: string;
+  maidenName: string;
+  maidenNamePlaceholder: string;
   gender: string;
   genderUndisclosed: string;
   genderMale: string;
@@ -172,6 +174,7 @@ export default function AddMemberModal({
       const formData = new FormData();
       formData.append("firstName", formState.firstName.trim());
       formData.append("lastName", formState.lastName.trim());
+      formData.append("maidenName", formState.maidenName.trim());
       formData.append("gender", formState.gender);
       formData.append("bio", formState.bio.trim());
       formData.append("isLiving", String(formState.isLiving));
@@ -303,6 +306,26 @@ export default function AddMemberModal({
                 disabled={isLoading}
               />
             </div>
+          </div>
+
+          {/* Maiden name */}
+          <div>
+            <label className="block text-sm font-semibold text-stone-900 mb-2">
+              {t.maidenName}
+            </label>
+            <input
+              type="text"
+              value={formState.maidenName}
+              onChange={(e) =>
+                setFormState((prev) => ({
+                  ...prev,
+                  maidenName: e.target.value,
+                }))
+              }
+              className="w-full px-4 py-2 bg-stone-50 border border-stone-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-900 focus:border-transparent transition-all text-stone-900 placeholder-stone-400"
+              placeholder={t.maidenNamePlaceholder}
+              disabled={isLoading}
+            />
           </div>
 
           {/* Gender + is-living */}

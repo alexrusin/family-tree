@@ -299,6 +299,8 @@
       "firstNamePlaceholder": "e.g., Elena",
       "lastName": "Last Name",
       "lastNamePlaceholder": "Optional",
+      "maidenName": "Maiden Name",
+      "maidenNamePlaceholder": "Optional",
       "gender": "Gender",
       "genderUndisclosed": "Not disclosed",
       "genderMale": "Male",
