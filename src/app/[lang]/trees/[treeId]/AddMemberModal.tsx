@@ -309,23 +309,25 @@ export default function AddMemberModal({
           </div>
 
           {/* Maiden name */}
-          <div>
-            <label className="block text-sm font-semibold text-stone-900 mb-2">
-              {t.maidenName}
-            </label>
-            <input
-              type="text"
-              value={formState.maidenName}
-              onChange={(e) =>
-                setFormState((prev) => ({
-                  ...prev,
-                  maidenName: e.target.value,
-                }))
-              }
-              className="w-full px-4 py-2 bg-stone-50 border border-stone-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-900 focus:border-transparent transition-all text-stone-900 placeholder-stone-400"
-              placeholder={t.maidenNamePlaceholder}
-              disabled={isLoading}
-            />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-semibold text-stone-900 mb-2">
+                {t.maidenName}
+              </label>
+              <input
+                type="text"
+                value={formState.maidenName}
+                onChange={(e) =>
+                  setFormState((prev) => ({
+                    ...prev,
+                    maidenName: e.target.value,
+                  }))
+                }
+                className="w-full px-4 py-2 bg-stone-50 border border-stone-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-900 focus:border-transparent transition-all text-stone-900 placeholder-stone-400"
+                placeholder={t.maidenNamePlaceholder}
+                disabled={isLoading}
+              />
+            </div>
           </div>
 
           {/* Gender + is-living */}
