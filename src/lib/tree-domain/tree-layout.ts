@@ -288,6 +288,17 @@ export function buildTreeGraph(
   return { nodes: [...memberNodes, ...unionNodes], edges };
 }
 
+export function formatMemberDisplayName(member: TreeMemberData): string {
+  const parts: string[] = [member.firstName];
+  if (member.lastName) parts.push(member.lastName);
+  const maiden = member.maidenName?.trim();
+  const last = member.lastName?.trim();
+  if (maiden && !(last && maiden.toLowerCase() === last.toLowerCase())) {
+    parts.push(`(${maiden})`);
+  }
+  return parts.join(" ");
+}
+
 export function formatMemberDateRange(member: TreeMemberData): string {
   if (!member.birthYear && !member.deathYear) return "";
   if (member.isLiving && member.birthYear) return String(member.birthYear);

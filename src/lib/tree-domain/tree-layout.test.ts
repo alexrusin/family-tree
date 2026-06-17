@@ -3,6 +3,7 @@ import { describe, it, expect } from "vitest";
 import {
   buildTreeGraph,
   formatMemberDateRange,
+  formatMemberDisplayName,
   isValidArrangement,
   pruneArrangement,
   SPOUSE_LEFT_SOURCE_HANDLE,
@@ -405,5 +406,37 @@ describe("formatMemberDateRange", () => {
   it("returns birth year with unknown death when no death year", () => {
     const m = makeMember("x", { birthYear: 1950 });
     expect(formatMemberDateRange(m)).toBe("1950 — ?");
+  });
+});
+
+describe("formatMemberDisplayName", () => {
+  it("renders First Last (Maiden) when both names present", () => {
+    const m = makeMember("x", { firstName: "Elena", lastName: "Ivanova", maidenName: "Petrova" });
+    expect(formatMemberDisplayName(m)).toBe("Elena Ivanova (Petrova)");
+  });
+
+  it("renders First (Maiden) when no last name", () => {
+    const m = makeMember("x", { firstName: "Elena", maidenName: "Petrova" });
+    expect(formatMemberDisplayName(m)).toBe("Elena (Petrova)");
+  });
+
+  it("suppresses parenthetical when maiden equals last name (case-insensitive)", () => {
+    const m = makeMember("x", { firstName: "Elena", lastName: "Ivanova", maidenName: "ivanova" });
+    expect(formatMemberDisplayName(m)).toBe("Elena Ivanova");
+  });
+
+  it("suppresses parenthetical when maiden equals last name with surrounding whitespace", () => {
+    const m = makeMember("x", { firstName: "Elena", lastName: "Ivanova", maidenName: "  Ivanova  " });
+    expect(formatMemberDisplayName(m)).toBe("Elena Ivanova");
+  });
+
+  it("renders First Last when no maiden name", () => {
+    const m = makeMember("x", { firstName: "Elena", lastName: "Ivanova" });
+    expect(formatMemberDisplayName(m)).toBe("Elena Ivanova");
+  });
+
+  it("renders first name only when neither last nor maiden name", () => {
+    const m = makeMember("x", { firstName: "Elena" });
+    expect(formatMemberDisplayName(m)).toBe("Elena");
   });
 });

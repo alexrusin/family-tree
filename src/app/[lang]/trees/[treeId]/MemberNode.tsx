@@ -5,6 +5,7 @@ import { memo } from "react";
 import { Handle, Position, type NodeProps, type Node } from "@xyflow/react";
 import {
   formatMemberDateRange,
+  formatMemberDisplayName,
   type MemberNodeData,
   SPOUSE_LEFT_SOURCE_HANDLE,
   SPOUSE_LEFT_TARGET_HANDLE,
@@ -26,7 +27,7 @@ export const MemberNode = memo(function MemberNode({
 }: NodeProps<MemberNodeType>) {
   const { member, hiddenCount, onBadgeClick, badgeLabel } = data;
   const dateRange = formatMemberDateRange(member);
-  const displayName = `${member.firstName}${member.lastName ? ` ${member.lastName}` : ""}`;
+  const displayName = formatMemberDisplayName(member);
 
   const handleBadgeClick = (e: React.MouseEvent) => {
     e.stopPropagation();
