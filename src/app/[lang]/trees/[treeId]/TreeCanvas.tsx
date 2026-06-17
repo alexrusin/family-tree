@@ -67,7 +67,7 @@ interface TreeCanvasProps {
     getter: (() => MemberPosition | null) | null,
   ) => void;
   hiddenIds?: Set<string>;
-  hiddenCounts?: Map<string, number>;
+  collapsedAnchors?: string[];
   onBadgeClick?: (memberId: string) => void;
   badgeLabelTemplate?: string;
   t: {
@@ -213,7 +213,7 @@ export default function TreeCanvas({
   memberAddedSignal,
   registerViewportCenter,
   hiddenIds,
-  hiddenCounts,
+  collapsedAnchors,
   onBadgeClick,
   badgeLabelTemplate,
   t,
@@ -252,10 +252,15 @@ export default function TreeCanvas({
   }, [memberAddedSignal]);
 
   const emptySet = useMemo(() => new Set<string>(), []);
+  const emptyAnchors = useMemo(() => [] as string[], []);
   const effectiveHiddenIds = hiddenIds ?? emptySet;
+  const effectiveAnchors = collapsedAnchors ?? emptyAnchors;
 
-  function applyBadgeData(nodes: TreeFlowNode[]): TreeFlowNode[] {
-    if (!hiddenCounts || hiddenCounts.size === 0) return nodes;
+  function applyBadgeData(
+    nodes: TreeFlowNode[],
+    hiddenCounts: Map<string, number>,
+  ): TreeFlowNode[] {
+    if (hiddenCounts.size === 0) return nodes;
     return nodes.map((n) => {
       if (n.type !== "member") return n;
       const count = hiddenCounts.get(n.id);
@@ -272,30 +277,44 @@ export default function TreeCanvas({
     });
   }
 
-  const initialNodes = useMemo(
-    () => applyBadgeData(buildVisibleGraph(members, relationships, effectiveHiddenIds, arrangement).nodes),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [],
-  );
-
-  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
-
-  const edges = useMemo(
-    () => buildVisibleGraph(members, relationships, effectiveHiddenIds, arrangement).edges,
-    [members, relationships, effectiveHiddenIds, arrangement],
-  );
-
-  // Sync nodes from parent state (handles initial load, member additions/removals, and position reverts).
-  useEffect(() => {
-    const { nodes: computedNodes } = buildVisibleGraph(
+  const initialNodes = useMemo(() => {
+    const { nodes, hiddenCounts } = buildVisibleGraph(
       members,
       relationships,
       effectiveHiddenIds,
       arrangement,
+      effectiveAnchors,
     );
-    setNodes(applyBadgeData(computedNodes));
+    return applyBadgeData(nodes, hiddenCounts);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
+
+  const edges = useMemo(
+    () =>
+      buildVisibleGraph(
+        members,
+        relationships,
+        effectiveHiddenIds,
+        arrangement,
+        effectiveAnchors,
+      ).edges,
+    [members, relationships, effectiveHiddenIds, arrangement, effectiveAnchors],
+  );
+
+  // Sync nodes from parent state (handles initial load, member additions/removals, and position reverts).
+  useEffect(() => {
+    const { nodes: computedNodes, hiddenCounts } = buildVisibleGraph(
+      members,
+      relationships,
+      effectiveHiddenIds,
+      arrangement,
+      effectiveAnchors,
+    );
+    setNodes(applyBadgeData(computedNodes, hiddenCounts));
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [members, relationships, effectiveHiddenIds, arrangement, setNodes, hiddenCounts, onBadgeClick, badgeLabelTemplate]);
+  }, [members, relationships, effectiveHiddenIds, arrangement, effectiveAnchors, setNodes, onBadgeClick, badgeLabelTemplate]);
 
   const handleNodeClick: NodeMouseHandler = (_event, node) => {
     if (node.type === "member") onNodeClick(node.id);

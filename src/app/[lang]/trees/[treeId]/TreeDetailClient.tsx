@@ -23,10 +23,7 @@ import {
   type TreeFlowEdge,
   type TreeArrangement,
 } from "@/lib/tree-domain/tree-layout";
-import {
-  computeMultiAnchorHiddenSet,
-  computePerAnchorHiddenCounts,
-} from "@/lib/tree-domain/collapse-branch";
+import { computeMultiAnchorHiddenSet } from "@/lib/tree-domain/collapse-branch";
 import {
   getCollapsedAnchors,
   setCollapsedAnchors as persistCollapsedAnchors,
@@ -484,11 +481,6 @@ export default function TreeDetailClient({
     [collapsedAnchors, members, relationships],
   );
 
-  const hiddenCounts = useMemo(
-    () => computePerAnchorHiddenCounts(collapsedAnchors, members, relationships),
-    [collapsedAnchors, members, relationships],
-  );
-
   const handleToggleCollapse = useCallback((memberId: string) => {
     setCollapsedAnchors((prev) =>
       prev.includes(memberId)
@@ -847,7 +839,7 @@ export default function TreeDetailClient({
             memberAddedSignal={memberAddedSignal}
             registerViewportCenter={canEdit ? registerViewportCenter : undefined}
             hiddenIds={hiddenIds}
-            hiddenCounts={hiddenCounts}
+            collapsedAnchors={collapsedAnchors}
             onBadgeClick={handleBadgeClick}
             badgeLabelTemplate={t.panel.hiddenBadge}
             t={t.canvas}

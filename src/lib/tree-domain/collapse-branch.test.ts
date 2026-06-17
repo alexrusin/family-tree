@@ -401,6 +401,70 @@ describe("computeMultiAnchorHiddenSet", () => {
     const expected = computeHiddenSet("a1", members, rels);
     expect(result).toEqual(expected);
   });
+
+  describe("nested collapsed anchors", () => {
+    // Inner anchor sits inside the outer anchor's collapsed branch:
+    //   g-grandpa → grandpa → dad → you → kid (a single ancestral line)
+    //   Collapse "you" (outer)  → hides {dad, grandpa, g-grandpa}
+    //   Collapse "dad" (inner)  → hides {grandpa, g-grandpa}
+    const nestedMembers = [
+      makeMember("g-grandpa"),
+      makeMember("grandpa"),
+      makeMember("dad"),
+      makeMember("you"),
+      makeMember("kid"),
+    ];
+    const nestedRels: TreeRelationship[] = [
+      { id: "r1", fromMemberId: "g-grandpa", toMemberId: "grandpa", type: "parent" },
+      { id: "r2", fromMemberId: "grandpa", toMemberId: "dad", type: "parent" },
+      { id: "r3", fromMemberId: "dad", toMemberId: "you", type: "parent" },
+      { id: "r4", fromMemberId: "you", toMemberId: "kid", type: "parent" },
+    ];
+
+    it("union of an outer anchor and a nested inner anchor equals the outer alone", () => {
+      const union = computeMultiAnchorHiddenSet(
+        ["you", "dad"],
+        nestedMembers,
+        nestedRels,
+      );
+      const outerOnly = computeHiddenSet("you", nestedMembers, nestedRels);
+      // "dad" is already inside "you"'s hidden set, so the union adds nothing.
+      expect(union).toEqual(outerOnly);
+      expect(union.has("dad")).toBe(true);
+      expect(union.has("grandpa")).toBe(true);
+      expect(union.has("g-grandpa")).toBe(true);
+      expect(union.has("you")).toBe(false);
+      expect(union.has("kid")).toBe(false);
+    });
+
+    it("is order-independent for nested anchors", () => {
+      const outerFirst = computeMultiAnchorHiddenSet(
+        ["you", "dad"],
+        nestedMembers,
+        nestedRels,
+      );
+      const innerFirst = computeMultiAnchorHiddenSet(
+        ["dad", "you"],
+        nestedMembers,
+        nestedRels,
+      );
+      expect(outerFirst).toEqual(innerFirst);
+    });
+
+    it("expanding the outer anchor leaves the inner branch still collapsed", () => {
+      // Removing "you" from the collapsed set (expanding it) must still apply
+      // "dad"'s collapse: dad and you become visible, but dad's ancestors stay hidden.
+      const innerOnly = computeMultiAnchorHiddenSet(
+        ["dad"],
+        nestedMembers,
+        nestedRels,
+      );
+      expect(innerOnly.has("dad")).toBe(false);
+      expect(innerOnly.has("you")).toBe(false);
+      expect(innerOnly.has("grandpa")).toBe(true);
+      expect(innerOnly.has("g-grandpa")).toBe(true);
+    });
+  });
 });
 
 describe("computePerAnchorHiddenCounts", () => {

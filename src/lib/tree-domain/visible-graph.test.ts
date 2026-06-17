@@ -100,7 +100,16 @@ describe("buildVisibleGraph", () => {
     expect(arrangement).toEqual(copy);
   });
 
-  it("returns correct per-anchor hidden count via external computeHiddenSet", async () => {
+  it("returns an empty hidden-count map when no anchors are collapsed", () => {
+    const members = [makeMember("a"), makeMember("b")];
+    const rels: TreeRelationship[] = [
+      { id: "r1", fromMemberId: "a", toMemberId: "b", type: "parent" },
+    ];
+    const result = buildVisibleGraph(members, rels, new Set(), null, []);
+    expect(result.hiddenCounts.size).toBe(0);
+  });
+
+  it("returns the per-anchor hidden count for the Hidden Relatives Badge", async () => {
     const members = [
       makeMember("gp"),
       makeMember("parent"),
@@ -120,8 +129,12 @@ describe("buildVisibleGraph", () => {
     const { computeHiddenSet } = await import("./collapse-branch");
     const hidden = computeHiddenSet("anchor", members, rels);
     expect(hidden.size).toBe(3);
-    const result = buildVisibleGraph(members, rels, hidden);
+
+    const result = buildVisibleGraph(members, rels, hidden, null, ["anchor"]);
     expect(result.nodes).toHaveLength(1);
     expect(result.nodes[0].id).toBe("anchor");
+    // The count is now returned by buildVisibleGraph itself (computed against
+    // the full data), not derived by the caller.
+    expect(result.hiddenCounts.get("anchor")).toBe(3);
   });
 });
