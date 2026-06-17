@@ -290,8 +290,15 @@ export function mapGedcomToMembers(records: GedcomNode[]): {
       ),
     );
 
-    const { firstName, lastName } = parseGedcomName(primaryNameNode?.value);
+    const primaryParsed = parseGedcomName(primaryNameNode?.value);
     const maidenParsed = parseGedcomName(maidenNameNode?.value);
+
+    // A record whose only NAME is maiden-typed still carries a given name;
+    // fall back to it so the person's first name is not discarded. The
+    // current surname stays empty (lastName null) per ADR-0001 — the maiden
+    // surname is not promoted to the current one.
+    const firstName = primaryParsed.firstName ?? maidenParsed.firstName;
+    const lastName = primaryParsed.lastName;
 
     if (!firstName) {
       unknownNameCount += 1;

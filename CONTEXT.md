@@ -103,6 +103,11 @@ A person represented within one Family Tree. Members participate in Relationship
 The single circularly-displayed image that represents a Member, or the account holder's own avatar. It is framed by the uploader from any source image — typically by cropping one person out of a group photo — rather than requiring a ready-made headshot. The same concept is currently named differently in the two places it appears (Member `photo` versus account `avatar`); this is a known naming divergence, not two different concepts.
 _Avoid_: headshot, picture
 
+## Maiden Name
+
+The surname a Member had at birth, before it was changed — typically through marriage. It is optional and independent of the Member's current surname: a Member may have a Maiden Name, a current surname, both, or neither. It is descriptive identity, not a Relationship, and it carries no assumption about gender. When shown, it appears in parentheses after the Member's displayed name.
+_Avoid_: née, birth name, last name
+
 ## Relationship
 
 A typed connection between two Members in one Family Tree. The canonical Relationship types are Parent Relationship, Spouse Relationship, Divorced Relationship, and Sibling Relationship.

@@ -156,6 +156,7 @@ describe("mapGedcomToMembers", () => {
       const { members } = mapGedcomToMembers(records);
 
       expect(members[0]).toMatchObject({
+        firstName: "Elena",
         lastName: null,
         maidenName: "Petrova",
       });
