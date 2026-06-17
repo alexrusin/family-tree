@@ -413,7 +413,10 @@
       "genderMale": "Male",
       "genderFemale": "Female",
       "genderOther": "Other",
-      "genderUndisclosed": "—"
+      "genderUndisclosed": "—",
+      "collapseFamily": "Collapse this family",
+      "expandFamily": "Expand this family",
+      "hiddenBadge": "+{count} hidden"
     },
     "sidebar": {
       "warningBanner": "Approaching the 300-member limit ({count}/300).",

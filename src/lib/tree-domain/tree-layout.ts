@@ -65,7 +65,7 @@ export interface TreeRelationship {
   type: "parent" | "spouse" | "divorced" | "sibling";
 }
 
-export type MemberNodeData = { member: TreeMemberData };
+export type MemberNodeData = { member: TreeMemberData; hiddenCount?: number; onBadgeClick?: (memberId: string) => void; badgeLabel?: string };
 export type UnionNodeData = { spouseIds: [string, string] };
 export type TreeFlowNode =
   | Node<MemberNodeData, "member">

@@ -38,6 +38,8 @@ interface SidePanelT {
   genderFemale: string;
   genderOther: string;
   genderUndisclosed: string;
+  collapseFamily: string;
+  expandFamily: string;
 }
 
 interface MemberSidePanelProps {
@@ -52,6 +54,9 @@ interface MemberSidePanelProps {
   onDeleted: (memberId: string) => void;
   onRelationshipRemoved: (relationshipId: string) => void;
   presentation?: MemberSidePanelPresentation;
+  hasAncestors: boolean;
+  isCollapsed: boolean;
+  onToggleCollapse: (memberId: string) => void;
   t: SidePanelT;
 }
 
@@ -67,6 +72,9 @@ export default function MemberSidePanel({
   onDeleted,
   onRelationshipRemoved,
   presentation = "desktop",
+  hasAncestors,
+  isCollapsed,
+  onToggleCollapse,
   t,
 }: MemberSidePanelProps) {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -290,6 +298,14 @@ export default function MemberSidePanel({
 
       {/* Footer actions */}
       <div className="px-5 py-4 border-t border-stone-100 space-y-2">
+        {hasAncestors && (
+          <button
+            onClick={() => onToggleCollapse(member.id)}
+            className="w-full px-4 py-2 bg-stone-100 text-stone-700 rounded-lg font-semibold hover:bg-stone-200 transition-colors text-sm"
+          >
+            {isCollapsed ? t.expandFamily : t.collapseFamily}
+          </button>
+        )}
         {canEdit && (
           <button
             onClick={onEditClick}

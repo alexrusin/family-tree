@@ -16,7 +16,6 @@ import {
 import "@xyflow/react/dist/style.css";
 
 import {
-  buildTreeGraph,
   NODE_H,
   NODE_W,
   type MemberPosition,
@@ -26,6 +25,7 @@ import {
   type TreeMemberData,
   type TreeRelationship,
 } from "@/lib/tree-domain/tree-layout";
+import { buildVisibleGraph } from "@/lib/tree-domain/visible-graph";
 import { MemberNode } from "./MemberNode";
 import { UnionNode } from "./UnionNode";
 import { SpouseEdge } from "./SpouseEdge";
@@ -66,6 +66,10 @@ interface TreeCanvasProps {
   registerViewportCenter?: (
     getter: (() => MemberPosition | null) | null,
   ) => void;
+  hiddenIds?: Set<string>;
+  hiddenCounts?: Map<string, number>;
+  onBadgeClick?: (memberId: string) => void;
+  badgeLabelTemplate?: string;
   t: {
     emptyTitle: string;
     emptyBody: string;
@@ -208,6 +212,10 @@ export default function TreeCanvas({
   onDragStop,
   memberAddedSignal,
   registerViewportCenter,
+  hiddenIds,
+  hiddenCounts,
+  onBadgeClick,
+  badgeLabelTemplate,
   t,
 }: TreeCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -243,8 +251,29 @@ export default function TreeCanvas({
     setStoredDragLockPreference(window.localStorage, false);
   }, [memberAddedSignal]);
 
+  const emptySet = useMemo(() => new Set<string>(), []);
+  const effectiveHiddenIds = hiddenIds ?? emptySet;
+
+  function applyBadgeData(nodes: TreeFlowNode[]): TreeFlowNode[] {
+    if (!hiddenCounts || hiddenCounts.size === 0) return nodes;
+    return nodes.map((n) => {
+      if (n.type !== "member") return n;
+      const count = hiddenCounts.get(n.id);
+      if (!count) return n;
+      return {
+        ...n,
+        data: {
+          ...n.data,
+          hiddenCount: count,
+          onBadgeClick,
+          badgeLabel: badgeLabelTemplate?.replace("{count}", String(count)),
+        },
+      };
+    });
+  }
+
   const initialNodes = useMemo(
-    () => buildTreeGraph(members, relationships, arrangement).nodes,
+    () => applyBadgeData(buildVisibleGraph(members, relationships, effectiveHiddenIds, arrangement).nodes),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [],
   );
@@ -252,19 +281,21 @@ export default function TreeCanvas({
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
 
   const edges = useMemo(
-    () => buildTreeGraph(members, relationships, arrangement).edges,
-    [members, relationships, arrangement],
+    () => buildVisibleGraph(members, relationships, effectiveHiddenIds, arrangement).edges,
+    [members, relationships, effectiveHiddenIds, arrangement],
   );
 
   // Sync nodes from parent state (handles initial load, member additions/removals, and position reverts).
   useEffect(() => {
-    const { nodes: computedNodes } = buildTreeGraph(
+    const { nodes: computedNodes } = buildVisibleGraph(
       members,
       relationships,
+      effectiveHiddenIds,
       arrangement,
     );
-    setNodes(computedNodes);
-  }, [members, relationships, arrangement, setNodes]);
+    setNodes(applyBadgeData(computedNodes));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [members, relationships, effectiveHiddenIds, arrangement, setNodes, hiddenCounts, onBadgeClick, badgeLabelTemplate]);
 
   const handleNodeClick: NodeMouseHandler = (_event, node) => {
     if (node.type === "member") onNodeClick(node.id);
