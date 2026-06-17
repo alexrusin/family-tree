@@ -290,6 +290,83 @@ describe("computeHiddenSet", () => {
       expect(hidden.has("wife-dad")).toBe(true);
     });
   });
+
+  describe("married-in in-laws", () => {
+    it("hides a hidden relative's childless married-in spouse", () => {
+      // wife-dad → wife (anchor), wife-dad → sister
+      // sister ↔ brother-in-law (spouse, married in, no children, no other links)
+      // you ↔ wife (spouse)
+      const members = [
+        makeMember("you"),
+        makeMember("wife"),
+        makeMember("wife-dad"),
+        makeMember("sister"),
+        makeMember("brother-in-law"),
+        makeMember("kid"),
+      ];
+      const rels: TreeRelationship[] = [
+        { id: "r1", fromMemberId: "wife-dad", toMemberId: "wife", type: "parent" },
+        { id: "r2", fromMemberId: "wife-dad", toMemberId: "sister", type: "parent" },
+        { id: "r3", fromMemberId: "you", toMemberId: "wife", type: "spouse" },
+        { id: "r4", fromMemberId: "sister", toMemberId: "brother-in-law", type: "spouse" },
+        { id: "r5", fromMemberId: "you", toMemberId: "kid", type: "parent" },
+        { id: "r6", fromMemberId: "wife", toMemberId: "kid", type: "parent" },
+      ];
+      const hidden = computeHiddenSet("wife", members, rels);
+      expect(hidden.has("wife-dad")).toBe(true);
+      expect(hidden.has("sister")).toBe(true);
+      expect(hidden.has("brother-in-law")).toBe(true);
+      expect(hidden.has("wife")).toBe(false);
+      expect(hidden.has("you")).toBe(false);
+      expect(hidden.has("kid")).toBe(false);
+    });
+
+    it("rescues a married-in partner who has an independent connection to the kept set", () => {
+      // wife-dad → wife (anchor), wife-dad → sister
+      // sister ↔ brother-in-law (spouse)
+      // brother-in-law is also you-dad's child (independent link)
+      // you-dad → you, you-dad → brother-in-law
+      // you ↔ wife (spouse)
+      const members = [
+        makeMember("you"),
+        makeMember("you-dad"),
+        makeMember("wife"),
+        makeMember("wife-dad"),
+        makeMember("sister"),
+        makeMember("brother-in-law"),
+        makeMember("kid"),
+      ];
+      const rels: TreeRelationship[] = [
+        { id: "r1", fromMemberId: "wife-dad", toMemberId: "wife", type: "parent" },
+        { id: "r2", fromMemberId: "wife-dad", toMemberId: "sister", type: "parent" },
+        { id: "r3", fromMemberId: "you", toMemberId: "wife", type: "spouse" },
+        { id: "r4", fromMemberId: "sister", toMemberId: "brother-in-law", type: "spouse" },
+        { id: "r5", fromMemberId: "you-dad", toMemberId: "you", type: "parent" },
+        { id: "r6", fromMemberId: "you-dad", toMemberId: "brother-in-law", type: "parent" },
+        { id: "r7", fromMemberId: "you", toMemberId: "kid", type: "parent" },
+        { id: "r8", fromMemberId: "wife", toMemberId: "kid", type: "parent" },
+      ];
+      const hidden = computeHiddenSet("wife", members, rels);
+      expect(hidden.has("brother-in-law")).toBe(false);
+      expect(hidden.has("sister")).toBe(false);
+      expect(hidden.has("wife-dad")).toBe(true);
+    });
+
+    it("never hides the anchor's own spouse", () => {
+      const members = [
+        makeMember("parent"),
+        makeMember("anchor"),
+        makeMember("spouse"),
+      ];
+      const rels: TreeRelationship[] = [
+        { id: "r1", fromMemberId: "parent", toMemberId: "anchor", type: "parent" },
+        { id: "r2", fromMemberId: "anchor", toMemberId: "spouse", type: "spouse" },
+      ];
+      const hidden = computeHiddenSet("anchor", members, rels);
+      expect(hidden.has("spouse")).toBe(false);
+      expect(hidden.has("parent")).toBe(true);
+    });
+  });
 });
 
 describe("computeMultiAnchorHiddenSet", () => {

@@ -54,21 +54,37 @@ export function computeHiddenSet(
     }
   }
 
+  const spouseAdj = new Map<string, Set<string>>();
+  for (const r of relationships) {
+    if (r.type !== "spouse" && r.type !== "divorced") continue;
+    if (!memberIds.has(r.fromMemberId) || !memberIds.has(r.toMemberId))
+      continue;
+    if (!spouseAdj.has(r.fromMemberId))
+      spouseAdj.set(r.fromMemberId, new Set());
+    if (!spouseAdj.has(r.toMemberId))
+      spouseAdj.set(r.toMemberId, new Set());
+    spouseAdj.get(r.fromMemberId)!.add(r.toMemberId);
+    spouseAdj.get(r.toMemberId)!.add(r.fromMemberId);
+  }
+
   const hidden = new Set<string>();
-  for (const anc of ancestors) {
-    hidden.add(anc);
-    const stack = [anc];
-    const visited = new Set<string>();
-    while (stack.length > 0) {
-      const current = stack.pop()!;
-      if (visited.has(current)) continue;
-      visited.add(current);
-      for (const child of childrenOf.get(current) ?? []) {
-        if (!anchorDescendants.has(child)) {
-          hidden.add(child);
-          stack.push(child);
-        }
-      }
+  const closureVisited = new Set<string>();
+  const closureStack = [...ancestors];
+
+  while (closureStack.length > 0) {
+    const current = closureStack.pop()!;
+    if (closureVisited.has(current)) continue;
+    closureVisited.add(current);
+    if (anchorDescendants.has(current)) continue;
+
+    hidden.add(current);
+
+    for (const child of childrenOf.get(current) ?? []) {
+      closureStack.push(child);
+    }
+
+    for (const partner of spouseAdj.get(current) ?? []) {
+      closureStack.push(partner);
     }
   }
 
@@ -106,7 +122,10 @@ export function computeHiddenSet(
       if (visited.has(neighbor)) continue;
       visited.add(neighbor);
       if (hidden.has(neighbor)) {
-        rescued.add(neighbor);
+        if (!ancestors.has(neighbor)) {
+          rescued.add(neighbor);
+          queue.push(neighbor);
+        }
       } else {
         queue.push(neighbor);
       }
