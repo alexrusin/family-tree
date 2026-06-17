@@ -27,6 +27,10 @@ import {
   computeMultiAnchorHiddenSet,
   computePerAnchorHiddenCounts,
 } from "@/lib/tree-domain/collapse-branch";
+import {
+  getCollapsedAnchors,
+  setCollapsedAnchors as persistCollapsedAnchors,
+} from "@/lib/tree-domain/collapse-preference";
 
 const MEMBER_HARD_LIMIT = 300;
 // Pixel step applied to each consecutive member added at the same viewport
@@ -304,7 +308,11 @@ export default function TreeDetailClient({
   // to unlocked (ADR 0003).
   const [memberAddedSignal, setMemberAddedSignal] = useState(0);
   const [addRelationshipModalKey, setAddRelationshipModalKey] = useState(0);
-  const [collapsedAnchors, setCollapsedAnchors] = useState<string[]>([]);
+  const [collapsedAnchors, setCollapsedAnchors] = useState<string[]>(() =>
+    typeof window === "undefined"
+      ? []
+      : getCollapsedAnchors(window.localStorage, treeId),
+  );
   const [isTreeMenuOpen, setIsTreeMenuOpen] = useState(false);
   const [memberPanelPresentation, setMemberPanelPresentation] =
     useState<MemberSidePanelPresentation>(() => getMemberPanelPresentation());
@@ -424,6 +432,10 @@ export default function TreeDetailClient({
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [isDesktopViewport, isTreeMenuOpen]);
+
+  useEffect(() => {
+    persistCollapsedAnchors(window.localStorage, treeId, collapsedAnchors);
+  }, [treeId, collapsedAnchors]);
 
   const memberCount = isLoading ? initialMemberCount : members.length;
   const canAddMember = canEdit && memberCount < MEMBER_HARD_LIMIT;
