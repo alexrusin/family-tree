@@ -447,6 +447,8 @@
       "resending": "Reenviando...",
       "cancelInvite": "Cancelar",
       "cancelling": "Cancelando...",
+      "remove": "Eliminar",
+      "removing": "Eliminando...",
       "leaveTree": "Abandonar árbol",
       "leavingTree": "Abandonando árbol...",
       "invitedRole": "Invitado como {role}",
@@ -455,6 +457,7 @@
       "you": "Tú",
       "resendSuccess": "Invitación reenviada.",
       "cancelSuccess": "Invitación cancelada.",
+      "removeSuccess": "Colaborador eliminado.",
       "inviteSuccess": "Invitación enviada.",
       "loading": "Cargando colaboradores...",
       "roles": {
@@ -478,6 +481,13 @@
         "send": "Enviar invitación",
         "sending": "Enviando..."
       },
+      "removeModal": {
+        "title": "Eliminar colaborador",
+        "body": "¿Estás seguro de que quieres eliminar a {name}?",
+        "warning": "Esta acción no se puede deshacer. Perderá el acceso a este árbol genealógico.",
+        "cancel": "Cancelar",
+        "confirm": "Eliminar colaborador"
+      },
       "errors": {
         "ERR_INVALID_EMAIL": "Ingresa una dirección de email válida.",
         "ERR_INVALID_ROLE": "Elige un rol de colaborador válido.",
@@ -487,6 +497,7 @@
         "ERR_FORBIDDEN": "No tienes permiso para realizar esta acción.",
         "ERR_UNAUTHORIZED": "Se requiere iniciar sesión.",
         "ERR_INVITATION_NOT_FOUND": "La invitación ya no existe.",
+        "ERR_COLLABORATOR_NOT_FOUND": "Este colaborador ya no existe.",
         "ERR_OWNER_CANNOT_LEAVE": "El propietario del árbol no puede abandonar su propio árbol.",
         "loadFailed": "No se pudieron cargar los colaboradores. Por favor inténtalo de nuevo.",
         "generic": "Algo salió mal. Por favor inténtalo de nuevo."

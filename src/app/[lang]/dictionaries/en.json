@@ -447,6 +447,8 @@
       "resending": "Resending...",
       "cancelInvite": "Cancel",
       "cancelling": "Cancelling...",
+      "remove": "Remove",
+      "removing": "Removing...",
       "leaveTree": "Leave tree",
       "leavingTree": "Leaving tree...",
       "invitedRole": "Invited as {role}",
@@ -455,6 +457,7 @@
       "you": "You",
       "resendSuccess": "Invitation resent.",
       "cancelSuccess": "Invitation cancelled.",
+      "removeSuccess": "Collaborator removed.",
       "inviteSuccess": "Invitation sent.",
       "loading": "Loading collaborators...",
       "roles": {
@@ -478,6 +481,13 @@
         "send": "Send invitation",
         "sending": "Sending..."
       },
+      "removeModal": {
+        "title": "Remove collaborator",
+        "body": "Are you sure you want to remove {name}?",
+        "warning": "This action cannot be undone. They will lose access to this family tree.",
+        "cancel": "Cancel",
+        "confirm": "Remove collaborator"
+      },
       "errors": {
         "ERR_INVALID_EMAIL": "Enter a valid email address.",
         "ERR_INVALID_ROLE": "Choose a valid collaborator role.",
@@ -487,6 +497,7 @@
         "ERR_FORBIDDEN": "You do not have permission to perform this action.",
         "ERR_UNAUTHORIZED": "Sign in required.",
         "ERR_INVITATION_NOT_FOUND": "Invitation no longer exists.",
+        "ERR_COLLABORATOR_NOT_FOUND": "This collaborator no longer exists.",
         "ERR_OWNER_CANNOT_LEAVE": "Tree owners cannot leave their own tree.",
         "loadFailed": "Unable to load collaborators. Please try again.",
         "generic": "Something went wrong. Please try again."
