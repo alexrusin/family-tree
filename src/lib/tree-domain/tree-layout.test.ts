@@ -163,6 +163,19 @@ describe("buildTreeGraph", () => {
     ).toEqual(["rpa", "rpb"]);
   });
 
+  it("marks union nodes as non-selectable", () => {
+    const members = [makeMember("a"), makeMember("b"), makeMember("child")];
+    const rels: TreeRelationship[] = [
+      { id: "rs", fromMemberId: "a", toMemberId: "b", type: "spouse" },
+      { id: "rpa", fromMemberId: "a", toMemberId: "child", type: "parent" },
+      { id: "rpb", fromMemberId: "b", toMemberId: "child", type: "parent" },
+    ];
+    const { nodes } = buildTreeGraph(members, rels);
+    const unionNodes = nodes.filter((n) => n.type === "union");
+    expect(unionNodes).toHaveLength(1);
+    expect(unionNodes[0].selectable).toBe(false);
+  });
+
   it("creates a union node for a divorced couple with at least one shared child", () => {
     const members = [makeMember("a"), makeMember("b"), makeMember("child")];
     const rels: TreeRelationship[] = [

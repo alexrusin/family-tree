@@ -10,8 +10,28 @@ import TreeCanvas from "./TreeCanvas";
 import type { TreeMemberData, TreeRelationship } from "@/lib/tree-domain/tree-layout";
 
 vi.mock("@xyflow/react", () => ({
-  ReactFlow: ({ children }: { children?: React.ReactNode }) => (
-    <div data-testid="react-flow">{children}</div>
+  ReactFlow: ({
+    children,
+    selectionOnDrag,
+    panOnDrag,
+    selectionMode,
+    selectionKeyCode,
+  }: {
+    children?: React.ReactNode;
+    selectionOnDrag?: boolean;
+    panOnDrag?: boolean | number[];
+    selectionMode?: string;
+    selectionKeyCode?: string | null;
+  }) => (
+    <div
+      data-testid="react-flow"
+      data-selection-on-drag={String(selectionOnDrag ?? false)}
+      data-pan-on-drag={JSON.stringify(panOnDrag ?? true)}
+      data-selection-mode={selectionMode ?? ""}
+      data-selection-key-code={selectionKeyCode === null ? "null" : String(selectionKeyCode ?? "")}
+    >
+      {children}
+    </div>
   ),
   Panel: ({ children }: { children?: React.ReactNode }) => <div>{children}</div>,
   useReactFlow: () => ({
@@ -21,6 +41,7 @@ vi.mock("@xyflow/react", () => ({
     screenToFlowPosition: () => ({ x: 0, y: 0 }),
   }),
   useNodesState: (initial: unknown) => [initial, vi.fn(), vi.fn()],
+  SelectionMode: { Full: "full", Partial: "partial" },
   Handle: () => null,
   Position: { Left: "left", Right: "right", Top: "top", Bottom: "bottom" },
   BaseEdge: () => null,
@@ -166,5 +187,71 @@ describe("TreeCanvas Drag Lock on member added", () => {
     );
 
     expect(window.localStorage.getItem(DRAG_LOCK_STORAGE_KEY)).toBe("true");
+  });
+});
+
+describe("TreeCanvas multi-select props", () => {
+  beforeEach(() => {
+    window.localStorage.clear();
+    window.matchMedia = vi.fn().mockReturnValue({ matches: false }) as unknown as typeof window.matchMedia;
+  });
+
+  afterEach(() => {
+    cleanup();
+  });
+
+  it("enables selection when canEdit is true and drag lock is off", () => {
+    renderCanvas({ canEdit: true });
+
+    const flow = screen.getByTestId("react-flow");
+    expect(flow.getAttribute("data-selection-on-drag")).toBe("true");
+    expect(JSON.parse(flow.getAttribute("data-pan-on-drag")!)).toEqual([0]);
+    expect(flow.getAttribute("data-selection-mode")).toBe("partial");
+    expect(flow.getAttribute("data-selection-key-code")).toBe("Shift");
+  });
+
+  it("disables selection when canEdit is false", () => {
+    renderCanvas({ canEdit: false });
+
+    const flow = screen.getByTestId("react-flow");
+    expect(flow.getAttribute("data-selection-on-drag")).toBe("false");
+    expect(JSON.parse(flow.getAttribute("data-pan-on-drag")!)).toBe(true);
+    expect(flow.getAttribute("data-selection-key-code")).toBe("null");
+  });
+
+  it("disables selection when drag lock is on", () => {
+    setStoredDragLockPreference(window.localStorage, true);
+    renderCanvas({ canEdit: true });
+
+    const flow = screen.getByTestId("react-flow");
+    expect(flow.getAttribute("data-selection-on-drag")).toBe("false");
+    expect(JSON.parse(flow.getAttribute("data-pan-on-drag")!)).toBe(true);
+    expect(flow.getAttribute("data-selection-key-code")).toBe("null");
+  });
+
+  it("disables selection on coarse pointer devices", () => {
+    window.matchMedia = vi.fn().mockImplementation((query: string) => ({
+      matches: query === "(pointer: coarse)",
+    })) as unknown as typeof window.matchMedia;
+
+    renderCanvas({ canEdit: true });
+
+    const flow = screen.getByTestId("react-flow");
+    expect(flow.getAttribute("data-selection-on-drag")).toBe("false");
+    expect(JSON.parse(flow.getAttribute("data-pan-on-drag")!)).toBe(true);
+  });
+
+  it("re-enables selection when drag lock is toggled off", () => {
+    setStoredDragLockPreference(window.localStorage, true);
+    renderCanvas({ canEdit: true });
+
+    const flow = screen.getByTestId("react-flow");
+    expect(flow.getAttribute("data-selection-on-drag")).toBe("false");
+
+    fireEvent.click(screen.getByRole("button", { name: t.unlockDragging }));
+
+    expect(flow.getAttribute("data-selection-on-drag")).toBe("true");
+    expect(JSON.parse(flow.getAttribute("data-pan-on-drag")!)).toEqual([0]);
+    expect(flow.getAttribute("data-selection-key-code")).toBe("Shift");
   });
 });

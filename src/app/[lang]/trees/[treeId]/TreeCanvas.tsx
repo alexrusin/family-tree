@@ -1,15 +1,17 @@
 // src/app/[lang]/trees/[treeId]/TreeCanvas.tsx
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ReactFlow,
   Panel,
   useReactFlow,
   useNodesState,
+  SelectionMode,
   type EdgeMouseHandler,
   type NodeMouseHandler,
   type OnNodeDrag,
+  type OnSelectionDrag,
   type NodeTypes,
   type EdgeTypes,
 } from "@xyflow/react";
@@ -51,6 +53,10 @@ interface TreeCanvasProps {
   onEdgeClick: (event: React.MouseEvent, edge: TreeFlowEdge) => void;
   onAddMember: () => void;
   onDragStop?: (memberId: string, position: { x: number; y: number }) => void;
+  onSelectionDragStop?: (
+    positions: Array<{ memberId: string; position: { x: number; y: number } }>,
+  ) => void;
+  onSelectionChange?: (selectedNodeIds: string[]) => void;
   /**
    * Incremented by the parent each time a new Member is added to the tree.
    * Adding a Member forces the Drag Lock to unlocked (ADR 0003), so a change
@@ -210,6 +216,8 @@ export default function TreeCanvas({
   onEdgeClick,
   onAddMember,
   onDragStop,
+  onSelectionDragStop,
+  onSelectionChange,
   memberAddedSignal,
   registerViewportCenter,
   hiddenIds,
@@ -330,6 +338,31 @@ export default function TreeCanvas({
     }
   };
 
+  const handleSelectionDragStop: OnSelectionDrag = (_event, draggedNodes) => {
+    const memberPositions = draggedNodes
+      .filter((n) => n.type === "member")
+      .map((n) => ({ memberId: n.id, position: n.position }));
+    if (memberPositions.length > 0) {
+      onSelectionDragStop?.(memberPositions);
+    }
+  };
+
+  const handleSelectionChange = useCallback(
+    ({ nodes: selectedNodes }: { nodes: TreeFlowNode[] }) => {
+      const memberIds = selectedNodes
+        .filter((n) => n.type === "member")
+        .map((n) => n.id);
+      onSelectionChange?.(memberIds);
+    },
+    [onSelectionChange],
+  );
+
+  const selectionEnabled = canEdit && !dragLocked;
+  const isCoarsePointer = useMemo(
+    () => typeof window !== "undefined" && window.matchMedia("(pointer: coarse)").matches,
+    [],
+  );
+
   if (members.length === 0) {
     return (
       <div
@@ -369,6 +402,12 @@ export default function TreeCanvas({
         onNodeClick={handleNodeClick}
         onEdgeClick={handleEdgeClick}
         onNodeDragStop={handleNodeDragStop}
+        onSelectionDragStop={handleSelectionDragStop}
+        onSelectionChange={handleSelectionChange}
+        selectionOnDrag={selectionEnabled && !isCoarsePointer}
+        panOnDrag={selectionEnabled && !isCoarsePointer ? [0] : true}
+        selectionMode={SelectionMode.Partial}
+        selectionKeyCode={selectionEnabled && !isCoarsePointer ? "Shift" : null}
         fitView
         fitViewOptions={{ padding: 0.2 }}
         defaultEdgeOptions={{

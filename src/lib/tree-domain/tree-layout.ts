@@ -172,6 +172,7 @@ export function buildTreeGraph(
       type: "union" as const,
       position: { x: ux, y: uy },
       draggable: false,
+      selectable: false,
       data: { spouseIds: [a, b] as [string, string] },
     });
   }
