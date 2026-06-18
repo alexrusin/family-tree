@@ -7,11 +7,13 @@ import {
   Panel,
   useReactFlow,
   useNodesState,
+  applyNodeChanges,
   SelectionMode,
   type EdgeMouseHandler,
   type NodeMouseHandler,
   type OnNodeDrag,
-  type OnSelectionDrag,
+  type OnNodesChange,
+  type SelectionDragHandler,
   type NodeTypes,
   type EdgeTypes,
 } from "@xyflow/react";
@@ -20,6 +22,7 @@ import "@xyflow/react/dist/style.css";
 import {
   NODE_H,
   NODE_W,
+  syncUnionPositions,
   type MemberPosition,
   type TreeArrangement,
   type TreeFlowEdge,
@@ -297,7 +300,18 @@ export default function TreeCanvas({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
+  const [nodes, setNodes] = useNodesState(initialNodes);
+
+  // Apply React Flow's node changes, then re-pin union nodes to their parents.
+  // React Flow only moves the nodes a user drags, so without this the derived
+  // union nodes stay put during a drag and snap into place on drop. Re-syncing
+  // on every change keeps them glued to the members as they move.
+  const handleNodesChange = useCallback<OnNodesChange<TreeFlowNode>>(
+    (changes) => {
+      setNodes((current) => syncUnionPositions(applyNodeChanges(changes, current)));
+    },
+    [setNodes],
+  );
 
   const edges = useMemo(
     () =>
@@ -338,7 +352,10 @@ export default function TreeCanvas({
     }
   };
 
-  const handleSelectionDragStop: OnSelectionDrag = (_event, draggedNodes) => {
+  const handleSelectionDragStop: SelectionDragHandler<TreeFlowNode> = (
+    _event,
+    draggedNodes,
+  ) => {
     const memberPositions = draggedNodes
       .filter((n) => n.type === "member")
       .map((n) => ({ memberId: n.id, position: n.position }));
@@ -362,6 +379,24 @@ export default function TreeCanvas({
     () => typeof window !== "undefined" && window.matchMedia("(pointer: coarse)").matches,
     [],
   );
+
+  // Escape clears an active multi-selection (US #13). React Flow does not bind
+  // Escape by default, so unselect every node ourselves while selection is
+  // enabled. Clearing the `selected` flag fires onSelectionChange, which resets
+  // the parent's multi-select count and restores the Member Details Panel.
+  useEffect(() => {
+    if (!selectionEnabled || isCoarsePointer) return;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      setNodes((current) =>
+        current.some((n) => n.selected)
+          ? current.map((n) => (n.selected ? { ...n, selected: false } : n))
+          : current,
+      );
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [selectionEnabled, isCoarsePointer, setNodes]);
 
   if (members.length === 0) {
     return (
@@ -398,14 +433,19 @@ export default function TreeCanvas({
         edgeTypes={edgeTypes}
         nodesDraggable={canEdit && !dragLocked}
         nodesConnectable={false}
-        onNodesChange={onNodesChange}
+        onNodesChange={handleNodesChange}
         onNodeClick={handleNodeClick}
         onEdgeClick={handleEdgeClick}
         onNodeDragStop={handleNodeDragStop}
         onSelectionDragStop={handleSelectionDragStop}
         onSelectionChange={handleSelectionChange}
-        selectionOnDrag={selectionEnabled && !isCoarsePointer}
-        panOnDrag={selectionEnabled && !isCoarsePointer ? [0] : true}
+        // Plain left-drag always pans. Rubber-band selection is bound to the
+        // Shift key (gated to editors on a fine pointer with the Drag Lock
+        // off), so Shift+drag selects without also panning. selectionOnDrag is
+        // intentionally left off: enabling it alongside panOnDrag makes a
+        // single left-drag both pan and draw a selection box.
+        selectionOnDrag={false}
+        panOnDrag
         selectionMode={SelectionMode.Partial}
         selectionKeyCode={selectionEnabled && !isCoarsePointer ? "Shift" : null}
         fitView

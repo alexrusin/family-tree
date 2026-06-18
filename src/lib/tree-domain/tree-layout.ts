@@ -79,6 +79,53 @@ export type TreeFlowEdge =
 export const NODE_W = 120;
 export const NODE_H = 150;
 const UNION_SIZE = 8;
+
+/**
+ * Position a union node at the horizontal midpoint of its two spouse members,
+ * just below the lower of the two. Shared by the initial layout and the live
+ * drag sync so the formula stays in one place.
+ */
+export function computeUnionPosition(
+  pa: MemberPosition,
+  pb: MemberPosition,
+): MemberPosition {
+  return {
+    x: (pa.x + pb.x) / 2 + NODE_W / 2 - UNION_SIZE / 2,
+    y: Math.max(pa.y, pb.y) + NODE_H - UNION_SIZE / 2,
+  };
+}
+
+/**
+ * Re-pin every union node to sit below its two spouse members based on those
+ * members' current positions. React Flow does not move derived (union) nodes
+ * when their parents are dragged, so this is called on every node change to
+ * keep unions glued to their parents during a drag instead of jumping into
+ * place only after the drag ends. Returns the same array reference when nothing
+ * moved, so it is safe to call on every change.
+ */
+export function syncUnionPositions(nodes: TreeFlowNode[]): TreeFlowNode[] {
+  const memberPositions = new Map<string, MemberPosition>();
+  for (const node of nodes) {
+    if (node.type === "member") memberPositions.set(node.id, node.position);
+  }
+
+  let changed = false;
+  const next = nodes.map((node) => {
+    if (node.type !== "union") return node;
+    const [a, b] = node.data.spouseIds;
+    const pa = memberPositions.get(a);
+    const pb = memberPositions.get(b);
+    if (!pa || !pb) return node;
+    const target = computeUnionPosition(pa, pb);
+    if (node.position.x === target.x && node.position.y === target.y) {
+      return node;
+    }
+    changed = true;
+    return { ...node, position: target };
+  });
+
+  return changed ? next : nodes;
+}
 export const SPOUSE_LEFT_SOURCE_HANDLE = "spouse-left-source";
 export const SPOUSE_LEFT_TARGET_HANDLE = "spouse-left-target";
 export const SPOUSE_RIGHT_SOURCE_HANDLE = "spouse-right-source";
@@ -164,8 +211,7 @@ export function buildTreeGraph(
     const pa = pos.get(a);
     const pb = pos.get(b);
     if (!pa || !pb) continue;
-    const ux = (pa.x + pb.x) / 2 + NODE_W / 2 - UNION_SIZE / 2;
-    const uy = Math.max(pa.y, pb.y) + NODE_H - UNION_SIZE / 2;
+    const { x: ux, y: uy } = computeUnionPosition(pa, pb);
     unionMap.set(key, { spouseA: a, spouseB: b, children: kids });
     unionNodes.push({
       id: `union-${key}`,
