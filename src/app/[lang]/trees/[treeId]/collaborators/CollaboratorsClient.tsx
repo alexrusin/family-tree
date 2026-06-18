@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useMemo, useState } from "react";
 import { Mail, UserMinus, Users } from "lucide-react";
 import InviteCollaboratorModal from "./InviteCollaboratorModal";
+import RemoveCollaboratorConfirmation from "./RemoveCollaboratorConfirmation";
 
 type CollaboratorRole = "editor" | "viewer";
 
@@ -45,6 +46,8 @@ interface CollaborationDictionary {
   resending: string;
   cancelInvite: string;
   cancelling: string;
+  remove: string;
+  removing: string;
   leaveTree: string;
   leavingTree: string;
   invitedRole: string;
@@ -53,6 +56,7 @@ interface CollaborationDictionary {
   you: string;
   resendSuccess: string;
   cancelSuccess: string;
+  removeSuccess: string;
   inviteSuccess: string;
   roles: {
     owner: string;
@@ -74,6 +78,13 @@ interface CollaborationDictionary {
     cancel: string;
     send: string;
     sending: string;
+  };
+  removeModal: {
+    title: string;
+    body: string;
+    warning: string;
+    cancel: string;
+    confirm: string;
   };
   errors: {
     loadFailed: string;
@@ -128,6 +139,11 @@ export default function CollaboratorsClient({
   const [cancellingInvitationId, setCancellingInvitationId] = useState<
     string | null
   >(null);
+  const [removingCollaboratorId, setRemovingCollaboratorId] = useState<
+    string | null
+  >(null);
+  const [collaboratorToRemove, setCollaboratorToRemove] =
+    useState<CollaboratorRecord | null>(null);
   const [isLeavingTree, setIsLeavingTree] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
   const [actionMessage, setActionMessage] = useState<string | null>(null);
@@ -239,6 +255,40 @@ export default function CollaboratorsClient({
       setActionError(t.errors.generic);
     } finally {
       setCancellingInvitationId(null);
+    }
+  };
+
+  const handleRemoveCollaborator = async (collaboratorId: string) => {
+    setActionError(null);
+    setActionMessage(null);
+    setRemovingCollaboratorId(collaboratorId);
+
+    try {
+      const response = await fetch(
+        `/api/trees/${treeId}/collaboration/collaborators/${collaboratorId}`,
+        {
+          method: "DELETE",
+        },
+      );
+
+      const payload = (await response.json().catch(() => null)) as {
+        errorCode?: string;
+      } | null;
+
+      if (!response.ok) {
+        setActionError(mapErrorCode(payload?.errorCode, t.errors));
+        return;
+      }
+
+      setCollaborators((current) =>
+        current.filter((collaborator) => collaborator.id !== collaboratorId),
+      );
+      setActionMessage(t.removeSuccess);
+      setCollaboratorToRemove(null);
+    } catch {
+      setActionError(t.errors.generic);
+    } finally {
+      setRemovingCollaboratorId(null);
     }
   };
 
@@ -408,6 +458,26 @@ export default function CollaboratorsClient({
                       </span>
                     )}
                   </div>
+
+                  {isOwner && (
+                    <div className="mt-4 pt-4 border-t border-stone-200 flex justify-end">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setActionError(null);
+                          setActionMessage(null);
+                          setCollaboratorToRemove(collaborator);
+                        }}
+                        disabled={removingCollaboratorId === collaborator.id}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-red-600 hover:bg-red-50 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                      >
+                        <UserMinus className="w-3.5 h-3.5" />
+                        {removingCollaboratorId === collaborator.id
+                          ? t.removing
+                          : t.remove}
+                      </button>
+                    </div>
+                  )}
                 </article>
               );
             })}
@@ -528,6 +598,39 @@ export default function CollaboratorsClient({
             setActionError(null);
             setActionMessage(t.inviteSuccess);
             await loadCollaborationData();
+          }}
+        />
+      )}
+
+      {isOwner && (
+        <RemoveCollaboratorConfirmation
+          isOpen={collaboratorToRemove !== null}
+          isRemoving={
+            collaboratorToRemove !== null &&
+            removingCollaboratorId === collaboratorToRemove.id
+          }
+          collaboratorName={
+            collaboratorToRemove
+              ? collaboratorToRemove.user.name?.trim() ||
+                collaboratorToRemove.user.email
+              : ""
+          }
+          onClose={() => {
+            if (removingCollaboratorId) return;
+            setCollaboratorToRemove(null);
+          }}
+          onConfirm={() => {
+            if (collaboratorToRemove) {
+              void handleRemoveCollaborator(collaboratorToRemove.id);
+            }
+          }}
+          t={{
+            title: t.removeModal.title,
+            body: t.removeModal.body,
+            warning: t.removeModal.warning,
+            cancel: t.removeModal.cancel,
+            confirm: t.removeModal.confirm,
+            removing: t.removing,
           }}
         />
       )}
