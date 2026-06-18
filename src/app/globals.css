@@ -73,3 +73,15 @@ body {
 *, *::before, *::after {
   box-sizing: border-box;
 }
+
+/*
+ * Hide React Flow's multi-selection bounding box. Selected Members already
+ * read as selected via their own amber ring, so the default blue dotted
+ * rectangle is redundant visual noise. The element is kept in the DOM with its
+ * pointer events intact so it still serves as the drag handle for moving the
+ * whole selection together.
+ */
+.react-flow__nodesselection-rect {
+  background: transparent !important;
+  border: none !important;
+}

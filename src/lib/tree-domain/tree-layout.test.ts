@@ -2,15 +2,18 @@
 import { describe, it, expect } from "vitest";
 import {
   buildTreeGraph,
+  computeUnionPosition,
   formatMemberDateRange,
   formatMemberDisplayName,
   isValidArrangement,
   pruneArrangement,
+  syncUnionPositions,
   SPOUSE_LEFT_SOURCE_HANDLE,
   SPOUSE_LEFT_TARGET_HANDLE,
   SPOUSE_RIGHT_SOURCE_HANDLE,
   SPOUSE_RIGHT_TARGET_HANDLE,
   type TreeArrangement,
+  type TreeFlowNode,
   type TreeMemberData,
   type TreeRelationship,
 } from "./tree-layout";
@@ -163,6 +166,19 @@ describe("buildTreeGraph", () => {
     ).toEqual(["rpa", "rpb"]);
   });
 
+  it("marks union nodes as non-selectable", () => {
+    const members = [makeMember("a"), makeMember("b"), makeMember("child")];
+    const rels: TreeRelationship[] = [
+      { id: "rs", fromMemberId: "a", toMemberId: "b", type: "spouse" },
+      { id: "rpa", fromMemberId: "a", toMemberId: "child", type: "parent" },
+      { id: "rpb", fromMemberId: "b", toMemberId: "child", type: "parent" },
+    ];
+    const { nodes } = buildTreeGraph(members, rels);
+    const unionNodes = nodes.filter((n) => n.type === "union");
+    expect(unionNodes).toHaveLength(1);
+    expect(unionNodes[0].selectable).toBe(false);
+  });
+
   it("creates a union node for a divorced couple with at least one shared child", () => {
     const members = [makeMember("a"), makeMember("b"), makeMember("child")];
     const rels: TreeRelationship[] = [
@@ -298,6 +314,80 @@ describe("buildTreeGraph with arrangement", () => {
     // Centered horizontally between a (x=0) and b (x=200): mid x ≈ 0+200/2 = 100
     // The exact formula is (pa.x + pb.x) / 2 + NODE_W / 2 - UNION_SIZE / 2 where NODE_W=120, UNION_SIZE=8
     expect(unionNode.position.x).toBeCloseTo(100 + 120 / 2 - 8 / 2, 0);
+  });
+});
+
+describe("computeUnionPosition", () => {
+  it("centers the union horizontally and drops it below the lower spouse", () => {
+    expect(computeUnionPosition({ x: 0, y: 0 }, { x: 200, y: 40 })).toEqual({
+      x: 100 + 120 / 2 - 8 / 2, // midpoint + NODE_W/2 - UNION_SIZE/2 = 156
+      y: 40 + 150 - 8 / 2, //       max(y) + NODE_H - UNION_SIZE/2 = 186
+    });
+  });
+});
+
+describe("syncUnionPositions", () => {
+  function memberNode(id: string, x: number, y: number): TreeFlowNode {
+    return {
+      id,
+      type: "member",
+      position: { x, y },
+      data: { member: makeMember(id) },
+    };
+  }
+  function unionNode(
+    a: string,
+    b: string,
+    x: number,
+    y: number,
+  ): TreeFlowNode {
+    return {
+      id: `union-${a}::${b}`,
+      type: "union",
+      position: { x, y },
+      draggable: false,
+      selectable: false,
+      data: { spouseIds: [a, b] as [string, string] },
+    };
+  }
+
+  it("re-pins a union node to its spouses' current positions", () => {
+    const nodes: TreeFlowNode[] = [
+      memberNode("a", 0, 0),
+      memberNode("b", 200, 40),
+      unionNode("a", "b", -999, -999), // stale, as if the spouses just moved
+    ];
+
+    const union = syncUnionPositions(nodes).find((n) => n.type === "union")!;
+
+    expect(union.position).toEqual(
+      computeUnionPosition({ x: 0, y: 0 }, { x: 200, y: 40 }),
+    );
+  });
+
+  it("returns the same array reference when unions are already in place", () => {
+    const target = computeUnionPosition({ x: 0, y: 0 }, { x: 200, y: 0 });
+    const nodes: TreeFlowNode[] = [
+      memberNode("a", 0, 0),
+      memberNode("b", 200, 0),
+      unionNode("a", "b", target.x, target.y),
+    ];
+
+    expect(syncUnionPositions(nodes)).toBe(nodes);
+  });
+
+  it("leaves a union untouched when one of its spouses is missing", () => {
+    const nodes: TreeFlowNode[] = [
+      memberNode("a", 0, 0),
+      unionNode("a", "b", 5, 5),
+    ];
+
+    const result = syncUnionPositions(nodes);
+    expect(result).toBe(nodes);
+    expect(result.find((n) => n.type === "union")!.position).toEqual({
+      x: 5,
+      y: 5,
+    });
   });
 });
 

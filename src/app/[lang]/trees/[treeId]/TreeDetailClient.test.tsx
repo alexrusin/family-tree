@@ -24,6 +24,8 @@ vi.mock("next/dynamic", () => ({
     ({
       onNodeClick,
       onDragStop,
+      onSelectionDragStop,
+      onSelectionChange,
       registerViewportCenter,
       canEdit,
       arrangement,
@@ -32,6 +34,10 @@ vi.mock("next/dynamic", () => ({
     }: {
       onNodeClick: (id: string) => void;
       onDragStop?: (memberId: string, position: { x: number; y: number }) => void;
+      onSelectionDragStop?: (
+        positions: Array<{ memberId: string; position: { x: number; y: number } }>,
+      ) => void;
+      onSelectionChange?: (selectedNodeIds: string[]) => void;
       registerViewportCenter?: (
         getter: (() => { x: number; y: number } | null) | null,
       ) => void;
@@ -57,6 +63,41 @@ vi.mock("next/dynamic", () => ({
           >
             Drag member
           </button>
+        )}
+        {canEdit && onSelectionDragStop && (
+          <button
+            type="button"
+            onClick={() =>
+              onSelectionDragStop([
+                { memberId: "member-1", position: { x: 60, y: 110 } },
+                { memberId: "member-2", position: { x: 160, y: 210 } },
+              ])
+            }
+          >
+            Drag selection
+          </button>
+        )}
+        {canEdit && onSelectionChange && (
+          <>
+            <button
+              type="button"
+              onClick={() => onSelectionChange(["member-1", "member-2"])}
+            >
+              Multi-select members
+            </button>
+            <button
+              type="button"
+              onClick={() => onSelectionChange(["member-1"])}
+            >
+              Single-select member
+            </button>
+            <button
+              type="button"
+              onClick={() => onSelectionChange([])}
+            >
+              Clear selection
+            </button>
+          </>
         )}
         {registerViewportCenter && (
           <button
@@ -1304,5 +1345,254 @@ describe("TreeDetailClient reset layout", () => {
     await waitFor(() => {
       expect(screen.queryByRole("button", { name: "Reset Layout" })).toBeNull();
     });
+  });
+});
+
+describe("TreeDetailClient multi-select and multi-drag", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    currentViewportWidth = 0;
+    mediaQueries = [];
+  });
+
+  afterEach(() => {
+    cleanup();
+    vi.unstubAllGlobals();
+  });
+
+  function setupFetchWithArrangementHandler(
+    arrangementHandler: (body: { arrangement?: unknown }) => Response | Promise<Response>,
+  ) {
+    mockMatchMedia(1280);
+    vi.stubGlobal(
+      "fetch",
+      vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
+        const url = String(input);
+        if (url.includes("/members"))
+          return Promise.resolve({
+            ok: true,
+            json: async () => ({
+              members: [
+                { id: "member-1", firstName: "Alice" },
+                { id: "member-2", firstName: "Bob" },
+              ],
+            }),
+          });
+        if (url.includes("/relationships"))
+          return Promise.resolve({
+            ok: true,
+            json: async () => ({ relationships: [] }),
+          });
+        if (url.includes("/arrangement") && init?.method === "PUT") {
+          const body = JSON.parse(String(init.body)) as { arrangement?: unknown };
+          return Promise.resolve(arrangementHandler(body));
+        }
+        if (url.includes("/arrangement"))
+          return Promise.resolve({
+            ok: true,
+            json: async () => ({ arrangement: null }),
+          });
+        return Promise.resolve({ ok: true, json: async () => ({}) });
+      }),
+    );
+  }
+
+  it("saves all moved positions in a single batch on multi-drag stop", async () => {
+    const user = userEvent.setup();
+    const savedArrangements: unknown[] = [];
+
+    setupFetchWithArrangementHandler((body) => {
+      savedArrangements.push(body.arrangement);
+      return { ok: true, json: async () => ({ arrangement: body.arrangement }) } as Response;
+    });
+
+    render(
+      <TreeDetailClient
+        lang="en"
+        treeId="tree-1"
+        treeName="Family Tree"
+        canEdit={true}
+        isOwner={false}
+        initialMemberCount={2}
+        t={translations}
+      />,
+    );
+
+    const dragBtn = await screen.findByRole("button", { name: "Drag selection" });
+    await user.click(dragBtn);
+
+    await waitFor(() => {
+      expect(savedArrangements).toHaveLength(1);
+      expect(savedArrangements[0]).toEqual({
+        "member-1": { x: 60, y: 110 },
+        "member-2": { x: 160, y: 210 },
+      });
+    });
+
+    expect(screen.queryByText("Unable to save member position.")).toBeNull();
+  });
+
+  it("reverts all positions and shows error on failed batch save", async () => {
+    const user = userEvent.setup();
+
+    setupFetchWithArrangementHandler(() => ({
+      ok: false,
+      json: async () => ({ errorCode: "ERR_INTERNAL" }),
+    } as Response));
+
+    render(
+      <TreeDetailClient
+        lang="en"
+        treeId="tree-1"
+        treeName="Family Tree"
+        canEdit={true}
+        isOwner={false}
+        initialMemberCount={2}
+        t={translations}
+      />,
+    );
+
+    const dragBtn = await screen.findByRole("button", { name: "Drag selection" });
+    await user.click(dragBtn);
+
+    await waitFor(() => {
+      expect(
+        screen.getByText("Unable to save member position."),
+      ).not.toBeNull();
+    });
+  });
+
+  it("suppresses the member details panel when multiple members are selected", async () => {
+    const user = userEvent.setup();
+    mockMatchMedia(1280);
+    mockedFetchedMemberCount = 2;
+    vi.stubGlobal(
+      "fetch",
+      vi.fn((input: RequestInfo | URL) => {
+        const url = String(input);
+        if (url.includes("/members"))
+          return Promise.resolve({
+            ok: true,
+            json: async () => ({
+              members: [
+                { id: "member-1", firstName: "Alice" },
+                { id: "member-2", firstName: "Bob" },
+              ],
+            }),
+          });
+        if (url.includes("/relationships"))
+          return Promise.resolve({ ok: true, json: async () => ({ relationships: [] }) });
+        return Promise.resolve({ ok: true, json: async () => ({}) });
+      }),
+    );
+
+    render(
+      <TreeDetailClient
+        lang="en"
+        treeId="tree-1"
+        treeName="Family Tree"
+        canEdit={true}
+        isOwner={false}
+        initialMemberCount={2}
+        t={translations}
+      />,
+    );
+
+    await user.click(await screen.findByRole("button", { name: "Select member" }));
+    expect(await screen.findByTestId("member-side-panel")).not.toBeNull();
+
+    await user.click(screen.getByRole("button", { name: "Multi-select members" }));
+
+    await waitFor(() => {
+      expect(screen.queryByTestId("member-side-panel")).toBeNull();
+    });
+  });
+
+  it("re-shows the member details panel when selection returns to single", async () => {
+    const user = userEvent.setup();
+    mockMatchMedia(1280);
+    mockedFetchedMemberCount = 2;
+    vi.stubGlobal(
+      "fetch",
+      vi.fn((input: RequestInfo | URL) => {
+        const url = String(input);
+        if (url.includes("/members"))
+          return Promise.resolve({
+            ok: true,
+            json: async () => ({
+              members: [
+                { id: "member-1", firstName: "Alice" },
+                { id: "member-2", firstName: "Bob" },
+              ],
+            }),
+          });
+        if (url.includes("/relationships"))
+          return Promise.resolve({ ok: true, json: async () => ({ relationships: [] }) });
+        return Promise.resolve({ ok: true, json: async () => ({}) });
+      }),
+    );
+
+    render(
+      <TreeDetailClient
+        lang="en"
+        treeId="tree-1"
+        treeName="Family Tree"
+        canEdit={true}
+        isOwner={false}
+        initialMemberCount={2}
+        t={translations}
+      />,
+    );
+
+    await user.click(await screen.findByRole("button", { name: "Select member" }));
+    expect(await screen.findByTestId("member-side-panel")).not.toBeNull();
+
+    await user.click(screen.getByRole("button", { name: "Multi-select members" }));
+    await waitFor(() => {
+      expect(screen.queryByTestId("member-side-panel")).toBeNull();
+    });
+
+    await user.click(screen.getByRole("button", { name: "Select member" }));
+    await user.click(screen.getByRole("button", { name: "Single-select member" }));
+
+    await waitFor(() => {
+      expect(screen.getByTestId("member-side-panel")).not.toBeNull();
+    });
+  });
+
+  it("does not expose multi-select controls to viewers (canEdit=false)", async () => {
+    mockMatchMedia(1280);
+    vi.stubGlobal(
+      "fetch",
+      vi.fn((input: RequestInfo | URL) => {
+        const url = String(input);
+        if (url.includes("/members"))
+          return Promise.resolve({
+            ok: true,
+            json: async () => ({
+              members: [{ id: "member-1", firstName: "Alice" }],
+            }),
+          });
+        if (url.includes("/relationships"))
+          return Promise.resolve({ ok: true, json: async () => ({ relationships: [] }) });
+        return Promise.resolve({ ok: true, json: async () => ({}) });
+      }),
+    );
+
+    render(
+      <TreeDetailClient
+        lang="en"
+        treeId="tree-1"
+        treeName="Family Tree"
+        canEdit={false}
+        isOwner={false}
+        initialMemberCount={1}
+        t={translations}
+      />,
+    );
+
+    await screen.findByTestId("tree-canvas");
+    expect(screen.queryByRole("button", { name: "Drag selection" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Multi-select members" })).toBeNull();
   });
 });

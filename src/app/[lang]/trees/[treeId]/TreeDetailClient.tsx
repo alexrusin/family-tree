@@ -313,6 +313,7 @@ export default function TreeDetailClient({
       : getCollapsedAnchors(window.localStorage, treeId),
   );
   const [isTreeMenuOpen, setIsTreeMenuOpen] = useState(false);
+  const [multiSelectCount, setMultiSelectCount] = useState(0);
   const [memberPanelPresentation, setMemberPanelPresentation] =
     useState<MemberSidePanelPresentation>(() => getMemberPanelPresentation());
   const isDesktopViewport = memberPanelPresentation === "desktop";
@@ -652,6 +653,41 @@ export default function TreeDetailClient({
     [arrangement, persistArrangement, t.errors.dragSaveFailed],
   );
 
+  const handleSelectionDragStop = useCallback(
+    async (
+      positions: Array<{ memberId: string; position: { x: number; y: number } }>,
+    ) => {
+      const prevArrangement = arrangement;
+      const nextArrangement = { ...(arrangement ?? {}) } as TreeArrangement;
+      for (const { memberId, position } of positions) {
+        nextArrangement[memberId] = position;
+      }
+      if (await persistArrangement(nextArrangement)) {
+        setArrangement(nextArrangement);
+        setLayoutError(null);
+      } else {
+        setArrangement(
+          prevArrangement === null
+            ? ({} as TreeArrangement)
+            : { ...prevArrangement },
+        );
+        setLayoutError(t.errors.dragSaveFailed);
+      }
+    },
+    [arrangement, persistArrangement, t.errors.dragSaveFailed],
+  );
+
+  const handleSelectionChange = useCallback(
+    (selectedNodeIds: string[]) => {
+      const count = selectedNodeIds.length;
+      setMultiSelectCount(count);
+      if (count > 1) {
+        setSelectedMemberId(null);
+      }
+    },
+    [],
+  );
+
   const handleResetLayout = useCallback(async () => {
     try {
       const response = await fetch(`/api/trees/${treeId}/arrangement`, {
@@ -838,6 +874,8 @@ export default function TreeDetailClient({
             onEdgeClick={handleEdgeClick}
             onAddMember={openAddMemberModal}
             onDragStop={canEdit ? handleNodeDragStop : undefined}
+            onSelectionDragStop={canEdit ? handleSelectionDragStop : undefined}
+            onSelectionChange={canEdit ? handleSelectionChange : undefined}
             memberAddedSignal={memberAddedSignal}
             registerViewportCenter={canEdit ? registerViewportCenter : undefined}
             hiddenIds={hiddenIds}
@@ -850,7 +888,7 @@ export default function TreeDetailClient({
       </div>
 
       {/* Right side panel */}
-      {selectedMember && (
+      {selectedMember && multiSelectCount <= 1 && (
         <MemberSidePanel
           member={selectedMember}
           allRelationships={relationships}
