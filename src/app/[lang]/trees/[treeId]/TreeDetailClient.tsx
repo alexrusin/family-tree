@@ -55,6 +55,8 @@ interface MemberSubT {
   firstNamePlaceholder: string;
   lastName: string;
   lastNamePlaceholder: string;
+  maidenName: string;
+  maidenNamePlaceholder: string;
   gender: string;
   genderUndisclosed: string;
   genderMale: string;
