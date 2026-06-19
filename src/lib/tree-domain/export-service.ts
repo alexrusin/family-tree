@@ -4,6 +4,7 @@ import {
   type ExportableRelationship,
 } from "@/lib/gedcom/export-mapper";
 import { serializeGedcom } from "@/lib/gedcom/serializer";
+import { DomainError } from "@/lib/domain-error";
 import type { TreeRole } from "./tree-access";
 
 export function buildGedcomFilename(treeName: string): string {
@@ -28,12 +29,12 @@ export async function exportTreeAsGedcom(params: {
 }): Promise<{ content: string; filename: string }> {
   const role = await params.repo.getRole(params.treeId, params.actorUserId);
   if (role === "none") {
-    throw new Error("ERR_FORBIDDEN");
+    throw new DomainError("ERR_FORBIDDEN");
   }
 
   const tree = await params.repo.getTree(params.treeId);
   if (!tree) {
-    throw new Error("ERR_NOT_FOUND");
+    throw new DomainError("ERR_NOT_FOUND");
   }
 
   const members = await params.repo.getMembers(params.treeId);

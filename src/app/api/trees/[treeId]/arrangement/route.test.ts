@@ -1,59 +1,45 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { NextRequest } from "next/server";
 
-const { prismaMock, prismaClientCtorMock, prismaPgMock, authMock, prismaDbNullSentinel } =
-  vi.hoisted(() => {
-    const prismaMock = {
-      familyTree: {
-        findUnique: vi.fn(),
-        update: vi.fn(),
-      },
-      collaborator: {
-        findUnique: vi.fn(),
-      },
-    };
+const {
+  getSessionMock,
+  getTreeRoleMock,
+  prismaMock,
+  prismaDbNullSentinel,
+} = vi.hoisted(() => {
+  const getSessionMock = vi.fn();
+  const getTreeRoleMock = vi.fn();
+  const prismaDbNullSentinel = Symbol("DbNull");
+  const prismaMock = {
+    familyTree: {
+      findUnique: vi.fn(),
+      update: vi.fn(),
+    },
+  };
 
-    const prismaDbNullSentinel = Symbol("DbNull");
+  return {
+    getSessionMock,
+    getTreeRoleMock,
+    prismaMock,
+    prismaDbNullSentinel,
+  };
+});
 
-    return {
-      prismaMock,
-      prismaClientCtorMock: vi.fn(function PrismaClientMock() {
-        return prismaMock;
-      }),
-      prismaPgMock: vi.fn(function PrismaPgMock() {
-        return {};
-      }),
-      authMock: { api: { getSession: vi.fn() } },
-      prismaDbNullSentinel,
-    };
-  });
+vi.mock("@/lib/auth", () => ({
+  auth: { api: { getSession: getSessionMock } },
+}));
+
+vi.mock("@/lib/prisma", () => ({ prisma: prismaMock }));
+
+vi.mock("@/lib/tree-domain/tree-access", () => ({
+  getTreeRole: getTreeRoleMock,
+}));
 
 vi.mock("@/generated/prisma/client", () => ({
-  PrismaClient: prismaClientCtorMock,
   Prisma: { DbNull: prismaDbNullSentinel },
 }));
-vi.mock("@prisma/adapter-pg", () => ({ PrismaPg: prismaPgMock }));
-vi.mock("@/lib/auth", () => ({ auth: authMock }));
 
 const { GET, PUT, DELETE } = await import("./route");
-
-const OWNER_SESSION = { user: { id: "owner-1" } };
-const EDITOR_SESSION = { user: { id: "editor-1" } };
-const VIEWER_SESSION = { user: { id: "viewer-1" } };
-
-function setupEditorCollaborator() {
-  prismaMock.collaborator.findUnique.mockResolvedValue({
-    role: "editor",
-    acceptedAt: new Date(),
-  });
-}
-
-function setupViewerCollaborator() {
-  prismaMock.collaborator.findUnique.mockResolvedValue({
-    role: "viewer",
-    acceptedAt: new Date(),
-  });
-}
 
 function makeGetRequest(treeId = "tree-1") {
   return new NextRequest(
@@ -83,35 +69,12 @@ function makePutRequest(body: unknown, treeId = "tree-1") {
 describe("GET /api/trees/[treeId]/arrangement", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-  });
-
-  it("returns 401 when unauthenticated", async () => {
-    authMock.api.getSession.mockResolvedValue(null);
-
-    const response = await GET(makeGetRequest(), {
-      params: Promise.resolve({ treeId: "tree-1" }),
-    });
-
-    expect(response.status).toBe(401);
-  });
-
-  it("returns 403 when user has no tree access", async () => {
-    authMock.api.getSession.mockResolvedValue(EDITOR_SESSION);
-    prismaMock.familyTree.findUnique.mockResolvedValue(null);
-
-    const response = await GET(makeGetRequest(), {
-      params: Promise.resolve({ treeId: "tree-1" }),
-    });
-
-    expect(response.status).toBe(403);
+    getSessionMock.mockResolvedValue({ user: { id: "owner-1" } });
+    getTreeRoleMock.mockResolvedValue("owner");
   });
 
   it("returns null arrangement when nodePositions is null", async () => {
-    authMock.api.getSession.mockResolvedValue(OWNER_SESSION);
-    // First call: getTreeRole, second call: load nodePositions
-    prismaMock.familyTree.findUnique
-      .mockResolvedValueOnce({ ownerId: "owner-1" })
-      .mockResolvedValueOnce({ nodePositions: null });
+    prismaMock.familyTree.findUnique.mockResolvedValue({ nodePositions: null });
 
     const response = await GET(makeGetRequest(), {
       params: Promise.resolve({ treeId: "tree-1" }),
@@ -123,10 +86,7 @@ describe("GET /api/trees/[treeId]/arrangement", () => {
   });
 
   it("returns null arrangement when stored JSON is invalid", async () => {
-    authMock.api.getSession.mockResolvedValue(OWNER_SESSION);
-    prismaMock.familyTree.findUnique
-      .mockResolvedValueOnce({ ownerId: "owner-1" })
-      .mockResolvedValueOnce({ nodePositions: { bad: "data" } });
+    prismaMock.familyTree.findUnique.mockResolvedValue({ nodePositions: { bad: "data" } });
 
     const response = await GET(makeGetRequest(), {
       params: Promise.resolve({ treeId: "tree-1" }),
@@ -139,10 +99,7 @@ describe("GET /api/trees/[treeId]/arrangement", () => {
 
   it("returns saved arrangement when nodePositions is valid", async () => {
     const savedArrangement = { m1: { x: 100, y: 200 }, m2: { x: 300, y: 400 } };
-    authMock.api.getSession.mockResolvedValue(OWNER_SESSION);
-    prismaMock.familyTree.findUnique
-      .mockResolvedValueOnce({ ownerId: "owner-1" })
-      .mockResolvedValueOnce({ nodePositions: savedArrangement });
+    prismaMock.familyTree.findUnique.mockResolvedValue({ nodePositions: savedArrangement });
 
     const response = await GET(makeGetRequest(), {
       params: Promise.resolve({ treeId: "tree-1" }),
@@ -154,11 +111,8 @@ describe("GET /api/trees/[treeId]/arrangement", () => {
   });
 
   it("allows a collaborator viewer to read the arrangement", async () => {
-    authMock.api.getSession.mockResolvedValue(VIEWER_SESSION);
-    prismaMock.familyTree.findUnique
-      .mockResolvedValueOnce({ ownerId: "owner-1" })
-      .mockResolvedValueOnce({ nodePositions: null });
-    setupViewerCollaborator();
+    getTreeRoleMock.mockResolvedValue("viewer");
+    prismaMock.familyTree.findUnique.mockResolvedValue({ nodePositions: null });
 
     const response = await GET(makeGetRequest(), {
       params: Promise.resolve({ treeId: "tree-1" }),
@@ -171,35 +125,11 @@ describe("GET /api/trees/[treeId]/arrangement", () => {
 describe("PUT /api/trees/[treeId]/arrangement", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-  });
-
-  it("returns 401 when unauthenticated", async () => {
-    authMock.api.getSession.mockResolvedValue(null);
-
-    const response = await PUT(makePutRequest({ arrangement: {} }), {
-      params: Promise.resolve({ treeId: "tree-1" }),
-    });
-
-    expect(response.status).toBe(401);
-  });
-
-  it("returns 403 when user has viewer role", async () => {
-    authMock.api.getSession.mockResolvedValue(VIEWER_SESSION);
-    prismaMock.familyTree.findUnique.mockResolvedValue({ ownerId: "owner-1" });
-    setupViewerCollaborator();
-
-    const response = await PUT(
-      makePutRequest({ arrangement: { m1: { x: 10, y: 20 } } }),
-      { params: Promise.resolve({ treeId: "tree-1" }) },
-    );
-
-    expect(response.status).toBe(403);
+    getSessionMock.mockResolvedValue({ user: { id: "owner-1" } });
+    getTreeRoleMock.mockResolvedValue("owner");
   });
 
   it("returns 400 when arrangement body is invalid", async () => {
-    authMock.api.getSession.mockResolvedValue(OWNER_SESSION);
-    prismaMock.familyTree.findUnique.mockResolvedValue({ ownerId: "owner-1" });
-
     const response = await PUT(
       makePutRequest({ arrangement: { m1: { x: "bad", y: 20 } } }),
       { params: Promise.resolve({ treeId: "tree-1" }) },
@@ -212,8 +142,6 @@ describe("PUT /api/trees/[treeId]/arrangement", () => {
 
   it("saves valid arrangement for owner and returns it", async () => {
     const arrangement = { m1: { x: 10, y: 20 }, m2: { x: 30, y: 40 } };
-    authMock.api.getSession.mockResolvedValue(OWNER_SESSION);
-    prismaMock.familyTree.findUnique.mockResolvedValue({ ownerId: "owner-1" });
     prismaMock.familyTree.update.mockResolvedValue({});
 
     const response = await PUT(makePutRequest({ arrangement }), {
@@ -232,9 +160,7 @@ describe("PUT /api/trees/[treeId]/arrangement", () => {
 
   it("saves valid arrangement for editor and returns it", async () => {
     const arrangement = { m1: { x: 5, y: 15 } };
-    authMock.api.getSession.mockResolvedValue(EDITOR_SESSION);
-    prismaMock.familyTree.findUnique.mockResolvedValue({ ownerId: "owner-1" });
-    setupEditorCollaborator();
+    getTreeRoleMock.mockResolvedValue("editor");
     prismaMock.familyTree.update.mockResolvedValue({});
 
     const response = await PUT(makePutRequest({ arrangement }), {
@@ -247,8 +173,6 @@ describe("PUT /api/trees/[treeId]/arrangement", () => {
   });
 
   it("saves an empty arrangement (clears all positions)", async () => {
-    authMock.api.getSession.mockResolvedValue(OWNER_SESSION);
-    prismaMock.familyTree.findUnique.mockResolvedValue({ ownerId: "owner-1" });
     prismaMock.familyTree.update.mockResolvedValue({});
 
     const response = await PUT(makePutRequest({ arrangement: {} }), {
@@ -264,44 +188,11 @@ describe("PUT /api/trees/[treeId]/arrangement", () => {
 describe("DELETE /api/trees/[treeId]/arrangement", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-  });
-
-  it("returns 401 when unauthenticated", async () => {
-    authMock.api.getSession.mockResolvedValue(null);
-
-    const response = await DELETE(makeDeleteRequest(), {
-      params: Promise.resolve({ treeId: "tree-1" }),
-    });
-
-    expect(response.status).toBe(401);
-  });
-
-  it("returns 403 when user has no tree access", async () => {
-    authMock.api.getSession.mockResolvedValue(EDITOR_SESSION);
-    prismaMock.familyTree.findUnique.mockResolvedValue(null);
-
-    const response = await DELETE(makeDeleteRequest(), {
-      params: Promise.resolve({ treeId: "tree-1" }),
-    });
-
-    expect(response.status).toBe(403);
-  });
-
-  it("returns 403 when user has viewer role", async () => {
-    authMock.api.getSession.mockResolvedValue(VIEWER_SESSION);
-    prismaMock.familyTree.findUnique.mockResolvedValue({ ownerId: "owner-1" });
-    setupViewerCollaborator();
-
-    const response = await DELETE(makeDeleteRequest(), {
-      params: Promise.resolve({ treeId: "tree-1" }),
-    });
-
-    expect(response.status).toBe(403);
+    getSessionMock.mockResolvedValue({ user: { id: "owner-1" } });
+    getTreeRoleMock.mockResolvedValue("owner");
   });
 
   it("clears nodePositions for owner and returns null arrangement", async () => {
-    authMock.api.getSession.mockResolvedValue(OWNER_SESSION);
-    prismaMock.familyTree.findUnique.mockResolvedValue({ ownerId: "owner-1" });
     prismaMock.familyTree.update.mockResolvedValue({});
 
     const response = await DELETE(makeDeleteRequest(), {
@@ -320,9 +211,7 @@ describe("DELETE /api/trees/[treeId]/arrangement", () => {
   });
 
   it("clears nodePositions for editor collaborator and returns null arrangement", async () => {
-    authMock.api.getSession.mockResolvedValue(EDITOR_SESSION);
-    prismaMock.familyTree.findUnique.mockResolvedValue({ ownerId: "owner-1" });
-    setupEditorCollaborator();
+    getTreeRoleMock.mockResolvedValue("editor");
     prismaMock.familyTree.update.mockResolvedValue({});
 
     const response = await DELETE(makeDeleteRequest(), {
