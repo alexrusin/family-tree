@@ -3,7 +3,10 @@ import { NextRequest } from "next/server";
 
 const getSessionMock = vi.hoisted(() => vi.fn());
 const getTreeRoleMock = vi.hoisted(() => vi.fn());
-const prismaStub = vi.hoisted(() => ({ __stub: true }));
+const prismaStub = vi.hoisted(() => ({
+  __stub: true,
+  familyTree: { findUnique: vi.fn() },
+}));
 
 vi.mock("@/lib/auth", () => ({
   auth: { api: { getSession: getSessionMock } },
@@ -46,8 +49,22 @@ describe("withTreeRole", () => {
   });
 
   describe("viewer tier", () => {
-    it("rejects none with 403", async () => {
+    it("returns 404 when tree does not exist", async () => {
       getTreeRoleMock.mockResolvedValue("none");
+      prismaStub.familyTree.findUnique.mockResolvedValue(null);
+
+      const handler = vi.fn();
+      const wrapped = withTreeRole("viewer", handler);
+      const res = await wrapped(makeRequest(), makeParams());
+
+      expect(res.status).toBe(404);
+      expect(await res.json()).toEqual({ errorCode: "ERR_NOT_FOUND" });
+      expect(handler).not.toHaveBeenCalled();
+    });
+
+    it("returns 403 when tree exists but user has no role", async () => {
+      getTreeRoleMock.mockResolvedValue("none");
+      prismaStub.familyTree.findUnique.mockResolvedValue({ ownerId: "other" });
 
       const handler = vi.fn();
       const wrapped = withTreeRole("viewer", handler);
@@ -93,8 +110,21 @@ describe("withTreeRole", () => {
   });
 
   describe("editor tier", () => {
-    it("rejects none with 403", async () => {
+    it("returns 404 when tree does not exist", async () => {
       getTreeRoleMock.mockResolvedValue("none");
+      prismaStub.familyTree.findUnique.mockResolvedValue(null);
+
+      const handler = vi.fn();
+      const wrapped = withTreeRole("editor", handler);
+      const res = await wrapped(makeRequest(), makeParams());
+
+      expect(res.status).toBe(404);
+      expect(await res.json()).toEqual({ errorCode: "ERR_NOT_FOUND" });
+    });
+
+    it("returns 403 when tree exists but user has no role", async () => {
+      getTreeRoleMock.mockResolvedValue("none");
+      prismaStub.familyTree.findUnique.mockResolvedValue({ ownerId: "other" });
 
       const handler = vi.fn();
       const wrapped = withTreeRole("editor", handler);
@@ -139,8 +169,21 @@ describe("withTreeRole", () => {
   });
 
   describe("owner tier", () => {
-    it("rejects none with 403", async () => {
+    it("returns 404 when tree does not exist", async () => {
       getTreeRoleMock.mockResolvedValue("none");
+      prismaStub.familyTree.findUnique.mockResolvedValue(null);
+
+      const handler = vi.fn();
+      const wrapped = withTreeRole("owner", handler);
+      const res = await wrapped(makeRequest(), makeParams());
+
+      expect(res.status).toBe(404);
+      expect(await res.json()).toEqual({ errorCode: "ERR_NOT_FOUND" });
+    });
+
+    it("returns 403 when tree exists but user has no role", async () => {
+      getTreeRoleMock.mockResolvedValue("none");
+      prismaStub.familyTree.findUnique.mockResolvedValue({ ownerId: "other" });
 
       const handler = vi.fn();
       const wrapped = withTreeRole("owner", handler);

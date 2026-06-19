@@ -36,6 +36,15 @@ export function withTreeRole<
       const role = await getTreeRole(ctx.prisma, params.treeId, ctx.user.id);
 
       if ((TIER_RANK[role] ?? 0) < TIER_RANK[tier]) {
+        if (role === "none") {
+          const tree = await ctx.prisma.familyTree.findUnique({
+            where: { id: params.treeId },
+            select: { ownerId: true },
+          });
+          if (!tree) {
+            throw new DomainError("ERR_NOT_FOUND");
+          }
+        }
         throw new DomainError("ERR_FORBIDDEN");
       }
 
