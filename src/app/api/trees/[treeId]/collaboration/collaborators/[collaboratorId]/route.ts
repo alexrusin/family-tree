@@ -1,19 +1,12 @@
-import { NextRequest, NextResponse } from "next/server";
-import { PrismaClient } from "@/generated/prisma/client";
-import { PrismaPg } from "@prisma/adapter-pg";
+import { NextResponse } from "next/server";
 import type { CollaboratorRole } from "@/generated/prisma/enums";
-import { auth } from "@/lib/auth";
+import { DomainError } from "@/lib/domain-error";
 import {
   changeCollaboratorRole,
   removeCollaborator,
 } from "@/lib/tree-domain/collaboration-service";
 import { getTreeRole } from "@/lib/tree-domain/tree-access";
-
-function getPrismaClient() {
-  return new PrismaClient({
-    adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }),
-  });
-}
+import { withTreeRole } from "@/lib/with-tree-role";
 
 function parseRole(value: unknown): CollaboratorRole | null {
   if (!value || typeof value !== "object") {
@@ -31,23 +24,10 @@ function parseRole(value: unknown): CollaboratorRole | null {
   return body.role;
 }
 
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: Promise<{ treeId: string; collaboratorId: string }> },
-) {
-  try {
-    const session = await auth.api.getSession({
-      headers: request.headers,
-    });
-
-    if (!session?.user) {
-      return NextResponse.json(
-        { errorCode: "ERR_UNAUTHORIZED" },
-        { status: 401 },
-      );
-    }
-
-    const body = await request.json().catch(() => null);
+export const PATCH = withTreeRole<{ treeId: string; collaboratorId: string }>(
+  "owner",
+  async (ctx) => {
+    const body = await ctx.request.json().catch(() => null);
     const nextRole = parseRole(body);
 
     if (!nextRole) {
@@ -57,14 +37,13 @@ export async function PATCH(
       );
     }
 
-    const { treeId, collaboratorId } = await params;
-    const prisma = getPrismaClient();
+    const { treeId, collaboratorId } = ctx.params;
 
     await changeCollaboratorRole({
       repo: {
-        getActorRole: (tId, uId) => getTreeRole(prisma, tId, uId),
+        getActorRole: (tId, uId) => getTreeRole(ctx.prisma, tId, uId),
         updateCollaboratorRole: async (tId, cId, role) => {
-          const collaborator = await prisma.collaborator.findFirst({
+          const collaborator = await ctx.prisma.collaborator.findFirst({
             where: {
               id: cId,
               treeId: tId,
@@ -78,10 +57,10 @@ export async function PATCH(
           });
 
           if (!collaborator) {
-            throw new Error("ERR_COLLABORATOR_NOT_FOUND");
+            throw new DomainError("ERR_COLLABORATOR_NOT_FOUND");
           }
 
-          await prisma.collaborator.update({
+          await ctx.prisma.collaborator.update({
             where: { id: collaborator.id },
             data: {
               role,
@@ -89,58 +68,26 @@ export async function PATCH(
           });
         },
       },
-      actorUserId: session.user.id,
+      actorUserId: ctx.user.id,
       treeId,
       collaboratorId,
       role: nextRole,
     });
 
     return NextResponse.json({ success: true }, { status: 200 });
-  } catch (error) {
-    if (error instanceof Error) {
-      if (error.message === "ERR_FORBIDDEN") {
-        return NextResponse.json(
-          { errorCode: "ERR_FORBIDDEN" },
-          { status: 403 },
-        );
-      }
-      if (error.message === "ERR_COLLABORATOR_NOT_FOUND") {
-        return NextResponse.json(
-          { errorCode: "ERR_COLLABORATOR_NOT_FOUND" },
-          { status: 404 },
-        );
-      }
-    }
+  },
+);
 
-    console.error("Error updating collaborator role:", error);
-    return NextResponse.json({ errorCode: "ERR_INTERNAL" }, { status: 500 });
-  }
-}
-
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: Promise<{ treeId: string; collaboratorId: string }> },
-) {
-  try {
-    const session = await auth.api.getSession({
-      headers: request.headers,
-    });
-
-    if (!session?.user) {
-      return NextResponse.json(
-        { errorCode: "ERR_UNAUTHORIZED" },
-        { status: 401 },
-      );
-    }
-
-    const { treeId, collaboratorId } = await params;
-    const prisma = getPrismaClient();
+export const DELETE = withTreeRole<{ treeId: string; collaboratorId: string }>(
+  "owner",
+  async (ctx) => {
+    const { treeId, collaboratorId } = ctx.params;
 
     await removeCollaborator({
       repo: {
-        getActorRole: (tId, uId) => getTreeRole(prisma, tId, uId),
+        getActorRole: (tId, uId) => getTreeRole(ctx.prisma, tId, uId),
         deleteCollaborator: async (tId, cId) => {
-          const collaborator = await prisma.collaborator.findFirst({
+          const collaborator = await ctx.prisma.collaborator.findFirst({
             where: {
               id: cId,
               treeId: tId,
@@ -154,39 +101,21 @@ export async function DELETE(
           });
 
           if (!collaborator) {
-            throw new Error("ERR_COLLABORATOR_NOT_FOUND");
+            throw new DomainError("ERR_COLLABORATOR_NOT_FOUND");
           }
 
-          await prisma.collaborator.delete({
+          await ctx.prisma.collaborator.delete({
             where: {
               id: collaborator.id,
             },
           });
         },
       },
-      actorUserId: session.user.id,
+      actorUserId: ctx.user.id,
       treeId,
       collaboratorId,
     });
 
     return NextResponse.json({ success: true }, { status: 200 });
-  } catch (error) {
-    if (error instanceof Error) {
-      if (error.message === "ERR_FORBIDDEN") {
-        return NextResponse.json(
-          { errorCode: "ERR_FORBIDDEN" },
-          { status: 403 },
-        );
-      }
-      if (error.message === "ERR_COLLABORATOR_NOT_FOUND") {
-        return NextResponse.json(
-          { errorCode: "ERR_COLLABORATOR_NOT_FOUND" },
-          { status: 404 },
-        );
-      }
-    }
-
-    console.error("Error removing collaborator:", error);
-    return NextResponse.json({ errorCode: "ERR_INTERNAL" }, { status: 500 });
-  }
-}
+  },
+);

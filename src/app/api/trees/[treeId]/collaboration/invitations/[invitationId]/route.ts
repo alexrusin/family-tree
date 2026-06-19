@@ -1,46 +1,18 @@
-import { NextRequest, NextResponse } from "next/server";
-import { PrismaClient } from "@/generated/prisma/client";
-import { PrismaPg } from "@prisma/adapter-pg";
-import { auth } from "@/lib/auth";
+import { NextResponse } from "next/server";
 import { sendInvitationEmail } from "@/lib/invitation-email";
 import {
   generateInvitationToken,
   hashInvitationToken,
   invitationExpiresAt,
 } from "@/lib/tree-domain/invitation-token";
-import { getTreeRole } from "@/lib/tree-domain/tree-access";
+import { withTreeRole } from "@/lib/with-tree-role";
 
-function getPrismaClient() {
-  return new PrismaClient({
-    adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }),
-  });
-}
+export const PATCH = withTreeRole<{ treeId: string; invitationId: string }>(
+  "owner",
+  async (ctx) => {
+    const { treeId, invitationId } = ctx.params;
 
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: Promise<{ treeId: string; invitationId: string }> },
-) {
-  try {
-    const session = await auth.api.getSession({
-      headers: request.headers,
-    });
-
-    if (!session?.user) {
-      return NextResponse.json(
-        { errorCode: "ERR_UNAUTHORIZED" },
-        { status: 401 },
-      );
-    }
-
-    const { treeId, invitationId } = await params;
-    const prisma = getPrismaClient();
-    const role = await getTreeRole(prisma, treeId, session.user.id);
-
-    if (role !== "owner") {
-      return NextResponse.json({ errorCode: "ERR_FORBIDDEN" }, { status: 403 });
-    }
-
-    const invitation = await prisma.invitation.findFirst({
+    const invitation = await ctx.prisma.invitation.findFirst({
       where: {
         id: invitationId,
         treeId,
@@ -62,7 +34,7 @@ export async function PATCH(
       );
     }
 
-    const tree = await prisma.familyTree.findUnique({
+    const tree = await ctx.prisma.familyTree.findUnique({
       where: { id: treeId },
       select: { name: true },
     });
@@ -71,7 +43,7 @@ export async function PATCH(
     const tokenHash = hashInvitationToken(token);
     const expiresAt = invitationExpiresAt();
 
-    await prisma.invitation.update({
+    await ctx.prisma.invitation.update({
       where: { id: invitation.id },
       data: {
         tokenHash,
@@ -93,7 +65,9 @@ export async function PATCH(
     ).toString();
 
     const inviterName =
-      session.user.name?.trim() || session.user.email || "Family Tree";
+      (ctx.user.name as string | undefined)?.trim() ||
+      (ctx.user.email as string | undefined) ||
+      "Family Tree";
 
     await sendInvitationEmail({
       locale: invitation.locale,
@@ -106,37 +80,15 @@ export async function PATCH(
     });
 
     return NextResponse.json({ success: true }, { status: 200 });
-  } catch (error) {
-    console.error("Error resending invitation:", error);
-    return NextResponse.json({ errorCode: "ERR_INTERNAL" }, { status: 500 });
-  }
-}
+  },
+);
 
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: Promise<{ treeId: string; invitationId: string }> },
-) {
-  try {
-    const session = await auth.api.getSession({
-      headers: request.headers,
-    });
+export const DELETE = withTreeRole<{ treeId: string; invitationId: string }>(
+  "owner",
+  async (ctx) => {
+    const { treeId, invitationId } = ctx.params;
 
-    if (!session?.user) {
-      return NextResponse.json(
-        { errorCode: "ERR_UNAUTHORIZED" },
-        { status: 401 },
-      );
-    }
-
-    const { treeId, invitationId } = await params;
-    const prisma = getPrismaClient();
-    const role = await getTreeRole(prisma, treeId, session.user.id);
-
-    if (role !== "owner") {
-      return NextResponse.json({ errorCode: "ERR_FORBIDDEN" }, { status: 403 });
-    }
-
-    const invitation = await prisma.invitation.findFirst({
+    const invitation = await ctx.prisma.invitation.findFirst({
       where: {
         id: invitationId,
         treeId,
@@ -154,7 +106,7 @@ export async function DELETE(
       );
     }
 
-    await prisma.invitation.update({
+    await ctx.prisma.invitation.update({
       where: {
         id: invitation.id,
       },
@@ -165,8 +117,5 @@ export async function DELETE(
     });
 
     return NextResponse.json({ success: true }, { status: 200 });
-  } catch (error) {
-    console.error("Error cancelling invitation:", error);
-    return NextResponse.json({ errorCode: "ERR_INTERNAL" }, { status: 500 });
-  }
-}
+  },
+);

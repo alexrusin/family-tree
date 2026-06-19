@@ -3,17 +3,13 @@ import { NextRequest } from "next/server";
 
 const {
   getSessionMock,
-  prismaClientMock,
-  prismaClientConstructorMock,
-  prismaPgMock,
+  getTreeRoleMock,
+  prismaMock,
 } = vi.hoisted(() => {
   const getSessionMock = vi.fn();
-  const prismaClientMock = {
-    familyTree: {
-      findUnique: vi.fn(),
-    },
+  const getTreeRoleMock = vi.fn();
+  const prismaMock = {
     collaborator: {
-      findUnique: vi.fn(),
       findFirst: vi.fn(),
       update: vi.fn(),
       delete: vi.fn(),
@@ -22,13 +18,8 @@ const {
 
   return {
     getSessionMock,
-    prismaClientMock,
-    prismaClientConstructorMock: vi.fn(function PrismaClientMock() {
-      return prismaClientMock;
-    }),
-    prismaPgMock: vi.fn(function PrismaPgMock() {
-      return {};
-    }),
+    getTreeRoleMock,
+    prismaMock,
   };
 });
 
@@ -40,12 +31,10 @@ vi.mock("@/lib/auth", () => ({
   },
 }));
 
-vi.mock("@/generated/prisma/client", () => ({
-  PrismaClient: prismaClientConstructorMock,
-}));
+vi.mock("@/lib/prisma", () => ({ prisma: prismaMock }));
 
-vi.mock("@prisma/adapter-pg", () => ({
-  PrismaPg: prismaPgMock,
+vi.mock("@/lib/tree-domain/tree-access", () => ({
+  getTreeRole: getTreeRoleMock,
 }));
 
 const { PATCH, DELETE } = await import("./route");
@@ -55,34 +44,10 @@ describe("/api/trees/[treeId]/collaboration/collaborators/[collaboratorId]", () 
     vi.clearAllMocks();
 
     getSessionMock.mockResolvedValue({ user: { id: "u-owner" } });
-    prismaClientMock.familyTree.findUnique.mockResolvedValue({
-      ownerId: "u-owner",
-    });
-    prismaClientMock.collaborator.findUnique.mockResolvedValue(null);
-    prismaClientMock.collaborator.findFirst.mockResolvedValue({ id: "c1" });
-    prismaClientMock.collaborator.update.mockResolvedValue({ id: "c1" });
-    prismaClientMock.collaborator.delete.mockResolvedValue({ id: "c1" });
-  });
-
-  it("returns 401 for unauthenticated collaborator role PATCH", async () => {
-    getSessionMock.mockResolvedValue(null);
-
-    const request = new NextRequest(
-      "http://localhost/api/trees/t1/collaboration/collaborators/c1",
-      {
-        method: "PATCH",
-        body: JSON.stringify({ role: "viewer" }),
-      },
-    );
-
-    const response = await PATCH(request, {
-      params: Promise.resolve({ treeId: "t1", collaboratorId: "c1" }),
-    });
-
-    expect(response.status).toBe(401);
-    await expect(response.json()).resolves.toEqual({
-      errorCode: "ERR_UNAUTHORIZED",
-    });
+    getTreeRoleMock.mockResolvedValue("owner");
+    prismaMock.collaborator.findFirst.mockResolvedValue({ id: "c1" });
+    prismaMock.collaborator.update.mockResolvedValue({ id: "c1" });
+    prismaMock.collaborator.delete.mockResolvedValue({ id: "c1" });
   });
 
   it("returns 400 for invalid role payload", async () => {
@@ -102,39 +67,11 @@ describe("/api/trees/[treeId]/collaboration/collaborators/[collaboratorId]", () 
     await expect(response.json()).resolves.toEqual({
       errorCode: "ERR_INVALID_ROLE",
     });
-    expect(prismaClientMock.collaborator.update).not.toHaveBeenCalled();
-  });
-
-  it("returns 403 for non-owner collaborator role PATCH", async () => {
-    getSessionMock.mockResolvedValue({ user: { id: "u-editor" } });
-    prismaClientMock.familyTree.findUnique.mockResolvedValue({
-      ownerId: "u-owner",
-    });
-    prismaClientMock.collaborator.findUnique.mockResolvedValue({
-      role: "editor",
-      acceptedAt: new Date("2026-05-14T00:00:00.000Z"),
-    });
-
-    const request = new NextRequest(
-      "http://localhost/api/trees/t1/collaboration/collaborators/c1",
-      {
-        method: "PATCH",
-        body: JSON.stringify({ role: "viewer" }),
-      },
-    );
-
-    const response = await PATCH(request, {
-      params: Promise.resolve({ treeId: "t1", collaboratorId: "c1" }),
-    });
-
-    expect(response.status).toBe(403);
-    await expect(response.json()).resolves.toEqual({
-      errorCode: "ERR_FORBIDDEN",
-    });
+    expect(prismaMock.collaborator.update).not.toHaveBeenCalled();
   });
 
   it("returns 404 for missing collaborator role PATCH target", async () => {
-    prismaClientMock.collaborator.findFirst.mockResolvedValue(null);
+    prismaMock.collaborator.findFirst.mockResolvedValue(null);
 
     const request = new NextRequest(
       "http://localhost/api/trees/t1/collaboration/collaborators/c404",
@@ -169,7 +106,7 @@ describe("/api/trees/[treeId]/collaboration/collaborators/[collaboratorId]", () 
 
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toEqual({ success: true });
-    expect(prismaClientMock.collaborator.update).toHaveBeenCalledWith({
+    expect(prismaMock.collaborator.update).toHaveBeenCalledWith({
       where: { id: "c1" },
       data: {
         role: "viewer",
@@ -177,55 +114,8 @@ describe("/api/trees/[treeId]/collaboration/collaborators/[collaboratorId]", () 
     });
   });
 
-  it("returns 401 for unauthenticated collaborator DELETE", async () => {
-    getSessionMock.mockResolvedValue(null);
-
-    const request = new NextRequest(
-      "http://localhost/api/trees/t1/collaboration/collaborators/c1",
-      {
-        method: "DELETE",
-      },
-    );
-
-    const response = await DELETE(request, {
-      params: Promise.resolve({ treeId: "t1", collaboratorId: "c1" }),
-    });
-
-    expect(response.status).toBe(401);
-    await expect(response.json()).resolves.toEqual({
-      errorCode: "ERR_UNAUTHORIZED",
-    });
-  });
-
-  it("returns 403 for non-owner collaborator DELETE", async () => {
-    getSessionMock.mockResolvedValue({ user: { id: "u-viewer" } });
-    prismaClientMock.familyTree.findUnique.mockResolvedValue({
-      ownerId: "u-owner",
-    });
-    prismaClientMock.collaborator.findUnique.mockResolvedValue({
-      role: "viewer",
-      acceptedAt: new Date("2026-05-14T00:00:00.000Z"),
-    });
-
-    const request = new NextRequest(
-      "http://localhost/api/trees/t1/collaboration/collaborators/c1",
-      {
-        method: "DELETE",
-      },
-    );
-
-    const response = await DELETE(request, {
-      params: Promise.resolve({ treeId: "t1", collaboratorId: "c1" }),
-    });
-
-    expect(response.status).toBe(403);
-    await expect(response.json()).resolves.toEqual({
-      errorCode: "ERR_FORBIDDEN",
-    });
-  });
-
   it("returns 404 for missing collaborator DELETE target", async () => {
-    prismaClientMock.collaborator.findFirst.mockResolvedValue(null);
+    prismaMock.collaborator.findFirst.mockResolvedValue(null);
 
     const request = new NextRequest(
       "http://localhost/api/trees/t1/collaboration/collaborators/c404",
@@ -258,7 +148,7 @@ describe("/api/trees/[treeId]/collaboration/collaborators/[collaboratorId]", () 
 
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toEqual({ success: true });
-    expect(prismaClientMock.collaborator.delete).toHaveBeenCalledWith({
+    expect(prismaMock.collaborator.delete).toHaveBeenCalledWith({
       where: {
         id: "c1",
       },
