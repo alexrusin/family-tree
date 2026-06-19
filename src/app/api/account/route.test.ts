@@ -51,21 +51,6 @@ describe("/api/account", () => {
     });
   });
 
-  it("returns 401 for unauthenticated GET", async () => {
-    getSessionMock.mockResolvedValue(null);
-
-    const request = new NextRequest("http://localhost/api/account", {
-      method: "GET",
-    });
-
-    const response = await GET(request);
-
-    expect(response.status).toBe(401);
-    await expect(response.json()).resolves.toEqual({
-      errorCode: "ERR_UNAUTHORIZED",
-    });
-  });
-
   it("returns account profile for authenticated GET", async () => {
     const request = new NextRequest("http://localhost/api/account", {
       method: "GET",

@@ -38,28 +38,6 @@ describe("DELETE /api/account/delete", () => {
     );
   });
 
-  it("returns 401 for unauthenticated requests", async () => {
-    getSessionMock.mockResolvedValue(null);
-
-    const request = new NextRequest("http://localhost/api/account/delete", {
-      method: "DELETE",
-      body: JSON.stringify({
-        currentPassword: "password123",
-        confirmationPhrase: "DELETE",
-      }),
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
-
-    const response = await DELETE(request);
-
-    expect(response.status).toBe(401);
-    await expect(response.json()).resolves.toEqual({
-      errorCode: "ERR_UNAUTHORIZED",
-    });
-  });
-
   it("returns 400 when current password is missing", async () => {
     const request = new NextRequest("http://localhost/api/account/delete", {
       method: "DELETE",

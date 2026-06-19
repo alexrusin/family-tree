@@ -1,12 +1,10 @@
-import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { withSession } from "@/lib/with-session";
 import {
   createS3Client,
   processImage,
   uploadProcessedPhoto,
   validatePhotoFile,
 } from "@/lib/tree-domain/photo-upload";
-import { prisma } from "@/lib/prisma";
 import {
   avatarApiPath,
   avatarKeyForUser,
@@ -37,79 +35,63 @@ function toProfile(user: {
   };
 }
 
-export async function PATCH(request: NextRequest) {
+export const PATCH = withSession(async ({ prisma, user, request }) => {
+  const formData = await request.formData();
+  const avatarFile = formData.get("avatar");
+
+  if (!(avatarFile instanceof Blob) || avatarFile.size === 0) {
+    return Response.json(
+      { errorCode: "ERR_AVATAR_REQUIRED" },
+      { status: 400 },
+    );
+  }
+
   try {
-    const session = await auth.api.getSession({
-      headers: request.headers,
+    validatePhotoFile({
+      contentType: avatarFile.type,
+      sizeBytes: avatarFile.size,
     });
+  } catch (validationError) {
+    const code =
+      validationError instanceof Error
+        ? validationError.message
+        : "ERR_UNSUPPORTED_IMAGE_TYPE";
+    return Response.json({ errorCode: code }, { status: 400 });
+  }
 
-    if (!session?.user) {
-      return NextResponse.json(
-        { errorCode: "ERR_UNAUTHORIZED" },
-        { status: 401 },
-      );
-    }
+  const bucket = process.env.S3_BUCKET;
+  if (!bucket) {
+    console.error("S3_BUCKET is required for avatar uploads");
+    return Response.json({ errorCode: "ERR_INTERNAL" }, { status: 500 });
+  }
 
-    const formData = await request.formData();
-    const avatarFile = formData.get("avatar");
+  const inputBuffer = Buffer.from(await avatarFile.arrayBuffer());
+  const outputBuffer = await processImage(inputBuffer);
+  const key = avatarKeyForUser(user.id);
 
-    if (!(avatarFile instanceof Blob) || avatarFile.size === 0) {
-      return NextResponse.json(
-        { errorCode: "ERR_AVATAR_REQUIRED" },
-        { status: 400 },
-      );
-    }
+  await uploadProcessedPhoto({
+    s3Client: createS3Client(),
+    bucket,
+    key,
+    buffer: outputBuffer,
+  });
 
-    try {
-      validatePhotoFile({
-        contentType: avatarFile.type,
-        sizeBytes: avatarFile.size,
-      });
-    } catch (validationError) {
-      const code =
-        validationError instanceof Error
-          ? validationError.message
-          : "ERR_UNSUPPORTED_IMAGE_TYPE";
-      return NextResponse.json({ errorCode: code }, { status: 400 });
-    }
-
-    const bucket = process.env.S3_BUCKET;
-    if (!bucket) {
-      console.error("S3_BUCKET is required for avatar uploads");
-      return NextResponse.json({ errorCode: "ERR_INTERNAL" }, { status: 500 });
-    }
-
-    const inputBuffer = Buffer.from(await avatarFile.arrayBuffer());
-    const outputBuffer = await processImage(inputBuffer);
-    const key = avatarKeyForUser(session.user.id);
-
-    await uploadProcessedPhoto({
-      s3Client: createS3Client(),
-      bucket,
-      key,
-      buffer: outputBuffer,
-    });
-
-    const user = await prisma.user.update({
-      where: { id: session.user.id },
-      data: { image: avatarApiPath(session.user.id) },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        image: true,
-        pendingEmailChange: {
-          select: {
-            newEmail: true,
-            expiresAt: true,
-          },
+  const updatedUser = await prisma.user.update({
+    where: { id: user.id },
+    data: { image: avatarApiPath(user.id) },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      image: true,
+      pendingEmailChange: {
+        select: {
+          newEmail: true,
+          expiresAt: true,
         },
       },
-    });
+    },
+  });
 
-    return NextResponse.json({ profile: toProfile(user) }, { status: 200 });
-  } catch (error) {
-    console.error("Error updating account avatar:", error);
-    return NextResponse.json({ errorCode: "ERR_INTERNAL" }, { status: 500 });
-  }
-}
+  return Response.json({ profile: toProfile(updatedUser) });
+});

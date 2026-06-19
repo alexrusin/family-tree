@@ -1,5 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { NextRequest } from "next/server";
+import { withSession } from "@/lib/with-session";
+import { DomainError } from "@/lib/domain-error";
 import { avatarKeyForUser } from "@/lib/avatar-storage";
 import { createS3Client, downloadPhotoByKey } from "@/lib/tree-domain/photo-upload";
 
@@ -14,48 +15,42 @@ function isPhotoNotFoundError(error: unknown): boolean {
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ userId: string }> },
+  { params: paramsPromise }: { params: Promise<{ userId: string }> },
 ) {
-  try {
-    const session = await auth.api.getSession({ headers: request.headers });
+  const { userId } = await paramsPromise;
 
-    if (!session?.user) {
-      return NextResponse.json(
-        { errorCode: "ERR_UNAUTHORIZED" },
-        { status: 401 },
-      );
-    }
-
+  const handler = withSession(async () => {
     const bucket = process.env.S3_BUCKET;
     if (!bucket) {
       console.error("S3_BUCKET is required for avatar downloads");
-      return NextResponse.json({ errorCode: "ERR_INTERNAL" }, { status: 500 });
+      return Response.json({ errorCode: "ERR_INTERNAL" }, { status: 500 });
     }
 
-    const { userId } = await params;
     const key = avatarKeyForUser(userId);
 
-    const photo = await downloadPhotoByKey({
-      s3Client: createS3Client(),
-      bucket,
-      key,
-    });
+    try {
+      const photo = await downloadPhotoByKey({
+        s3Client: createS3Client(),
+        bucket,
+        key,
+      });
 
-    const body = Uint8Array.from(photo.body);
+      const body = Uint8Array.from(photo.body);
 
-    return new Response(body.buffer, {
-      status: 200,
-      headers: {
-        "Content-Type": photo.contentType ?? "image/webp",
-        "Cache-Control": "private, max-age=60",
-      },
-    });
-  } catch (error) {
-    if (isPhotoNotFoundError(error)) {
-      return NextResponse.json({ errorCode: "ERR_AVATAR_NOT_FOUND" }, { status: 404 });
+      return new Response(body.buffer, {
+        status: 200,
+        headers: {
+          "Content-Type": photo.contentType ?? "image/webp",
+          "Cache-Control": "private, max-age=60",
+        },
+      });
+    } catch (error) {
+      if (isPhotoNotFoundError(error)) {
+        throw new DomainError("ERR_AVATAR_NOT_FOUND");
+      }
+      throw error;
     }
+  });
 
-    console.error("Error reading avatar image:", error);
-    return NextResponse.json({ errorCode: "ERR_INTERNAL" }, { status: 500 });
-  }
+  return handler(request);
 }

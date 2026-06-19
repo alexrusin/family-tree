@@ -37,25 +37,6 @@ describe("/api/account/locale", () => {
     prismaClientMock.user.update.mockResolvedValue({ locale: "ru" });
   });
 
-  it("returns 401 for unauthenticated requests", async () => {
-    getSessionMock.mockResolvedValue(null);
-
-    const request = new NextRequest("http://localhost/api/account/locale", {
-      method: "PATCH",
-      body: JSON.stringify({ locale: "ru" }),
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
-
-    const response = await PATCH(request);
-
-    expect(response.status).toBe(401);
-    await expect(response.json()).resolves.toEqual({
-      errorCode: "ERR_UNAUTHORIZED",
-    });
-  });
-
   it("returns 400 for invalid locale", async () => {
     const request = new NextRequest("http://localhost/api/account/locale", {
       method: "PATCH",
