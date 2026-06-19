@@ -3,6 +3,7 @@
 .next
 .vscode
 coverage
+sandbox
 node_modules
 npm-debug.log*
 yarn-debug.log*
