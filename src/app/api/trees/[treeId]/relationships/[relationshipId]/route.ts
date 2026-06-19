@@ -1,40 +1,11 @@
-import { NextRequest, NextResponse } from "next/server";
-import { PrismaClient } from "@/generated/prisma/client";
-import { PrismaPg } from "@prisma/adapter-pg";
-import { auth } from "@/lib/auth";
-import { canEditMembers, getTreeRole } from "@/lib/tree-domain/tree-access";
+import { withTreeRole } from "@/lib/with-tree-role";
 
-function getPrismaClient() {
-  return new PrismaClient({
-    adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }),
-  });
-}
+export const DELETE = withTreeRole<{ treeId: string; relationshipId: string }>(
+  "editor",
+  async (ctx) => {
+    const { treeId, relationshipId } = ctx.params;
 
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: Promise<{ treeId: string; relationshipId: string }> },
-) {
-  try {
-    const session = await auth.api.getSession({
-      headers: request.headers,
-    });
-
-    if (!session?.user) {
-      return NextResponse.json(
-        { errorCode: "ERR_UNAUTHORIZED" },
-        { status: 401 },
-      );
-    }
-
-    const { treeId, relationshipId } = await params;
-    const prisma = getPrismaClient();
-    const role = await getTreeRole(prisma, treeId, session.user.id);
-
-    if (!canEditMembers(role)) {
-      return NextResponse.json({ errorCode: "ERR_FORBIDDEN" }, { status: 403 });
-    }
-
-    const existingRelationship = await prisma.relationship.findFirst({
+    const existingRelationship = await ctx.prisma.relationship.findFirst({
       where: {
         id: relationshipId,
         treeId,
@@ -43,19 +14,16 @@ export async function DELETE(
     });
 
     if (!existingRelationship) {
-      return NextResponse.json(
+      return Response.json(
         { errorCode: "ERR_RELATIONSHIP_NOT_FOUND" },
         { status: 404 },
       );
     }
 
-    await prisma.relationship.delete({
+    await ctx.prisma.relationship.delete({
       where: { id: relationshipId },
     });
 
-    return NextResponse.json({ success: true }, { status: 200 });
-  } catch (error) {
-    console.error("Error deleting relationship:", error);
-    return NextResponse.json({ errorCode: "ERR_INTERNAL" }, { status: 500 });
-  }
-}
+    return Response.json({ success: true }, { status: 200 });
+  },
+);

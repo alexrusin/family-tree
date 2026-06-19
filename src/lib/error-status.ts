@@ -6,6 +6,8 @@ const ERROR_STATUS: Record<string, number> = {
   ERR_FIRST_NAME_REQUIRED: 400,
   ERR_MEMBER_LIMIT_REACHED: 400,
   ERR_DEATH_BEFORE_BIRTH: 400,
+  ERR_DUPLICATE_RELATIONSHIP: 409,
+  ERR_SELF_RELATIONSHIP: 400,
 };
 
 export function statusForCode(code: string): number {

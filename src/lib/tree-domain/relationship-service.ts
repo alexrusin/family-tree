@@ -4,6 +4,7 @@ import {
   type RelationshipInput,
 } from "./relationship-canonical";
 import { canEditMembers, type TreeRole } from "./tree-access";
+import { DomainError } from "@/lib/domain-error";
 
 type CanonicalRelationshipType = "parent" | "spouse" | "divorced" | "sibling";
 
@@ -36,7 +37,7 @@ export async function createRelationship(params: {
 }): Promise<{ id: string; type: string }> {
   const role = await params.repo.getRole(params.treeId, params.actorUserId);
   if (!canEditMembers(role)) {
-    throw new Error("ERR_FORBIDDEN");
+    throw new DomainError("ERR_FORBIDDEN");
   }
 
   const canonical = canonicalizeRelationship(params.input);
@@ -48,7 +49,7 @@ export async function createRelationship(params: {
   });
 
   if (exists) {
-    throw new Error("ERR_DUPLICATE_RELATIONSHIP");
+    throw new DomainError("ERR_DUPLICATE_RELATIONSHIP");
   }
 
   const oppositeType = OPPOSITE_STATUS_TYPE[canonical.type];
