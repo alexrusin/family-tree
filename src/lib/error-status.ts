@@ -1,0 +1,10 @@
+const ERROR_STATUS: Record<string, number> = {
+  ERR_UNAUTHORIZED: 401,
+  ERR_FORBIDDEN: 403,
+  ERR_TREE_NAME_REQUIRED: 400,
+  ERR_TREE_NAME_LENGTH: 400,
+};
+
+export function statusForCode(code: string): number {
+  return ERROR_STATUS[code] ?? 500;
+}
