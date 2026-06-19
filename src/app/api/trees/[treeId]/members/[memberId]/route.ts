@@ -1,14 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
-import { PrismaClient } from "@/generated/prisma/client";
+import { withTreeRole } from "@/lib/with-tree-role";
 import type { DatePrecision, MemberGender } from "@/generated/prisma/enums";
-import { PrismaPg } from "@prisma/adapter-pg";
-import { auth } from "@/lib/auth";
 import { toPrismaNodePositions } from "@/lib/tree-domain/tree-arrangement-json";
-import {
-  canEditMembers,
-  canDeleteMembers,
-  getTreeRole,
-} from "@/lib/tree-domain/tree-access";
 import {
   compareLifeSpan,
   type PartialDate,
@@ -61,29 +53,10 @@ function toResponseMember<
   };
 }
 
-function getPrismaClient() {
-  return new PrismaClient({
-    adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }),
-  });
-}
-
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: Promise<{ treeId: string; memberId: string }> },
-) {
-  try {
-    const session = await auth.api.getSession({
-      headers: request.headers,
-    });
-
-    if (!session?.user) {
-      return NextResponse.json(
-        { errorCode: "ERR_UNAUTHORIZED" },
-        { status: 401 },
-      );
-    }
-
-    const { treeId, memberId } = await params;
+export const PATCH = withTreeRole<{ treeId: string; memberId: string }>(
+  "editor",
+  async (ctx) => {
+    const { treeId, memberId } = ctx.params;
     const updateData: {
       firstName?: string;
       lastName?: string | null;
@@ -102,14 +75,14 @@ export async function PATCH(
       photoKey?: string | null;
       photoUrl?: string | null;
     } = {};
-    const contentType = request.headers.get("content-type") ?? "";
+    const contentType = ctx.request.headers.get("content-type") ?? "";
     let photoFile: Blob | null = null;
 
     if (contentType.includes("multipart/form-data")) {
-      const formData = await request.formData();
+      const formData = await ctx.request.formData();
       const firstName = formData.get("firstName");
       if (typeof firstName !== "string" || firstName.trim().length === 0) {
-        return NextResponse.json(
+        return Response.json(
           { errorCode: "ERR_FIRST_NAME_REQUIRED" },
           { status: 400 },
         );
@@ -127,7 +100,10 @@ export async function PATCH(
       updateData.isLiving = formData.get("isLiving") === "true";
 
       const gender = formData.get("gender");
-      if (typeof gender === "string" && VALID_GENDERS.has(gender as MemberGender)) {
+      if (
+        typeof gender === "string" &&
+        VALID_GENDERS.has(gender as MemberGender)
+      ) {
         updateData.gender = gender as MemberGender;
       }
 
@@ -142,9 +118,15 @@ export async function PATCH(
         VALID_PRECISIONS.has(birthPrecisionRaw as DatePrecision)
           ? (birthPrecisionRaw as DatePrecision)
           : null;
-      const birthYear = toOptionalInt(formData.get("birthYear") as string | null);
-      const birthMonth = toOptionalInt(formData.get("birthMonth") as string | null);
-      const birthDay = toOptionalInt(formData.get("birthDay") as string | null);
+      const birthYear = toOptionalInt(
+        formData.get("birthYear") as string | null,
+      );
+      const birthMonth = toOptionalInt(
+        formData.get("birthMonth") as string | null,
+      );
+      const birthDay = toOptionalInt(
+        formData.get("birthDay") as string | null,
+      );
       if (birthYear === null) {
         updateData.birthPrecision = null;
         updateData.birthYear = null;
@@ -163,9 +145,15 @@ export async function PATCH(
         VALID_PRECISIONS.has(deathPrecisionRaw as DatePrecision)
           ? (deathPrecisionRaw as DatePrecision)
           : null;
-      const deathYear = toOptionalInt(formData.get("deathYear") as string | null);
-      const deathMonth = toOptionalInt(formData.get("deathMonth") as string | null);
-      const deathDay = toOptionalInt(formData.get("deathDay") as string | null);
+      const deathYear = toOptionalInt(
+        formData.get("deathYear") as string | null,
+      );
+      const deathMonth = toOptionalInt(
+        formData.get("deathMonth") as string | null,
+      );
+      const deathDay = toOptionalInt(
+        formData.get("deathDay") as string | null,
+      );
       if (updateData.isLiving || deathYear === null) {
         updateData.deathPrecision = null;
         updateData.deathYear = null;
@@ -183,13 +171,14 @@ export async function PATCH(
         photoFile = candidate;
       }
     } else {
-      const body = await request.json();
+      const body = await ctx.request.json();
 
       if (
         body?.firstName !== undefined &&
-        (typeof body.firstName !== "string" || body.firstName.trim().length === 0)
+        (typeof body.firstName !== "string" ||
+          body.firstName.trim().length === 0)
       ) {
-        return NextResponse.json(
+        return Response.json(
           { errorCode: "ERR_FIRST_NAME_REQUIRED" },
           { status: 400 },
         );
@@ -215,11 +204,17 @@ export async function PATCH(
         }
       }
 
-      if (body?.isLiving !== undefined && typeof body.isLiving === "boolean") {
+      if (
+        body?.isLiving !== undefined &&
+        typeof body.isLiving === "boolean"
+      ) {
         updateData.isLiving = body.isLiving;
       }
 
-      if (typeof body?.gender === "string" && VALID_GENDERS.has(body.gender)) {
+      if (
+        typeof body?.gender === "string" &&
+        VALID_GENDERS.has(body.gender)
+      ) {
         updateData.gender = body.gender as MemberGender;
       }
 
@@ -272,13 +267,12 @@ export async function PATCH(
     }
 
     if (Object.keys(updateData).length === 0 && !photoFile) {
-      return NextResponse.json(
+      return Response.json(
         { errorCode: "ERR_INVALID_MEMBER_UPDATE" },
         { status: 400 },
       );
     }
 
-    // Validate chronology when both birth and death year are in this request
     if (
       typeof updateData.birthYear === "number" &&
       typeof updateData.deathYear === "number"
@@ -299,21 +293,14 @@ export async function PATCH(
       };
       const chronologyError = compareLifeSpan(birth, death);
       if (chronologyError) {
-        return NextResponse.json(
+        return Response.json(
           { errorCode: chronologyError },
           { status: 400 },
         );
       }
     }
 
-    const prisma = getPrismaClient();
-    const role = await getTreeRole(prisma, treeId, session.user.id);
-
-    if (!canEditMembers(role)) {
-      return NextResponse.json({ errorCode: "ERR_FORBIDDEN" }, { status: 403 });
-    }
-
-    const existingMember = await prisma.treeMember.findFirst({
+    const existingMember = await ctx.prisma.treeMember.findFirst({
       where: {
         id: memberId,
         treeId,
@@ -327,7 +314,7 @@ export async function PATCH(
     });
 
     if (!existingMember) {
-      return NextResponse.json(
+      return Response.json(
         { errorCode: "ERR_MEMBER_NOT_FOUND" },
         { status: 404 },
       );
@@ -345,7 +332,7 @@ export async function PATCH(
           photoError instanceof Error
             ? photoError.message
             : "ERR_UNSUPPORTED_IMAGE_TYPE";
-        return NextResponse.json({ errorCode: code }, { status: 400 });
+        return Response.json({ errorCode: code }, { status: 400 });
       }
 
       const buffer = Buffer.from(await photoFile.arrayBuffer());
@@ -364,7 +351,7 @@ export async function PATCH(
 
     let member;
     try {
-      member = await prisma.treeMember.update({
+      member = await ctx.prisma.treeMember.update({
         where: { id: memberId },
         data: updateData,
       });
@@ -377,7 +364,10 @@ export async function PATCH(
             key: uploadedPhotoKey,
           });
         } catch (cleanupError) {
-          console.error("Error cleaning up uploaded member photo:", cleanupError);
+          console.error(
+            "Error cleaning up uploaded member photo:",
+            cleanupError,
+          );
         }
       }
       throw error;
@@ -395,38 +385,19 @@ export async function PATCH(
       }
     }
 
-    return NextResponse.json({ member: toResponseMember(member) }, { status: 200 });
-  } catch (error) {
-    console.error("Error updating tree member:", error);
-    return NextResponse.json({ errorCode: "ERR_INTERNAL" }, { status: 500 });
-  }
-}
+    return Response.json(
+      { member: toResponseMember(member) },
+      { status: 200 },
+    );
+  },
+);
 
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: Promise<{ treeId: string; memberId: string }> },
-) {
-  try {
-    const session = await auth.api.getSession({
-      headers: request.headers,
-    });
+export const DELETE = withTreeRole<{ treeId: string; memberId: string }>(
+  "owner",
+  async (ctx) => {
+    const { treeId, memberId } = ctx.params;
 
-    if (!session?.user) {
-      return NextResponse.json(
-        { errorCode: "ERR_UNAUTHORIZED" },
-        { status: 401 },
-      );
-    }
-
-    const { treeId, memberId } = await params;
-    const prisma = getPrismaClient();
-    const role = await getTreeRole(prisma, treeId, session.user.id);
-
-    if (!canDeleteMembers(role)) {
-      return NextResponse.json({ errorCode: "ERR_FORBIDDEN" }, { status: 403 });
-    }
-
-    const existingMember = await prisma.treeMember.findFirst({
+    const existingMember = await ctx.prisma.treeMember.findFirst({
       where: {
         id: memberId,
         treeId,
@@ -435,13 +406,13 @@ export async function DELETE(
     });
 
     if (!existingMember) {
-      return NextResponse.json(
+      return Response.json(
         { errorCode: "ERR_MEMBER_NOT_FOUND" },
         { status: 404 },
       );
     }
 
-    await prisma.$transaction(async (tx) => {
+    await ctx.prisma.$transaction(async (tx) => {
       await tx.treeMember.delete({
         where: { id: memberId },
       });
@@ -457,7 +428,9 @@ export async function DELETE(
       });
       const raw = tree?.nodePositions;
       if (raw != null && isValidArrangement(raw) && memberId in raw) {
-        const remaining = new Set(Object.keys(raw).filter((k) => k !== memberId));
+        const remaining = new Set(
+          Object.keys(raw).filter((k) => k !== memberId),
+        );
         await tx.familyTree.update({
           where: { id: treeId },
           data: {
@@ -469,9 +442,6 @@ export async function DELETE(
       }
     });
 
-    return NextResponse.json({ success: true }, { status: 200 });
-  } catch (error) {
-    console.error("Error deleting tree member:", error);
-    return NextResponse.json({ errorCode: "ERR_INTERNAL" }, { status: 500 });
-  }
-}
+    return Response.json({ success: true }, { status: 200 });
+  },
+);

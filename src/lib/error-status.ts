@@ -3,6 +3,9 @@ const ERROR_STATUS: Record<string, number> = {
   ERR_FORBIDDEN: 403,
   ERR_TREE_NAME_REQUIRED: 400,
   ERR_TREE_NAME_LENGTH: 400,
+  ERR_FIRST_NAME_REQUIRED: 400,
+  ERR_MEMBER_LIMIT_REACHED: 400,
+  ERR_DEATH_BEFORE_BIRTH: 400,
 };
 
 export function statusForCode(code: string): number {

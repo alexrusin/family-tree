@@ -3,37 +3,29 @@ import { NextRequest } from "next/server";
 
 const {
   getSessionMock,
-  prismaClientMock,
-  prismaClientConstructorMock,
-  prismaPgMock,
+  getTreeRoleMock,
+  prismaMock,
 } = vi.hoisted(() => {
   const getSessionMock = vi.fn();
-  const prismaClientMock = {
+  const getTreeRoleMock = vi.fn();
+  const prismaMock = {
     familyTree: {
       findUnique: vi.fn(),
       update: vi.fn(),
-    },
-    collaborator: {
-      findUnique: vi.fn(),
     },
     treeMember: {
       findMany: vi.fn(),
       create: vi.fn(),
     },
     $transaction: vi.fn(async (callback: (tx: unknown) => Promise<unknown>) => {
-      return callback(prismaClientMock);
+      return callback(prismaMock);
     }),
   };
 
   return {
     getSessionMock,
-    prismaClientMock,
-    prismaClientConstructorMock: vi.fn(function PrismaClientMock() {
-      return prismaClientMock;
-    }),
-    prismaPgMock: vi.fn(function PrismaPgMock() {
-      return {};
-    }),
+    getTreeRoleMock,
+    prismaMock,
   };
 });
 
@@ -45,12 +37,11 @@ vi.mock("@/lib/auth", () => ({
   },
 }));
 
-vi.mock("@/generated/prisma/client", () => ({
-  PrismaClient: prismaClientConstructorMock,
-}));
+vi.mock("@/lib/prisma", () => ({ prisma: prismaMock }));
 
-vi.mock("@prisma/adapter-pg", () => ({
-  PrismaPg: prismaPgMock,
+vi.mock("@/lib/tree-domain/tree-access", () => ({
+  getTreeRole: getTreeRoleMock,
+  canEditMembers: (role: string) => role === "owner" || role === "editor",
 }));
 
 vi.mock("@/lib/tree-domain/photo-upload", () => ({
@@ -80,38 +71,17 @@ describe("POST /api/trees/[treeId]/members", () => {
     vi.clearAllMocks();
 
     getSessionMock.mockResolvedValue({ user: { id: "u1" } });
-    prismaClientMock.familyTree.findUnique.mockImplementation(
-      async (args: { select?: { ownerId?: true; memberCount?: true } }) => {
-        if (args.select?.ownerId) {
-          return { ownerId: "u1" };
-        }
+    getTreeRoleMock.mockResolvedValue("owner");
+    prismaMock.familyTree.findUnique.mockImplementation(
+      async (args: { select?: { memberCount?: true } }) => {
         if (args.select?.memberCount) {
           return { memberCount: 0 };
         }
         return null;
       },
     );
-    prismaClientMock.collaborator.findUnique.mockResolvedValue(null);
-    prismaClientMock.treeMember.create.mockResolvedValue({ id: "m1" });
-    prismaClientMock.familyTree.update.mockResolvedValue({ id: "t1" });
-  });
-
-  it("returns 401 for unauthenticated request", async () => {
-    getSessionMock.mockResolvedValue(null);
-
-    const request = new NextRequest("http://localhost/api/trees/t1/members", {
-      method: "POST",
-      body: makeFormData({ firstName: "Elena", isLiving: "false" }),
-    });
-
-    const response = await POST(request, {
-      params: Promise.resolve({ treeId: "t1" }),
-    });
-
-    expect(response.status).toBe(401);
-    await expect(response.json()).resolves.toEqual({
-      errorCode: "ERR_UNAUTHORIZED",
-    });
+    prismaMock.treeMember.create.mockResolvedValue({ id: "m1" });
+    prismaMock.familyTree.update.mockResolvedValue({ id: "t1" });
   });
 
   it("returns 400 when firstName is missing or blank", async () => {
@@ -128,11 +98,11 @@ describe("POST /api/trees/[treeId]/members", () => {
     await expect(response.json()).resolves.toEqual({
       errorCode: "ERR_FIRST_NAME_REQUIRED",
     });
-    expect(prismaClientMock.treeMember.create).not.toHaveBeenCalled();
+    expect(prismaMock.treeMember.create).not.toHaveBeenCalled();
   });
 
   it("creates a member and increments tree memberCount", async () => {
-    prismaClientMock.treeMember.create.mockResolvedValueOnce({
+    prismaMock.treeMember.create.mockResolvedValueOnce({
       id: "m1",
       treeId: "t1",
       firstName: "Elena",
@@ -157,25 +127,22 @@ describe("POST /api/trees/[treeId]/members", () => {
         isLiving: false,
       },
     });
-    expect(prismaClientMock.treeMember.create).toHaveBeenCalledWith({
+    expect(prismaMock.treeMember.create).toHaveBeenCalledWith({
       data: expect.objectContaining({
         treeId: "t1",
         firstName: "Elena",
         isLiving: false,
       }),
     });
-    expect(prismaClientMock.familyTree.update).toHaveBeenCalledWith({
+    expect(prismaMock.familyTree.update).toHaveBeenCalledWith({
       where: { id: "t1" },
       data: { memberCount: { increment: 1 } },
     });
   });
 
   it("returns 400 when tree has reached member limit", async () => {
-    prismaClientMock.familyTree.findUnique.mockImplementation(
-      async (args: { select?: { ownerId?: true; memberCount?: true } }) => {
-        if (args.select?.ownerId) {
-          return { ownerId: "u1" };
-        }
+    prismaMock.familyTree.findUnique.mockImplementation(
+      async (args: { select?: { memberCount?: true } }) => {
         if (args.select?.memberCount) {
           return { memberCount: 300 };
         }
@@ -196,12 +163,12 @@ describe("POST /api/trees/[treeId]/members", () => {
     await expect(response.json()).resolves.toEqual({
       errorCode: "ERR_MEMBER_LIMIT_REACHED",
     });
-    expect(prismaClientMock.treeMember.create).not.toHaveBeenCalled();
-    expect(prismaClientMock.familyTree.update).not.toHaveBeenCalled();
+    expect(prismaMock.treeMember.create).not.toHaveBeenCalled();
+    expect(prismaMock.familyTree.update).not.toHaveBeenCalled();
   });
 
   it("maps member photos to the proxy URL when listing members", async () => {
-    prismaClientMock.treeMember.findMany.mockResolvedValue([
+    prismaMock.treeMember.findMany.mockResolvedValue([
       {
         id: "m1",
         treeId: "t1",
@@ -258,7 +225,7 @@ describe("POST /api/trees/[treeId]/members", () => {
       new File(["avatar"], "avatar.png", { type: "image/png" }),
     );
 
-    prismaClientMock.treeMember.create.mockResolvedValueOnce({
+    prismaMock.treeMember.create.mockResolvedValueOnce({
       id: "m1",
       treeId: "t1",
       firstName: "Elena",

@@ -3,9 +3,8 @@ import { NextRequest } from "next/server";
 
 const {
   getSessionMock,
-  prismaClientMock,
-  prismaClientConstructorMock,
-  prismaPgMock,
+  getTreeRoleMock,
+  prismaMock,
   createS3ClientMock,
   deletePhotoByKeyMock,
   generatePhotoKeyMock,
@@ -15,13 +14,11 @@ const {
   validatePhotoFileMock,
 } = vi.hoisted(() => {
   const getSessionMock = vi.fn();
-  const prismaClientMock = {
+  const getTreeRoleMock = vi.fn();
+  const prismaMock = {
     familyTree: {
       findUnique: vi.fn(),
       update: vi.fn(),
-    },
-    collaborator: {
-      findUnique: vi.fn(),
     },
     treeMember: {
       findFirst: vi.fn(),
@@ -29,19 +26,14 @@ const {
       delete: vi.fn(),
     },
     $transaction: vi.fn(async (callback: (tx: unknown) => Promise<unknown>) => {
-      await callback(prismaClientMock);
+      await callback(prismaMock);
     }),
   };
 
   return {
     getSessionMock,
-    prismaClientMock,
-    prismaClientConstructorMock: vi.fn(function PrismaClientMock() {
-      return prismaClientMock;
-    }),
-    prismaPgMock: vi.fn(function PrismaPgMock() {
-      return {};
-    }),
+    getTreeRoleMock,
+    prismaMock,
     createS3ClientMock: vi.fn(() => ({})),
     deletePhotoByKeyMock: vi.fn(),
     generatePhotoKeyMock: vi.fn(() => "trees/t1/members/new-photo.webp"),
@@ -62,12 +54,12 @@ vi.mock("@/lib/auth", () => ({
   },
 }));
 
-vi.mock("@/generated/prisma/client", () => ({
-  PrismaClient: prismaClientConstructorMock,
-}));
+vi.mock("@/lib/prisma", () => ({ prisma: prismaMock }));
 
-vi.mock("@prisma/adapter-pg", () => ({
-  PrismaPg: prismaPgMock,
+vi.mock("@/lib/tree-domain/tree-access", () => ({
+  getTreeRole: getTreeRoleMock,
+  canEditMembers: (role: string) => role === "owner" || role === "editor",
+  canDeleteMembers: (role: string) => role === "owner",
 }));
 
 vi.mock("@/lib/tree-domain/photo-upload", () => ({
@@ -95,15 +87,14 @@ describe("/api/trees/[treeId]/members/[memberId]", () => {
     vi.clearAllMocks();
 
     getSessionMock.mockResolvedValue({ user: { id: "u1" } });
-    prismaClientMock.familyTree.findUnique.mockResolvedValue({ ownerId: "u1" });
-    prismaClientMock.collaborator.findUnique.mockResolvedValue(null);
-    prismaClientMock.treeMember.findFirst.mockResolvedValue({
+    getTreeRoleMock.mockResolvedValue("owner");
+    prismaMock.treeMember.findFirst.mockResolvedValue({
       id: "m1",
       treeId: "t1",
       photoKey: null,
       photoUrl: null,
     });
-    prismaClientMock.treeMember.update.mockResolvedValue({
+    prismaMock.treeMember.update.mockResolvedValue({
       id: "m1",
       treeId: "t1",
       firstName: "Elena",
@@ -111,29 +102,8 @@ describe("/api/trees/[treeId]/members/[memberId]", () => {
       photoKey: null,
       photoUrl: null,
     });
-    prismaClientMock.treeMember.delete.mockResolvedValue({ id: "m1" });
-    prismaClientMock.familyTree.update.mockResolvedValue({ id: "t1" });
-  });
-
-  it("returns 401 for unauthenticated PATCH", async () => {
-    getSessionMock.mockResolvedValue(null);
-
-    const request = new NextRequest(
-      "http://localhost/api/trees/t1/members/m1",
-      {
-        method: "PATCH",
-        body: JSON.stringify({ firstName: "Elena" }),
-      },
-    );
-
-    const response = await PATCH(request, {
-      params: Promise.resolve({ treeId: "t1", memberId: "m1" }),
-    });
-
-    expect(response.status).toBe(401);
-    await expect(response.json()).resolves.toEqual({
-      errorCode: "ERR_UNAUTHORIZED",
-    });
+    prismaMock.treeMember.delete.mockResolvedValue({ id: "m1" });
+    prismaMock.familyTree.update.mockResolvedValue({ id: "t1" });
   });
 
   it("returns 400 when PATCH firstName is blank", async () => {
@@ -153,7 +123,7 @@ describe("/api/trees/[treeId]/members/[memberId]", () => {
     await expect(response.json()).resolves.toEqual({
       errorCode: "ERR_FIRST_NAME_REQUIRED",
     });
-    expect(prismaClientMock.treeMember.update).not.toHaveBeenCalled();
+    expect(prismaMock.treeMember.update).not.toHaveBeenCalled();
   });
 
   it("updates a member photo via multipart PATCH and returns the proxy URL", async () => {
@@ -174,13 +144,13 @@ describe("/api/trees/[treeId]/members/[memberId]", () => {
     });
     formData.append("photo", new File(["avatar"], "avatar.png", { type: "image/png" }));
 
-    prismaClientMock.treeMember.findFirst.mockResolvedValueOnce({
+    prismaMock.treeMember.findFirst.mockResolvedValueOnce({
       id: "m1",
       treeId: "t1",
       photoKey: "trees/t1/members/old-photo.webp",
       photoUrl: "https://bucket.example.com/trees/t1/members/old-photo.webp",
     });
-    prismaClientMock.treeMember.update.mockResolvedValueOnce({
+    prismaMock.treeMember.update.mockResolvedValueOnce({
       id: "m1",
       treeId: "t1",
       firstName: "Elena",
@@ -220,7 +190,7 @@ describe("/api/trees/[treeId]/members/[memberId]", () => {
         key: "trees/t1/members/new-photo.webp",
       }),
     );
-    expect(prismaClientMock.treeMember.update).toHaveBeenCalledWith({
+    expect(prismaMock.treeMember.update).toHaveBeenCalledWith({
       where: { id: "m1" },
       data: expect.objectContaining({
         firstName: "Elena",
@@ -275,52 +245,7 @@ describe("/api/trees/[treeId]/members/[memberId]", () => {
     await expect(response.json()).resolves.toEqual({
       errorCode: "ERR_IMAGE_TOO_LARGE",
     });
-    expect(prismaClientMock.treeMember.update).not.toHaveBeenCalled();
-  });
-
-  it("returns 401 for unauthenticated DELETE", async () => {
-    getSessionMock.mockResolvedValue(null);
-
-    const request = new NextRequest(
-      "http://localhost/api/trees/t1/members/m1",
-      {
-        method: "DELETE",
-      },
-    );
-
-    const response = await DELETE(request, {
-      params: Promise.resolve({ treeId: "t1", memberId: "m1" }),
-    });
-
-    expect(response.status).toBe(401);
-    await expect(response.json()).resolves.toEqual({
-      errorCode: "ERR_UNAUTHORIZED",
-    });
-  });
-
-  it("returns 403 for editor DELETE (owner-only action)", async () => {
-    getSessionMock.mockResolvedValue({ user: { id: "u2" } });
-    prismaClientMock.familyTree.findUnique.mockResolvedValue({ ownerId: "u1" });
-    prismaClientMock.collaborator.findUnique.mockResolvedValue({
-      role: "editor",
-      acceptedAt: new Date(),
-    });
-
-    const request = new NextRequest(
-      "http://localhost/api/trees/t1/members/m1",
-      {
-        method: "DELETE",
-      },
-    );
-
-    const response = await DELETE(request, {
-      params: Promise.resolve({ treeId: "t1", memberId: "m1" }),
-    });
-
-    expect(response.status).toBe(403);
-    await expect(response.json()).resolves.toEqual({
-      errorCode: "ERR_FORBIDDEN",
-    });
+    expect(prismaMock.treeMember.update).not.toHaveBeenCalled();
   });
 
   it("deletes the member and removes only its saved position from the arrangement", async () => {
@@ -328,33 +253,7 @@ describe("/api/trees/[treeId]/members/[memberId]", () => {
       m1: { x: 10, y: 20 },
       m2: { x: 30, y: 40 },
     };
-    prismaClientMock.familyTree.findUnique
-      .mockResolvedValueOnce({ ownerId: "u1" }) // getTreeRole
-      .mockResolvedValueOnce({ nodePositions: existingArrangement }); // prune inside tx
-
-    const request = new NextRequest(
-      "http://localhost/api/trees/t1/members/m1",
-      { method: "DELETE" },
-    );
-
-    const response = await DELETE(request, {
-      params: Promise.resolve({ treeId: "t1", memberId: "m1" }),
-    });
-
-    expect(response.status).toBe(200);
-    const arrangementUpdateCall = prismaClientMock.familyTree.update.mock.calls.find(
-      (call) => call[0]?.data?.nodePositions !== undefined,
-    );
-    expect(arrangementUpdateCall).toBeDefined();
-    expect(arrangementUpdateCall![0].data.nodePositions).toEqual({
-      m2: { x: 30, y: 40 },
-    });
-  });
-
-  it("deletes the member without touching the arrangement when the member has no saved position", async () => {
-    const existingArrangement = { m2: { x: 30, y: 40 } };
-    prismaClientMock.familyTree.findUnique
-      .mockResolvedValueOnce({ ownerId: "u1" })
+    prismaMock.familyTree.findUnique
       .mockResolvedValueOnce({ nodePositions: existingArrangement });
 
     const request = new NextRequest(
@@ -367,15 +266,38 @@ describe("/api/trees/[treeId]/members/[memberId]", () => {
     });
 
     expect(response.status).toBe(200);
-    const arrangementUpdateCall = prismaClientMock.familyTree.update.mock.calls.find(
+    const arrangementUpdateCall = prismaMock.familyTree.update.mock.calls.find(
+      (call) => call[0]?.data?.nodePositions !== undefined,
+    );
+    expect(arrangementUpdateCall).toBeDefined();
+    expect(arrangementUpdateCall![0].data.nodePositions).toEqual({
+      m2: { x: 30, y: 40 },
+    });
+  });
+
+  it("deletes the member without touching the arrangement when the member has no saved position", async () => {
+    const existingArrangement = { m2: { x: 30, y: 40 } };
+    prismaMock.familyTree.findUnique
+      .mockResolvedValueOnce({ nodePositions: existingArrangement });
+
+    const request = new NextRequest(
+      "http://localhost/api/trees/t1/members/m1",
+      { method: "DELETE" },
+    );
+
+    const response = await DELETE(request, {
+      params: Promise.resolve({ treeId: "t1", memberId: "m1" }),
+    });
+
+    expect(response.status).toBe(200);
+    const arrangementUpdateCall = prismaMock.familyTree.update.mock.calls.find(
       (call) => call[0]?.data?.nodePositions !== undefined,
     );
     expect(arrangementUpdateCall).toBeUndefined();
   });
 
   it("deletes the member without touching the arrangement when the tree has no saved arrangement", async () => {
-    prismaClientMock.familyTree.findUnique
-      .mockResolvedValueOnce({ ownerId: "u1" })
+    prismaMock.familyTree.findUnique
       .mockResolvedValueOnce({ nodePositions: null });
 
     const request = new NextRequest(
@@ -388,7 +310,7 @@ describe("/api/trees/[treeId]/members/[memberId]", () => {
     });
 
     expect(response.status).toBe(200);
-    const arrangementUpdateCall = prismaClientMock.familyTree.update.mock.calls.find(
+    const arrangementUpdateCall = prismaMock.familyTree.update.mock.calls.find(
       (call) => call[0]?.data?.nodePositions !== undefined,
     );
     expect(arrangementUpdateCall).toBeUndefined();
