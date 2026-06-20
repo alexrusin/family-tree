@@ -340,18 +340,26 @@ export const PATCH = withTreeRole<{ treeId: string; memberId: string }>(
         return Response.json({ errorCode: code }, { status: 400 });
       }
 
-      const buffer = Buffer.from(await photoFile.arrayBuffer());
-      const processed = await processImage(buffer);
-      const key = generatePhotoKey(treeId, crypto.randomUUID());
-      await uploadProcessedPhoto({
-        s3Client: createS3Client(),
-        bucket: process.env.S3_BUCKET ?? "",
-        key,
-        buffer: processed,
-      });
-      uploadedPhotoKey = key;
-      updateData.photoKey = key;
-      updateData.photoUrl = photoPublicUrl(key);
+      try {
+        const buffer = Buffer.from(await photoFile.arrayBuffer());
+        const processed = await processImage(buffer);
+        const key = generatePhotoKey(treeId, crypto.randomUUID());
+        await uploadProcessedPhoto({
+          s3Client: createS3Client(),
+          bucket: process.env.S3_BUCKET ?? "",
+          key,
+          buffer: processed,
+        });
+        uploadedPhotoKey = key;
+        updateData.photoKey = key;
+        updateData.photoUrl = photoPublicUrl(key);
+      } catch (processingError) {
+        console.error("Failed to process member photo upload", processingError);
+        return Response.json(
+          { errorCode: "ERR_PHOTO_PROCESSING_FAILED" },
+          { status: 400 },
+        );
+      }
     }
 
     if (removePhoto && !photoFile && existingMember.photoKey) {

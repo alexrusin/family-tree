@@ -118,17 +118,25 @@ export const POST = withTreeRole("editor", async (ctx) => {
           : "ERR_UNSUPPORTED_IMAGE_TYPE";
       return Response.json({ errorCode: code }, { status: 400 });
     }
-    const buffer = Buffer.from(await photoFile.arrayBuffer());
-    const processed = await processImage(buffer);
-    const key = generatePhotoKey(treeId, crypto.randomUUID());
-    await uploadProcessedPhoto({
-      s3Client: createS3Client(),
-      bucket: process.env.S3_BUCKET ?? "",
-      key,
-      buffer: processed,
-    });
-    photoKey = key;
-    photoUrl = photoPublicUrl(key);
+    try {
+      const buffer = Buffer.from(await photoFile.arrayBuffer());
+      const processed = await processImage(buffer);
+      const key = generatePhotoKey(treeId, crypto.randomUUID());
+      await uploadProcessedPhoto({
+        s3Client: createS3Client(),
+        bucket: process.env.S3_BUCKET ?? "",
+        key,
+        buffer: processed,
+      });
+      photoKey = key;
+      photoUrl = photoPublicUrl(key);
+    } catch (processingError) {
+      console.error("Failed to process member photo upload", processingError);
+      return Response.json(
+        { errorCode: "ERR_PHOTO_PROCESSING_FAILED" },
+        { status: 400 },
+      );
+    }
   }
 
   const member = await ctx.prisma.$transaction(async (tx) => {

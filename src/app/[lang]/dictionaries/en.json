@@ -376,6 +376,7 @@
       "ERR_INVALID_RELATIONSHIP": "Please choose two members and a relationship type",
       "ERR_DEATH_BEFORE_BIRTH": "Date of death cannot be before date of birth",
       "ERR_INVALID_PARTIAL_DATE": "Invalid date — please check month and day values",
+      "ERR_PHOTO_PROCESSING_FAILED": "We couldn't process that image. Please try a different photo.",
       "memberGeneric": "Unable to add member. Please try again.",
       "relationshipGeneric": "Unable to add relationship. Please try again.",
       "loadFailed": "Unable to load members and relationships.",

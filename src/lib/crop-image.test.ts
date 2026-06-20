@@ -11,7 +11,7 @@ describe("getCroppedBlob", () => {
   beforeEach(() => {
     drawImageMock = vi.fn();
     toBlobMock = vi.fn((cb: (blob: Blob | null) => void) => {
-      cb(new Blob(["fake-image-bytes"], { type: "image/webp" }));
+      cb(new Blob(["fake-image-bytes"], { type: "image/jpeg" }));
     });
 
     getContextSpy = vi
@@ -83,6 +83,16 @@ describe("getCroppedBlob", () => {
     );
   });
 
+  it("encodes the output as JPEG", async () => {
+    await getCroppedBlob("blob:source", { x: 0, y: 0, width: 100, height: 100 });
+
+    expect(toBlobMock).toHaveBeenCalledWith(
+      expect.any(Function),
+      "image/jpeg",
+      0.9,
+    );
+  });
+
   it("rejects when the canvas cannot produce a blob", async () => {
     toBlobMock.mockImplementation((cb: (blob: Blob | null) => void) => {
       cb(null);
@@ -103,20 +113,20 @@ describe("getCroppedBlob", () => {
 });
 
 describe("blobToPhotoFile", () => {
-  it("wraps the blob as a webp File using the source base name", () => {
-    const blob = new Blob(["fake-image-bytes"], { type: "image/webp" });
+  it("wraps the blob as a jpeg File using the source base name", () => {
+    const blob = new Blob(["fake-image-bytes"], { type: "image/jpeg" });
 
     const file = blobToPhotoFile(blob, "portrait.png");
 
-    expect(file.name).toBe("portrait.webp");
-    expect(file.type).toBe("image/webp");
+    expect(file.name).toBe("portrait.jpg");
+    expect(file.type).toBe("image/jpeg");
   });
 
   it("handles source names without an extension", () => {
-    const blob = new Blob(["fake-image-bytes"], { type: "image/webp" });
+    const blob = new Blob(["fake-image-bytes"], { type: "image/jpeg" });
 
     const file = blobToPhotoFile(blob, "portrait");
 
-    expect(file.name).toBe("portrait.webp");
+    expect(file.name).toBe("portrait.jpg");
   });
 });
