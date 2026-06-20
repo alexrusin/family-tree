@@ -1,0 +1,27 @@
+services:
+  ralph:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: family-tree-ralph
+    working_dir: /workspace
+    volumes:
+      # The repo — the ONLY writable host surface the agent can reach.
+      - ..:/workspace
+      # Shadow the host (Windows-built) node_modules with a Linux-native volume.
+      - ralph_node_modules:/workspace/node_modules
+      # The login token, read-only. Copied container-local by the entrypoint.
+      - ${USERPROFILE:-${HOME}}/.claude/.credentials.json:/seed/.credentials.json:ro
+    environment:
+      # Tunables forwarded to ralph.sh (see sandbox/scripts/ralph.sh).
+      - RALPH_MODEL
+      - RALPH_MAX_BUDGET_USD
+      # Commit attribution for the agent's commits.
+      - GIT_AUTHOR_NAME
+      - GIT_AUTHOR_EMAIL
+      # Harmless placeholder so prisma generate / module imports never fault on a
+      # missing var. The sandbox does not connect to a real database.
+      - DATABASE_URL=postgresql://sandbox:sandbox@localhost:5432/sandbox?schema=public
+
+volumes:
+  ralph_node_modules:

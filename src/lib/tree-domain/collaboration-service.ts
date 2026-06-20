@@ -1,4 +1,5 @@
 import type { CollaboratorRole, Locale } from "@/generated/prisma/enums";
+import { DomainError } from "@/lib/domain-error";
 import { isInvitationExpired } from "./invitation-token";
 import type { TreeRole } from "./tree-access";
 
@@ -33,7 +34,7 @@ export async function createOrRefreshInvitation(params: {
     params.actorUserId,
   );
   if (actorRole !== "owner") {
-    throw new Error("ERR_FORBIDDEN");
+    throw new DomainError("ERR_FORBIDDEN");
   }
 
   const normalizedEmail = params.invitedEmail.trim().toLowerCase();
@@ -43,7 +44,7 @@ export async function createOrRefreshInvitation(params: {
       normalizedEmail,
     );
   if (existingCollaborator) {
-    throw new Error("ERR_ALREADY_COLLABORATOR");
+    throw new DomainError("ERR_ALREADY_COLLABORATOR");
   }
 
   return params.repo.upsertPendingInvitation({
@@ -88,18 +89,18 @@ export async function acceptInvitation(params: {
   );
 
   if (!invitation) {
-    throw new Error("ERR_INVITATION_NOT_FOUND");
+    throw new DomainError("ERR_INVITATION_NOT_FOUND");
   }
 
   if (isInvitationExpired(invitation.expiresAt, now)) {
-    throw new Error("ERR_INVITATION_EXPIRED");
+    throw new DomainError("ERR_INVITATION_EXPIRED");
   }
 
   if (
     invitation.invitedEmail.toLowerCase() !==
     params.actorEmail.trim().toLowerCase()
   ) {
-    throw new Error("ERR_INVITATION_EMAIL_MISMATCH");
+    throw new DomainError("ERR_INVITATION_EMAIL_MISMATCH");
   }
 
   await params.repo.markInvitationAccepted(invitation.id, now);
@@ -136,7 +137,7 @@ export async function changeCollaboratorRole(params: {
     params.actorUserId,
   );
   if (actorRole !== "owner") {
-    throw new Error("ERR_FORBIDDEN");
+    throw new DomainError("ERR_FORBIDDEN");
   }
 
   await params.repo.updateCollaboratorRole(
@@ -163,7 +164,7 @@ export async function removeCollaborator(params: {
     params.actorUserId,
   );
   if (actorRole !== "owner") {
-    throw new Error("ERR_FORBIDDEN");
+    throw new DomainError("ERR_FORBIDDEN");
   }
 
   await params.repo.deleteCollaborator(params.treeId, params.collaboratorId);
@@ -182,10 +183,10 @@ export async function leaveTree(params: {
     params.actorUserId,
   );
   if (role === "owner") {
-    throw new Error("ERR_OWNER_CANNOT_LEAVE");
+    throw new DomainError("ERR_OWNER_CANNOT_LEAVE");
   }
   if (role === "none") {
-    throw new Error("ERR_FORBIDDEN");
+    throw new DomainError("ERR_FORBIDDEN");
   }
 
   await params.repo.deleteCollaboratorByUser(params.treeId, params.actorUserId);

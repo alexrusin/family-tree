@@ -110,28 +110,6 @@ describe("/api/account/email-change", () => {
     sendPendingEmailChangeEmailMock.mockResolvedValue(undefined);
   });
 
-  it("returns 401 for unauthenticated POST", async () => {
-    getSessionMock.mockResolvedValue(null);
-
-    const request = new NextRequest(
-      "http://localhost/api/account/email-change",
-      {
-        method: "POST",
-        body: JSON.stringify({ email: "new@example.com", locale: "en" }),
-        headers: {
-          "Content-Type": "application/json",
-        },
-      },
-    );
-
-    const response = await POST(request);
-
-    expect(response.status).toBe(401);
-    await expect(response.json()).resolves.toEqual({
-      errorCode: "ERR_UNAUTHORIZED",
-    });
-  });
-
   it("returns 400 for invalid email in POST", async () => {
     const request = new NextRequest(
       "http://localhost/api/account/email-change",

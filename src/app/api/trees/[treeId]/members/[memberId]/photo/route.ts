@@ -1,15 +1,8 @@
-import { NextRequest, NextResponse } from "next/server";
-import { PrismaClient } from "@/generated/prisma/client";
-import { PrismaPg } from "@prisma/adapter-pg";
+import { NextRequest } from "next/server";
 import { auth } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
 import { getTreeRole } from "@/lib/tree-domain/tree-access";
 import { createS3Client, downloadPhotoByKey } from "@/lib/tree-domain/photo-upload";
-
-function getPrismaClient() {
-  return new PrismaClient({
-    adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }),
-  });
-}
 
 function isPhotoNotFoundError(error: unknown): boolean {
   if (!error || typeof error !== "object") {
@@ -26,13 +19,12 @@ export async function GET(
 ) {
   try {
     const { treeId, memberId } = await params;
-    const prisma = getPrismaClient();
     const session = await auth.api.getSession({ headers: request.headers });
 
     if (session?.user) {
       const role = await getTreeRole(prisma, treeId, session.user.id);
       if (role === "none") {
-        return NextResponse.json({ errorCode: "ERR_FORBIDDEN" }, { status: 403 });
+        return Response.json({ errorCode: "ERR_FORBIDDEN" }, { status: 403 });
       }
     } else {
       const tree = await prisma.familyTree.findUnique({
@@ -41,7 +33,7 @@ export async function GET(
       });
 
       if (!tree?.shareEnabled) {
-        return NextResponse.json({ errorCode: "ERR_MEMBER_PHOTO_NOT_FOUND" }, { status: 404 });
+        return Response.json({ errorCode: "ERR_MEMBER_PHOTO_NOT_FOUND" }, { status: 404 });
       }
     }
 
@@ -56,13 +48,13 @@ export async function GET(
     });
 
     if (!member?.photoKey) {
-      return NextResponse.json({ errorCode: "ERR_MEMBER_PHOTO_NOT_FOUND" }, { status: 404 });
+      return Response.json({ errorCode: "ERR_MEMBER_PHOTO_NOT_FOUND" }, { status: 404 });
     }
 
     const bucket = process.env.S3_BUCKET;
     if (!bucket) {
       console.error("S3_BUCKET is required for member photo downloads");
-      return NextResponse.json({ errorCode: "ERR_INTERNAL" }, { status: 500 });
+      return Response.json({ errorCode: "ERR_INTERNAL" }, { status: 500 });
     }
 
     const photo = await downloadPhotoByKey({
@@ -82,10 +74,10 @@ export async function GET(
     });
   } catch (error) {
     if (isPhotoNotFoundError(error)) {
-      return NextResponse.json({ errorCode: "ERR_MEMBER_PHOTO_NOT_FOUND" }, { status: 404 });
+      return Response.json({ errorCode: "ERR_MEMBER_PHOTO_NOT_FOUND" }, { status: 404 });
     }
 
     console.error("Error reading member photo:", error);
-    return NextResponse.json({ errorCode: "ERR_INTERNAL" }, { status: 500 });
+    return Response.json({ errorCode: "ERR_INTERNAL" }, { status: 500 });
   }
 }

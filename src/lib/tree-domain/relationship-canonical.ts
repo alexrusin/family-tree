@@ -1,3 +1,5 @@
+import { DomainError } from "@/lib/domain-error";
+
 export type RelationshipType =
   | "parent"
   | "child"
@@ -21,7 +23,7 @@ export function canonicalizeRelationship(
   input: RelationshipInput,
 ): CanonicalRelationship {
   if (input.fromMemberId === input.toMemberId) {
-    throw new Error("ERR_SELF_RELATIONSHIP");
+    throw new DomainError("ERR_SELF_RELATIONSHIP");
   }
 
   if (input.type === "child") {

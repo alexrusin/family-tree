@@ -2,7 +2,8 @@
 # Ralph loop: drive `claude -p` through a folder of issue specs, one issue per
 # fresh context window. Stops on the first failure.
 #
-# Usage: bash scripts/ralph.sh <issues-dir>
+# Usage: bash sandbox/scripts/ralph.sh <issues-dir>
+# Intended to run inside the sandbox container — see sandbox/README.md.
 #
 # Env vars:
 #   RALPH_MAX_BUDGET_USD  Per-issue spend cap passed to `claude --max-budget-usd`.

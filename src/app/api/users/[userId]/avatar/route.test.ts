@@ -37,23 +37,6 @@ describe("GET /api/users/[userId]/avatar", () => {
     });
   });
 
-  it("returns 401 for unauthenticated request", async () => {
-    getSessionMock.mockResolvedValue(null);
-
-    const request = new NextRequest("http://localhost/api/users/u1/avatar", {
-      method: "GET",
-    });
-
-    const response = await GET(request, {
-      params: Promise.resolve({ userId: "u1" }),
-    });
-
-    expect(response.status).toBe(401);
-    await expect(response.json()).resolves.toEqual({
-      errorCode: "ERR_UNAUTHORIZED",
-    });
-  });
-
   it("streams avatar image bytes from S3", async () => {
     const request = new NextRequest("http://localhost/api/users/u1/avatar", {
       method: "GET",

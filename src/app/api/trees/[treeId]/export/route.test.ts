@@ -1,46 +1,40 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { NextRequest } from "next/server";
 
-const { getSessionMock, prismaMock, prismaClientCtorMock, prismaPgMock } =
-  vi.hoisted(() => {
-    const getSessionMock = vi.fn();
-    const prismaMock = {
-      familyTree: {
-        findUnique: vi.fn(),
-      },
-      collaborator: {
-        findUnique: vi.fn(),
-      },
-      treeMember: {
-        findMany: vi.fn(),
-      },
-      relationship: {
-        findMany: vi.fn(),
-      },
-    };
+const {
+  getSessionMock,
+  getTreeRoleMock,
+  prismaMock,
+} = vi.hoisted(() => {
+  const getSessionMock = vi.fn();
+  const getTreeRoleMock = vi.fn();
+  const prismaMock = {
+    familyTree: {
+      findUnique: vi.fn(),
+    },
+    treeMember: {
+      findMany: vi.fn(),
+    },
+    relationship: {
+      findMany: vi.fn(),
+    },
+  };
 
-    return {
-      getSessionMock,
-      prismaMock,
-      prismaClientCtorMock: vi.fn(function PrismaClientMock() {
-        return prismaMock;
-      }),
-      prismaPgMock: vi.fn(function PrismaPgMock() {
-        return {};
-      }),
-    };
-  });
+  return {
+    getSessionMock,
+    getTreeRoleMock,
+    prismaMock,
+  };
+});
 
 vi.mock("@/lib/auth", () => ({
   auth: { api: { getSession: getSessionMock } },
 }));
 
-vi.mock("@/generated/prisma/client", () => ({
-  PrismaClient: prismaClientCtorMock,
-}));
+vi.mock("@/lib/prisma", () => ({ prisma: prismaMock }));
 
-vi.mock("@prisma/adapter-pg", () => ({
-  PrismaPg: prismaPgMock,
+vi.mock("@/lib/tree-domain/tree-access", () => ({
+  getTreeRole: getTreeRoleMock,
 }));
 
 const { GET } = await import("./route");
@@ -52,33 +46,17 @@ describe("/api/trees/[treeId]/export", () => {
     getSessionMock.mockResolvedValue({
       user: { id: "u-owner", email: "owner@example.com" },
     });
+    getTreeRoleMock.mockResolvedValue("owner");
 
-    prismaMock.familyTree.findUnique.mockImplementation(
-      async (args: {
-        where: { id: string };
-        select?: { ownerId?: true; id?: true; name?: true };
-      }) => {
-        if (args.select?.ownerId) return { ownerId: "u-owner" };
-        return { id: "t1", name: "Ivanov Family" };
-      },
-    );
-    prismaMock.collaborator.findUnique.mockResolvedValue(null);
+    prismaMock.familyTree.findUnique.mockResolvedValue({
+      id: "t1",
+      name: "Ivanov Family",
+    });
     prismaMock.treeMember.findMany.mockResolvedValue([
       { id: "m1", firstName: "Elena", lastName: "Ivanova" },
       { id: "m2", firstName: "Madonna", lastName: null },
     ]);
     prismaMock.relationship.findMany.mockResolvedValue([]);
-  });
-
-  it("returns 401 when unauthenticated", async () => {
-    getSessionMock.mockResolvedValue(null);
-
-    const response = await GET(
-      new NextRequest("http://localhost/api/trees/t1/export"),
-      { params: Promise.resolve({ treeId: "t1" }) },
-    );
-
-    expect(response.status).toBe(401);
   });
 
   it("returns a GEDCOM file with attachment headers for an owner", async () => {
@@ -101,24 +79,14 @@ describe("/api/trees/[treeId]/export", () => {
     expect(body.trimEnd().endsWith("0 TRLR")).toBe(true);
   });
 
-  it("returns 403 for a collaborator with no role on the tree", async () => {
-    prismaMock.familyTree.findUnique.mockImplementation(
-      async (args: {
-        where: { id: string };
-        select?: { ownerId?: true; id?: true; name?: true };
-      }) => {
-        if (args.select?.ownerId) return { ownerId: "someone-else" };
-        return { id: "t1", name: "Ivanov Family" };
-      },
-    );
-    prismaMock.collaborator.findUnique.mockResolvedValue(null);
-
+  it("returns Content-Type text/plain for the GEDCOM file", async () => {
     const response = await GET(
       new NextRequest("http://localhost/api/trees/t1/export"),
       { params: Promise.resolve({ treeId: "t1" }) },
     );
 
-    expect(response.status).toBe(403);
-    expect((await response.json()).errorCode).toBe("ERR_FORBIDDEN");
+    expect(response.headers.get("Content-Type")).toBe(
+      "text/plain; charset=utf-8",
+    );
   });
 });

@@ -1,8 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
-import { PrismaClient } from "@/generated/prisma/client";
-import { PrismaPg } from "@prisma/adapter-pg";
+import { NextResponse } from "next/server";
 import type { CollaboratorRole, Locale } from "@/generated/prisma/enums";
-import { auth } from "@/lib/auth";
 import { sendInvitationEmail } from "@/lib/invitation-email";
 import { createOrRefreshInvitation } from "@/lib/tree-domain/collaboration-service";
 import {
@@ -12,6 +9,7 @@ import {
 } from "@/lib/tree-domain/invitation-token";
 import { getTreeRole } from "@/lib/tree-domain/tree-access";
 import { resolveAvatarUrlForUser } from "@/lib/avatar-storage";
+import { withTreeRole } from "@/lib/with-tree-role";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -20,12 +18,6 @@ type InvitationPayload = {
   role: CollaboratorRole;
   message: string | null;
 };
-
-function getPrismaClient() {
-  return new PrismaClient({
-    adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }),
-  });
-}
 
 function toLocale(value: unknown): Locale {
   if (value === "es") return "es";
@@ -76,31 +68,12 @@ function parseInvitationPayload(value: unknown): InvitationPayload | null {
   };
 }
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ treeId: string }> },
-) {
-  try {
-    const session = await auth.api.getSession({
-      headers: request.headers,
-    });
+export const GET = withTreeRole<{ treeId: string }>(
+  "viewer",
+  async (ctx) => {
+    const { treeId } = ctx.params;
 
-    if (!session?.user) {
-      return NextResponse.json(
-        { errorCode: "ERR_UNAUTHORIZED" },
-        { status: 401 },
-      );
-    }
-
-    const { treeId } = await params;
-    const prisma = getPrismaClient();
-    const role = await getTreeRole(prisma, treeId, session.user.id);
-
-    if (role === "none") {
-      return NextResponse.json({ errorCode: "ERR_FORBIDDEN" }, { status: 403 });
-    }
-
-    const collaborators = await prisma.collaborator.findMany({
+    const collaborators = await ctx.prisma.collaborator.findMany({
       where: {
         treeId,
         acceptedAt: {
@@ -132,8 +105,8 @@ export async function GET(
     });
 
     const invitations =
-      role === "owner"
-        ? await prisma.invitation.findMany({
+      ctx.role === "owner"
+        ? await ctx.prisma.invitation.findMany({
             where: {
               treeId,
               status: "pending",
@@ -174,29 +147,13 @@ export async function GET(
       },
       { status: 200 },
     );
-  } catch (error) {
-    console.error("Error listing collaborators:", error);
-    return NextResponse.json({ errorCode: "ERR_INTERNAL" }, { status: 500 });
-  }
-}
+  },
+);
 
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ treeId: string }> },
-) {
-  try {
-    const session = await auth.api.getSession({
-      headers: request.headers,
-    });
-
-    if (!session?.user) {
-      return NextResponse.json(
-        { errorCode: "ERR_UNAUTHORIZED" },
-        { status: 401 },
-      );
-    }
-
-    const body = await request.json().catch(() => null);
+export const POST = withTreeRole<{ treeId: string }>(
+  "owner",
+  async (ctx) => {
+    const body = await ctx.request.json().catch(() => null);
     const payload = parseInvitationPayload(body);
 
     if (!payload) {
@@ -207,8 +164,8 @@ export async function POST(
     }
 
     if (
-      session.user.email &&
-      payload.email === session.user.email.trim().toLowerCase()
+      ctx.user.email &&
+      payload.email === (ctx.user.email as string).trim().toLowerCase()
     ) {
       return NextResponse.json(
         { errorCode: "ERR_CANNOT_INVITE_SELF" },
@@ -216,13 +173,12 @@ export async function POST(
       );
     }
 
-    const { treeId } = await params;
-    const prisma = getPrismaClient();
+    const { treeId } = ctx.params;
     const token = generateInvitationToken();
     const tokenHash = hashInvitationToken(token);
     const expiresAt = invitationExpiresAt();
 
-    const ownerLocale = toLocale((session.user as { locale?: string }).locale);
+    const ownerLocale = toLocale((ctx.user as { locale?: string }).locale);
     let invitedUserCache: { id: string; locale: Locale } | null | undefined;
 
     const findInvitedUserByEmail = async (email: string) => {
@@ -230,7 +186,7 @@ export async function POST(
         return invitedUserCache;
       }
 
-      const invitedUser = await prisma.user.findUnique({
+      const invitedUser = await ctx.prisma.user.findUnique({
         where: { email },
         select: {
           id: true,
@@ -250,14 +206,14 @@ export async function POST(
 
     await createOrRefreshInvitation({
       repo: {
-        getActorRole: (tId, uId) => getTreeRole(prisma, tId, uId),
+        getActorRole: (tId, uId) => getTreeRole(ctx.prisma, tId, uId),
         findAcceptedCollaboratorByEmail: async (tId, invitedEmail) => {
           const invited = await findInvitedUserByEmail(invitedEmail);
           if (!invited) {
             return null;
           }
 
-          const collaborator = await prisma.collaborator.findUnique({
+          const collaborator = await ctx.prisma.collaborator.findUnique({
             where: {
               treeId_userId: {
                 treeId: tId,
@@ -277,7 +233,7 @@ export async function POST(
           return { id: collaborator.id };
         },
         upsertPendingInvitation: async (args) => {
-          const existing = await prisma.invitation.findFirst({
+          const existing = await ctx.prisma.invitation.findFirst({
             where: {
               treeId: args.treeId,
               invitedEmail: args.invitedEmail,
@@ -289,7 +245,7 @@ export async function POST(
           });
 
           if (existing) {
-            const invitation = await prisma.invitation.update({
+            const invitation = await ctx.prisma.invitation.update({
               where: { id: existing.id },
               data: {
                 role: args.role,
@@ -312,7 +268,7 @@ export async function POST(
             };
           }
 
-          const invitation = await prisma.invitation.create({
+          const invitation = await ctx.prisma.invitation.create({
             data: {
               treeId: args.treeId,
               invitedEmail: args.invitedEmail,
@@ -333,7 +289,7 @@ export async function POST(
           };
         },
       },
-      actorUserId: session.user.id,
+      actorUserId: ctx.user.id,
       treeId,
       invitedEmail: payload.email,
       role: payload.role,
@@ -343,7 +299,7 @@ export async function POST(
       expiresAt,
     });
 
-    const tree = await prisma.familyTree.findUnique({
+    const tree = await ctx.prisma.familyTree.findUnique({
       where: { id: treeId },
       select: {
         name: true,
@@ -361,7 +317,9 @@ export async function POST(
     ).toString();
 
     const inviterName =
-      session.user.name?.trim() || session.user.email || "Family Tree";
+      (ctx.user.name as string | undefined)?.trim() ||
+      (ctx.user.email as string | undefined) ||
+      "Family Tree";
 
     await sendInvitationEmail({
       locale: invitationLocale,
@@ -374,23 +332,5 @@ export async function POST(
     });
 
     return NextResponse.json({ success: true }, { status: 201 });
-  } catch (error) {
-    if (error instanceof Error) {
-      if (error.message === "ERR_FORBIDDEN") {
-        return NextResponse.json(
-          { errorCode: "ERR_FORBIDDEN" },
-          { status: 403 },
-        );
-      }
-      if (error.message === "ERR_ALREADY_COLLABORATOR") {
-        return NextResponse.json(
-          { errorCode: "ERR_ALREADY_COLLABORATOR" },
-          { status: 409 },
-        );
-      }
-    }
-
-    console.error("Error creating invitation:", error);
-    return NextResponse.json({ errorCode: "ERR_INTERNAL" }, { status: 500 });
-  }
-}
+  },
+);

@@ -1,5 +1,6 @@
 import { compareLifeSpan, type PartialDate } from "./date-precision";
 import { canEditMembers, type TreeRole } from "./tree-access";
+import { DomainError } from "@/lib/domain-error";
 
 export type MemberDatePrecision = "year" | "month" | "day";
 export type MemberGenderValue = "male" | "female" | "other" | "undisclosed";
@@ -38,16 +39,16 @@ export async function createMember<TCreated extends { id: string }>(params: {
 }): Promise<TCreated> {
   const role = await params.repo.getRole(params.treeId, params.actorUserId);
   if (!canEditMembers(role)) {
-    throw new Error("ERR_FORBIDDEN");
+    throw new DomainError("ERR_FORBIDDEN");
   }
 
   if (!params.input.firstName.trim()) {
-    throw new Error("ERR_FIRST_NAME_REQUIRED");
+    throw new DomainError("ERR_FIRST_NAME_REQUIRED");
   }
 
   const currentCount = await params.repo.getTreeMemberCount(params.treeId);
   if (currentCount >= MEMBER_HARD_LIMIT) {
-    throw new Error("ERR_MEMBER_LIMIT_REACHED");
+    throw new DomainError("ERR_MEMBER_LIMIT_REACHED");
   }
 
   if (params.input.birthYear != null && params.input.deathYear != null) {
@@ -65,7 +66,7 @@ export async function createMember<TCreated extends { id: string }>(params: {
     };
     const chronologyError = compareLifeSpan(birth, death);
     if (chronologyError) {
-      throw new Error(chronologyError);
+      throw new DomainError(chronologyError);
     }
   }
 

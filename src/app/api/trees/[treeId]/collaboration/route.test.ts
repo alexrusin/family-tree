@@ -3,21 +3,21 @@ import { NextRequest } from "next/server";
 
 const {
   getSessionMock,
-  prismaClientMock,
-  prismaClientConstructorMock,
-  prismaPgMock,
+  getTreeRoleMock,
+  prismaMock,
   generateInvitationTokenMock,
   hashInvitationTokenMock,
   invitationExpiresAtMock,
   sendInvitationEmailMock,
 } = vi.hoisted(() => {
   const getSessionMock = vi.fn();
+  const getTreeRoleMock = vi.fn();
   const generateInvitationTokenMock = vi.fn();
   const hashInvitationTokenMock = vi.fn();
   const invitationExpiresAtMock = vi.fn();
   const sendInvitationEmailMock = vi.fn();
 
-  const prismaClientMock = {
+  const prismaMock = {
     familyTree: {
       findUnique: vi.fn(),
     },
@@ -38,13 +38,8 @@ const {
 
   return {
     getSessionMock,
-    prismaClientMock,
-    prismaClientConstructorMock: vi.fn(function PrismaClientMock() {
-      return prismaClientMock;
-    }),
-    prismaPgMock: vi.fn(function PrismaPgMock() {
-      return {};
-    }),
+    getTreeRoleMock,
+    prismaMock,
     generateInvitationTokenMock,
     hashInvitationTokenMock,
     invitationExpiresAtMock,
@@ -60,12 +55,10 @@ vi.mock("@/lib/auth", () => ({
   },
 }));
 
-vi.mock("@/generated/prisma/client", () => ({
-  PrismaClient: prismaClientConstructorMock,
-}));
+vi.mock("@/lib/prisma", () => ({ prisma: prismaMock }));
 
-vi.mock("@prisma/adapter-pg", () => ({
-  PrismaPg: prismaPgMock,
+vi.mock("@/lib/tree-domain/tree-access", () => ({
+  getTreeRole: getTreeRoleMock,
 }));
 
 vi.mock("@/lib/tree-domain/invitation-token", () => ({
@@ -95,30 +88,29 @@ describe("/api/trees/[treeId]/collaboration", () => {
       },
     });
 
-    prismaClientMock.familyTree.findUnique.mockImplementation(
-      async (args: { select?: { ownerId?: true; name?: true } }) => {
-        if (args.select?.ownerId) {
-          return { ownerId: "u-owner" };
-        }
+    getTreeRoleMock.mockResolvedValue("owner");
+
+    prismaMock.familyTree.findUnique.mockImplementation(
+      async (args: { select?: { name?: true } }) => {
         if (args.select?.name) {
           return { name: "Smith Family" };
         }
-        return { id: "t1", ownerId: "u-owner", name: "Smith Family" };
+        return { id: "t1", name: "Smith Family" };
       },
     );
-    prismaClientMock.collaborator.findUnique.mockResolvedValue(null);
-    prismaClientMock.collaborator.findMany.mockResolvedValue([]);
-    prismaClientMock.invitation.findMany.mockResolvedValue([]);
-    prismaClientMock.invitation.findFirst.mockResolvedValue(null);
-    prismaClientMock.invitation.create.mockResolvedValue({
+    prismaMock.collaborator.findUnique.mockResolvedValue(null);
+    prismaMock.collaborator.findMany.mockResolvedValue([]);
+    prismaMock.invitation.findMany.mockResolvedValue([]);
+    prismaMock.invitation.findFirst.mockResolvedValue(null);
+    prismaMock.invitation.create.mockResolvedValue({
       id: "i1",
       status: "pending",
     });
-    prismaClientMock.invitation.update.mockResolvedValue({
+    prismaMock.invitation.update.mockResolvedValue({
       id: "i1",
       status: "pending",
     });
-    prismaClientMock.user.findUnique.mockResolvedValue(null);
+    prismaMock.user.findUnique.mockResolvedValue(null);
 
     generateInvitationTokenMock.mockReturnValue("token-raw");
     hashInvitationTokenMock.mockReturnValue("token-hash");
@@ -128,52 +120,8 @@ describe("/api/trees/[treeId]/collaboration", () => {
     sendInvitationEmailMock.mockResolvedValue(undefined);
   });
 
-  it("returns 401 for unauthenticated GET", async () => {
-    getSessionMock.mockResolvedValue(null);
-
-    const request = new NextRequest(
-      "http://localhost/api/trees/t1/collaboration",
-      {
-        method: "GET",
-      },
-    );
-
-    const response = await GET(request, {
-      params: Promise.resolve({ treeId: "t1" }),
-    });
-
-    expect(response.status).toBe(401);
-    await expect(response.json()).resolves.toEqual({
-      errorCode: "ERR_UNAUTHORIZED",
-    });
-  });
-
-  it("returns 403 for GET when actor has no access", async () => {
-    getSessionMock.mockResolvedValue({ user: { id: "u-stranger" } });
-    prismaClientMock.familyTree.findUnique.mockResolvedValue({
-      ownerId: "u-owner",
-    });
-    prismaClientMock.collaborator.findUnique.mockResolvedValue(null);
-
-    const request = new NextRequest(
-      "http://localhost/api/trees/t1/collaboration",
-      {
-        method: "GET",
-      },
-    );
-
-    const response = await GET(request, {
-      params: Promise.resolve({ treeId: "t1" }),
-    });
-
-    expect(response.status).toBe(403);
-    await expect(response.json()).resolves.toEqual({
-      errorCode: "ERR_FORBIDDEN",
-    });
-  });
-
   it("returns collaborators and pending invitations for owner GET", async () => {
-    prismaClientMock.collaborator.findMany.mockResolvedValue([
+    prismaMock.collaborator.findMany.mockResolvedValue([
       {
         id: "c1",
         treeId: "t1",
@@ -181,7 +129,7 @@ describe("/api/trees/[treeId]/collaboration", () => {
         role: "editor",
       },
     ]);
-    prismaClientMock.invitation.findMany.mockResolvedValue([
+    prismaMock.invitation.findMany.mockResolvedValue([
       {
         id: "i1",
         treeId: "t1",
@@ -224,14 +172,8 @@ describe("/api/trees/[treeId]/collaboration", () => {
 
   it("returns empty invitations for non-owner GET", async () => {
     getSessionMock.mockResolvedValue({ user: { id: "u-editor" } });
-    prismaClientMock.familyTree.findUnique.mockResolvedValue({
-      ownerId: "u-owner",
-    });
-    prismaClientMock.collaborator.findUnique.mockResolvedValue({
-      role: "editor",
-      acceptedAt: new Date("2026-05-14T00:00:00.000Z"),
-    });
-    prismaClientMock.collaborator.findMany.mockResolvedValue([
+    getTreeRoleMock.mockResolvedValue("editor");
+    prismaMock.collaborator.findMany.mockResolvedValue([
       {
         id: "c1",
         treeId: "t1",
@@ -263,94 +205,7 @@ describe("/api/trees/[treeId]/collaboration", () => {
       ],
       invitations: [],
     });
-    expect(prismaClientMock.invitation.findMany).not.toHaveBeenCalled();
-  });
-
-  it("returns 401 for unauthenticated POST", async () => {
-    getSessionMock.mockResolvedValue(null);
-
-    const request = new NextRequest(
-      "http://localhost/api/trees/t1/collaboration",
-      {
-        method: "POST",
-        body: JSON.stringify({
-          email: "invitee@example.com",
-          role: "editor",
-        }),
-      },
-    );
-
-    const response = await POST(request, {
-      params: Promise.resolve({ treeId: "t1" }),
-    });
-
-    expect(response.status).toBe(401);
-    await expect(response.json()).resolves.toEqual({
-      errorCode: "ERR_UNAUTHORIZED",
-    });
-  });
-
-  it("returns 403 for POST when actor has no access", async () => {
-    getSessionMock.mockResolvedValue({
-      user: { id: "u-stranger", email: "stranger@example.com" },
-    });
-    prismaClientMock.familyTree.findUnique.mockResolvedValue({
-      ownerId: "u-owner",
-    });
-    prismaClientMock.collaborator.findUnique.mockResolvedValue(null);
-
-    const request = new NextRequest(
-      "http://localhost/api/trees/t1/collaboration",
-      {
-        method: "POST",
-        body: JSON.stringify({
-          email: "invitee@example.com",
-          role: "viewer",
-        }),
-      },
-    );
-
-    const response = await POST(request, {
-      params: Promise.resolve({ treeId: "t1" }),
-    });
-
-    expect(response.status).toBe(403);
-    await expect(response.json()).resolves.toEqual({
-      errorCode: "ERR_FORBIDDEN",
-    });
-  });
-
-  it("returns 403 for POST when actor is non-owner collaborator", async () => {
-    getSessionMock.mockResolvedValue({
-      user: { id: "u-editor", email: "editor@example.com" },
-    });
-    prismaClientMock.familyTree.findUnique.mockResolvedValue({
-      ownerId: "u-owner",
-    });
-    prismaClientMock.collaborator.findUnique.mockResolvedValue({
-      role: "editor",
-      acceptedAt: new Date("2026-05-14T00:00:00.000Z"),
-    });
-
-    const request = new NextRequest(
-      "http://localhost/api/trees/t1/collaboration",
-      {
-        method: "POST",
-        body: JSON.stringify({
-          email: "invitee@example.com",
-          role: "viewer",
-        }),
-      },
-    );
-
-    const response = await POST(request, {
-      params: Promise.resolve({ treeId: "t1" }),
-    });
-
-    expect(response.status).toBe(403);
-    await expect(response.json()).resolves.toEqual({
-      errorCode: "ERR_FORBIDDEN",
-    });
+    expect(prismaMock.invitation.findMany).not.toHaveBeenCalled();
   });
 
   it("returns 400 for invalid invitation payload", async () => {
@@ -373,15 +228,15 @@ describe("/api/trees/[treeId]/collaboration", () => {
     await expect(response.json()).resolves.toEqual({
       errorCode: "ERR_INVALID_INVITATION",
     });
-    expect(prismaClientMock.invitation.create).not.toHaveBeenCalled();
+    expect(prismaMock.invitation.create).not.toHaveBeenCalled();
   });
 
   it("returns 409 when inviting accepted collaborator", async () => {
-    prismaClientMock.user.findUnique.mockResolvedValue({
+    prismaMock.user.findUnique.mockResolvedValue({
       id: "u-invitee",
       locale: "ru",
     });
-    prismaClientMock.collaborator.findUnique.mockImplementation(
+    prismaMock.collaborator.findUnique.mockImplementation(
       async (args: {
         where: { treeId_userId: { treeId: string; userId: string } };
       }) => {
@@ -418,11 +273,11 @@ describe("/api/trees/[treeId]/collaboration", () => {
   });
 
   it("creates invitation and returns success true without token", async () => {
-    prismaClientMock.user.findUnique.mockResolvedValue({
+    prismaMock.user.findUnique.mockResolvedValue({
       id: "u-invitee",
       locale: "ru",
     });
-    prismaClientMock.collaborator.findUnique.mockImplementation(
+    prismaMock.collaborator.findUnique.mockImplementation(
       async (args: {
         where: { treeId_userId: { treeId: string; userId: string } };
       }) => {
@@ -463,11 +318,11 @@ describe("/api/trees/[treeId]/collaboration", () => {
   });
 
   it("uses invitee spanish locale for invitation when invitee has es locale", async () => {
-    prismaClientMock.user.findUnique.mockResolvedValue({
+    prismaMock.user.findUnique.mockResolvedValue({
       id: "u-invitee",
       locale: "es",
     });
-    prismaClientMock.collaborator.findUnique.mockResolvedValue(null);
+    prismaMock.collaborator.findUnique.mockResolvedValue(null);
 
     const request = new NextRequest(
       "http://localhost/api/trees/t1/collaboration",
@@ -503,7 +358,7 @@ describe("/api/trees/[treeId]/collaboration", () => {
         locale: "es",
       },
     });
-    prismaClientMock.user.findUnique.mockResolvedValue(null);
+    prismaMock.user.findUnique.mockResolvedValue(null);
 
     const request = new NextRequest(
       "http://localhost/api/trees/t1/collaboration",

@@ -35,7 +35,7 @@ export default function DeleteTreeConfirmation({
 
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.error || "Failed to delete tree");
+        throw new Error(data.errorCode || "Failed to delete tree");
       }
 
       onClose();

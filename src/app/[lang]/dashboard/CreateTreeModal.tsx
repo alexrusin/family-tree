@@ -46,7 +46,7 @@ export default function CreateTreeModal({
 
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.error || "Failed to create tree");
+        throw new Error(data.errorCode || "Failed to create tree");
       }
 
       // Success - close modal and refresh dashboard

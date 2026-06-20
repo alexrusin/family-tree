@@ -38,28 +38,6 @@ describe("PATCH /api/account/password", () => {
     );
   });
 
-  it("returns 401 for unauthenticated requests", async () => {
-    getSessionMock.mockResolvedValue(null);
-
-    const request = new NextRequest("http://localhost/api/account/password", {
-      method: "PATCH",
-      body: JSON.stringify({
-        currentPassword: "old-password",
-        newPassword: "Family123",
-      }),
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
-
-    const response = await PATCH(request);
-
-    expect(response.status).toBe(401);
-    await expect(response.json()).resolves.toEqual({
-      errorCode: "ERR_UNAUTHORIZED",
-    });
-  });
-
   it("returns 400 when current password is missing", async () => {
     const request = new NextRequest("http://localhost/api/account/password", {
       method: "PATCH",

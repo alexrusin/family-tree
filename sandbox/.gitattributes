@@ -1,0 +1,3 @@
+# The entrypoint runs inside a Linux container; keep it LF even on Windows hosts
+# with core.autocrlf=true so the image's ENTRYPOINT stays executable.
+*.sh text eol=lf

@@ -3,18 +3,15 @@ import { NextRequest } from "next/server";
 
 const {
   getSessionMock,
-  prismaClientMock,
-  prismaClientConstructorMock,
-  prismaPgMock,
+  getTreeRoleMock,
+  prismaMock,
   createS3ClientMock,
   downloadPhotoByKeyMock,
 } = vi.hoisted(() => {
   const getSessionMock = vi.fn();
-  const prismaClientMock = {
+  const getTreeRoleMock = vi.fn();
+  const prismaMock = {
     familyTree: {
-      findUnique: vi.fn(),
-    },
-    collaborator: {
       findUnique: vi.fn(),
     },
     treeMember: {
@@ -24,13 +21,8 @@ const {
 
   return {
     getSessionMock,
-    prismaClientMock,
-    prismaClientConstructorMock: vi.fn(function PrismaClientMock() {
-      return prismaClientMock;
-    }),
-    prismaPgMock: vi.fn(function PrismaPgMock() {
-      return {};
-    }),
+    getTreeRoleMock,
+    prismaMock,
     createS3ClientMock: vi.fn(() => ({})),
     downloadPhotoByKeyMock: vi.fn(),
   };
@@ -44,12 +36,10 @@ vi.mock("@/lib/auth", () => ({
   },
 }));
 
-vi.mock("@/generated/prisma/client", () => ({
-  PrismaClient: prismaClientConstructorMock,
-}));
+vi.mock("@/lib/prisma", () => ({ prisma: prismaMock }));
 
-vi.mock("@prisma/adapter-pg", () => ({
-  PrismaPg: prismaPgMock,
+vi.mock("@/lib/tree-domain/tree-access", () => ({
+  getTreeRole: getTreeRoleMock,
 }));
 
 vi.mock("@/lib/tree-domain/photo-upload", () => ({
@@ -66,9 +56,8 @@ describe("GET /api/trees/[treeId]/members/[memberId]/photo", () => {
     process.env.S3_BUCKET = "test-bucket";
 
     getSessionMock.mockResolvedValue({ user: { id: "viewer-1" } });
-    prismaClientMock.familyTree.findUnique.mockResolvedValue({ ownerId: "viewer-1" });
-    prismaClientMock.collaborator.findUnique.mockResolvedValue(null);
-    prismaClientMock.treeMember.findFirst.mockResolvedValue({
+    getTreeRoleMock.mockResolvedValue("viewer");
+    prismaMock.treeMember.findFirst.mockResolvedValue({
       photoKey: "trees/t1/members/uuid.webp",
     });
     downloadPhotoByKeyMock.mockResolvedValue({
@@ -99,7 +88,7 @@ describe("GET /api/trees/[treeId]/members/[memberId]/photo", () => {
 
   it("allows unauthenticated access when the tree is publicly shared", async () => {
     getSessionMock.mockResolvedValue(null);
-    prismaClientMock.familyTree.findUnique.mockResolvedValue({ shareEnabled: true });
+    prismaMock.familyTree.findUnique.mockResolvedValue({ shareEnabled: true });
 
     const request = new NextRequest(
       "http://localhost/api/trees/t1/members/m1/photo",
@@ -115,8 +104,7 @@ describe("GET /api/trees/[treeId]/members/[memberId]/photo", () => {
   });
 
   it("returns 403 when an authenticated user cannot view the tree", async () => {
-    prismaClientMock.familyTree.findUnique.mockResolvedValue({ ownerId: "owner-1" });
-    prismaClientMock.collaborator.findUnique.mockResolvedValue(null);
+    getTreeRoleMock.mockResolvedValue("none");
 
     const request = new NextRequest(
       "http://localhost/api/trees/t1/members/m1/photo",
@@ -135,7 +123,7 @@ describe("GET /api/trees/[treeId]/members/[memberId]/photo", () => {
 
   it("returns 404 for unauthenticated requests to private trees", async () => {
     getSessionMock.mockResolvedValue(null);
-    prismaClientMock.familyTree.findUnique.mockResolvedValue({ shareEnabled: false });
+    prismaMock.familyTree.findUnique.mockResolvedValue({ shareEnabled: false });
 
     const request = new NextRequest(
       "http://localhost/api/trees/t1/members/m1/photo",
@@ -153,7 +141,7 @@ describe("GET /api/trees/[treeId]/members/[memberId]/photo", () => {
   });
 
   it("returns 404 when the member has no stored photo key", async () => {
-    prismaClientMock.treeMember.findFirst.mockResolvedValue({ photoKey: null });
+    prismaMock.treeMember.findFirst.mockResolvedValue({ photoKey: null });
 
     const request = new NextRequest(
       "http://localhost/api/trees/t1/members/m1/photo",

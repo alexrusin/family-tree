@@ -64,7 +64,7 @@ export default function RenameTreeModal({
 
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.error || "Failed to rename tree");
+        throw new Error(data.errorCode || "Failed to rename tree");
       }
 
       onClose();

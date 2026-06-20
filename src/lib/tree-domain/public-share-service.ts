@@ -1,5 +1,6 @@
 import { createHash } from "crypto";
 import { generateShareToken } from "@/lib/tree-utils";
+import { DomainError } from "@/lib/domain-error";
 import type { Locale } from "@/lib/locale";
 import type { TreeRole } from "./tree-access";
 
@@ -69,7 +70,7 @@ export async function setPublicShareEnabled(params: {
 }): Promise<void> {
   const role = await params.repo.getTreeRole(params.treeId, params.actorUserId);
   if (role !== "owner") {
-    throw new Error("ERR_FORBIDDEN");
+    throw new DomainError("ERR_FORBIDDEN");
   }
 
   await params.repo.updateShareEnabled(params.treeId, params.enabled);
@@ -91,7 +92,7 @@ export async function regeneratePublicShareToken(params: {
 }): Promise<{ treeId: string; shareToken: string }> {
   const role = await params.repo.getTreeRole(params.treeId, params.actorUserId);
   if (role !== "owner") {
-    throw new Error("ERR_FORBIDDEN");
+    throw new DomainError("ERR_FORBIDDEN");
   }
 
   const current = await params.repo.getCurrentShareToken(params.treeId);

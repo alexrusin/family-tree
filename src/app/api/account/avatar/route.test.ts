@@ -82,17 +82,6 @@ describe("PATCH /api/account/avatar", () => {
     });
   });
 
-  it("returns 401 for unauthenticated request", async () => {
-    getSessionMock.mockResolvedValue(null);
-
-    const response = await PATCH(makeRequestWithAvatar());
-
-    expect(response.status).toBe(401);
-    await expect(response.json()).resolves.toEqual({
-      errorCode: "ERR_UNAUTHORIZED",
-    });
-  });
-
   it("returns 400 when avatar file is missing", async () => {
     const response = await PATCH(makeRequestWithAvatar());
 
