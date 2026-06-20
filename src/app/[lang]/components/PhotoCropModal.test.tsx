@@ -66,11 +66,11 @@ describe("PhotoCropModal", () => {
   it("calls onApply with a cropped File when Apply is clicked", async () => {
     const user = userEvent.setup();
     const file = new File(["source"], "group.png", { type: "image/png" });
-    const croppedFile = new File(["cropped"], "group.webp", {
-      type: "image/webp",
+    const croppedFile = new File(["cropped"], "group.jpg", {
+      type: "image/jpeg",
     });
     vi.spyOn(cropImage, "getCroppedBlob").mockResolvedValue(
-      new Blob(["cropped"], { type: "image/webp" }),
+      new Blob(["cropped"], { type: "image/jpeg" }),
     );
     vi.spyOn(cropImage, "blobToPhotoFile").mockReturnValue(croppedFile);
 

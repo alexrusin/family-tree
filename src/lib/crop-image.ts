@@ -5,12 +5,15 @@ export interface CropAreaPixels {
   height: number;
 }
 
-// Match the server pipeline documented in ADR 0002
-// (sharp fit:"inside" 800x800 -> WebP@82) so the client crop flows through
-// unchanged instead of being re-downscaled and re-encoded server-side.
+// The server always re-encodes to WebP@82 via sharp (see ADR 0002 / processImage),
+// so the client only needs to hand off a cropped, downscaled (800px) image in a
+// format every browser can encode reliably. We output JPEG rather than WebP because
+// iOS Safari's canvas.toBlob WebP encoding is unreliable across versions (it can
+// produce output sharp fails to decode), which broke photo uploads on iPhone/iPad.
 const MAX_OUTPUT_EDGE = 800;
-const OUTPUT_QUALITY = 0.82;
-const OUTPUT_TYPE = "image/webp";
+const OUTPUT_QUALITY = 0.9;
+const OUTPUT_TYPE = "image/jpeg";
+const OUTPUT_EXTENSION = "jpg";
 
 function loadImage(src: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
@@ -42,7 +45,7 @@ function loadImage(src: string): Promise<HTMLImageElement> {
 /**
  * Renders the cropped pixel rectangle of an image onto a square canvas,
  * downscaling to MAX_OUTPUT_EDGE (800px, matching the server pipeline), and
- * returns it as a WebP blob.
+ * returns it as a JPEG blob.
  */
 export async function getCroppedBlob(
   imageSrc: string,
@@ -96,11 +99,11 @@ function stripExtension(name: string): string {
 }
 
 /**
- * Wraps a cropped blob as a WebP File, reusing the source file's base name
+ * Wraps a cropped blob as a JPEG File, reusing the source file's base name
  * so the result still passes the existing photo selection validators.
  */
 export function blobToPhotoFile(blob: Blob, baseName: string): File {
-  return new File([blob], `${stripExtension(baseName)}.webp`, {
+  return new File([blob], `${stripExtension(baseName)}.${OUTPUT_EXTENSION}`, {
     type: OUTPUT_TYPE,
   });
 }

@@ -57,6 +57,7 @@ vi.mock("@/lib/tree-domain/photo-upload", () => ({
 }));
 
 const { GET, POST } = await import("./route");
+const { processImage } = await import("@/lib/tree-domain/photo-upload");
 
 function makeFormData(fields: Record<string, string>): FormData {
   const fd = new FormData();
@@ -254,5 +255,35 @@ describe("POST /api/trees/[treeId]/members", () => {
         photoUrl: "/api/trees/t1/members/m1/photo?v=uuid",
       },
     });
+  });
+
+  it("returns ERR_PHOTO_PROCESSING_FAILED when image processing throws", async () => {
+    const consoleErrorSpy = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => {});
+    vi.mocked(processImage).mockRejectedValueOnce(new Error("sharp decode"));
+
+    const photoFormData = makeFormData({ firstName: "Elena", isLiving: "true" });
+    photoFormData.append(
+      "photo",
+      new File(["avatar"], "avatar.jpg", { type: "image/jpeg" }),
+    );
+
+    const request = new NextRequest("http://localhost/api/trees/t1/members", {
+      method: "POST",
+      body: photoFormData,
+    });
+
+    const response = await POST(request, {
+      params: Promise.resolve({ treeId: "t1" }),
+    });
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({
+      errorCode: "ERR_PHOTO_PROCESSING_FAILED",
+    });
+    expect(prismaMock.treeMember.create).not.toHaveBeenCalled();
+
+    consoleErrorSpy.mockRestore();
   });
 });
