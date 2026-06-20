@@ -37,12 +37,12 @@ describe("withSession", () => {
   it("maps a thrown DomainError to the correct status and errorCode", async () => {
     getSessionMock.mockResolvedValue({ user: { id: "u1" } });
 
-    const handler = vi.fn().mockRejectedValue(new DomainError("ERR_TREE_NAME_REQUIRED"));
+    const handler = vi.fn().mockRejectedValue(new DomainError("ERR_FIRST_NAME_REQUIRED"));
     const wrapped = withSession(handler);
     const res = await wrapped(makeRequest());
 
     expect(res.status).toBe(400);
-    expect(await res.json()).toEqual({ errorCode: "ERR_TREE_NAME_REQUIRED" });
+    expect(await res.json()).toEqual({ errorCode: "ERR_FIRST_NAME_REQUIRED" });
   });
 
   it("returns 500 and logs for non-DomainError throws", async () => {
