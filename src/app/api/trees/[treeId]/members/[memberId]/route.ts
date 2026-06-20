@@ -77,6 +77,7 @@ export const PATCH = withTreeRole<{ treeId: string; memberId: string }>(
     } = {};
     const contentType = ctx.request.headers.get("content-type") ?? "";
     let photoFile: Blob | null = null;
+    let removePhoto = false;
 
     if (contentType.includes("multipart/form-data")) {
       const formData = await ctx.request.formData();
@@ -169,6 +170,10 @@ export const PATCH = withTreeRole<{ treeId: string; memberId: string }>(
       const candidate = formData.get("photo");
       if (candidate instanceof Blob && candidate.size > 0) {
         photoFile = candidate;
+      }
+
+      if (!photoFile && formData.get("removePhoto") === "true") {
+        removePhoto = true;
       }
     } else {
       const body = await ctx.request.json();
@@ -266,7 +271,7 @@ export const PATCH = withTreeRole<{ treeId: string; memberId: string }>(
       }
     }
 
-    if (Object.keys(updateData).length === 0 && !photoFile) {
+    if (Object.keys(updateData).length === 0 && !photoFile && !removePhoto) {
       return Response.json(
         { errorCode: "ERR_INVALID_MEMBER_UPDATE" },
         { status: 400 },
@@ -349,6 +354,11 @@ export const PATCH = withTreeRole<{ treeId: string; memberId: string }>(
       updateData.photoUrl = photoPublicUrl(key);
     }
 
+    if (removePhoto && !photoFile && existingMember.photoKey) {
+      updateData.photoKey = null;
+      updateData.photoUrl = null;
+    }
+
     let member;
     try {
       member = await ctx.prisma.treeMember.update({
@@ -373,7 +383,7 @@ export const PATCH = withTreeRole<{ treeId: string; memberId: string }>(
       throw error;
     }
 
-    if (existingMember.photoKey && uploadedPhotoKey) {
+    if (existingMember.photoKey && (uploadedPhotoKey || removePhoto)) {
       try {
         await deletePhotoByKey({
           s3Client: createS3Client(),

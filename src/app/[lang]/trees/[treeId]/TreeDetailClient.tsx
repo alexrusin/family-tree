@@ -80,6 +80,9 @@ interface MemberSubT {
   currentPhotoAlt: string;
   addPhoto: string;
   updatePhoto: string;
+  removePhoto: string;
+  undoRemovePhoto: string;
+  photoWillBeRemoved: string;
 }
 interface RelationshipSubT {
   addTitle: string;

@@ -325,7 +325,10 @@
       "closeModal": "Закрыть модальное окно",
       "currentPhotoAlt": "Текущее фото",
       "addPhoto": "Добавить фото",
-      "updatePhoto": "Обновить фото"
+      "updatePhoto": "Обновить фото",
+      "removePhoto": "Удалить фото",
+      "undoRemovePhoto": "Оставить фото",
+      "photoWillBeRemoved": "Фото будет удалено при сохранении."
     },
     "photoCropEditor": {
       "title": "Обрезка фото",

@@ -325,7 +325,10 @@
       "closeModal": "Close modal",
       "currentPhotoAlt": "Current photo",
       "addPhoto": "Add Photo",
-      "updatePhoto": "Update Photo"
+      "updatePhoto": "Update Photo",
+      "removePhoto": "Remove photo",
+      "undoRemovePhoto": "Keep photo",
+      "photoWillBeRemoved": "Photo will be removed when you save."
     },
     "photoCropEditor": {
       "title": "Crop Photo",
