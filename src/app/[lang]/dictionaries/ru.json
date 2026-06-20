@@ -174,6 +174,9 @@
       "saving": "Сохранение...",
       "avatarSave": "Сохранить аватар",
       "avatarSaving": "Сохраняем аватар...",
+      "removeAvatar": "Удалить",
+      "removeAvatarConfirm": "Подтвердить",
+      "removeAvatarCancel": "Отмена",
       "emailChangeEmail": {
         "subject": "Подтвердите новый email",
         "intro": "Вы запросили смену email аккаунта на {email}. Подтвердите изменение по защищенной ссылке ниже.",
@@ -325,7 +328,10 @@
       "closeModal": "Закрыть модальное окно",
       "currentPhotoAlt": "Текущее фото",
       "addPhoto": "Добавить фото",
-      "updatePhoto": "Обновить фото"
+      "updatePhoto": "Обновить фото",
+      "removePhoto": "Удалить фото",
+      "undoRemovePhoto": "Оставить фото",
+      "photoWillBeRemoved": "Фото будет удалено при сохранении."
     },
     "photoCropEditor": {
       "title": "Обрезка фото",
@@ -376,7 +382,6 @@
       "chooseTwoMembers": "Выберите двух участников.",
       "chooseDifferentMembers": "Выберите двух разных участников.",
       "dragSaveFailed": "Не удалось сохранить позицию участника. Узел возвращён на прежнее место.",
-      "resetLayoutFailed": "Не удалось сбросить расположение. Попробуйте ещё раз.",
       "exportFailed": "Не удалось экспортировать дерево. Попробуйте ещё раз."
     },
     "canvas": {
@@ -424,7 +429,6 @@
       "warningBanner": "Приближается лимит 300 участников ({count}/300).",
       "limitReached": "Достигнут лимит 300 участников. Добавить больше нельзя.",
       "memberCount": "{count} участников",
-      "resetLayout": "Сбросить расположение",
       "exportGedcom": "Экспорт в GEDCOM"
     },
     "treeMenu": {

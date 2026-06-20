@@ -248,6 +248,215 @@ describe("/api/trees/[treeId]/members/[memberId]", () => {
     expect(prismaMock.treeMember.update).not.toHaveBeenCalled();
   });
 
+  it("removes a member photo when removePhoto is set", async () => {
+    prismaMock.treeMember.findFirst.mockResolvedValueOnce({
+      id: "m1",
+      treeId: "t1",
+      photoKey: "trees/t1/members/old-photo.webp",
+      photoUrl: "https://bucket.example.com/trees/t1/members/old-photo.webp",
+    });
+    prismaMock.treeMember.update.mockResolvedValueOnce({
+      id: "m1",
+      treeId: "t1",
+      firstName: "Elena",
+      isLiving: false,
+      photoKey: null,
+      photoUrl: null,
+    });
+
+    const formData = makeFormData({
+      firstName: "Elena",
+      lastName: "",
+      gender: "female",
+      bio: "",
+      isLiving: "false",
+      birthPrecision: "",
+      birthYear: "",
+      birthMonth: "",
+      birthDay: "",
+      deathPrecision: "",
+      deathYear: "",
+      deathMonth: "",
+      deathDay: "",
+      removePhoto: "true",
+    });
+
+    const request = new NextRequest(
+      "http://localhost/api/trees/t1/members/m1",
+      { method: "PATCH", body: formData },
+    );
+
+    const response = await PATCH(request, {
+      params: Promise.resolve({ treeId: "t1", memberId: "m1" }),
+    });
+
+    expect(response.status).toBe(200);
+    expect(prismaMock.treeMember.update).toHaveBeenCalledWith({
+      where: { id: "m1" },
+      data: expect.objectContaining({
+        photoKey: null,
+        photoUrl: null,
+      }),
+    });
+    expect(deletePhotoByKeyMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        key: "trees/t1/members/old-photo.webp",
+      }),
+    );
+  });
+
+  it("replace wins: new photo file overrides removePhoto flag", async () => {
+    prismaMock.treeMember.findFirst.mockResolvedValueOnce({
+      id: "m1",
+      treeId: "t1",
+      photoKey: "trees/t1/members/old-photo.webp",
+      photoUrl: "https://bucket.example.com/trees/t1/members/old-photo.webp",
+    });
+    prismaMock.treeMember.update.mockResolvedValueOnce({
+      id: "m1",
+      treeId: "t1",
+      firstName: "Elena",
+      isLiving: false,
+      photoKey: "trees/t1/members/new-photo.webp",
+      photoUrl: "https://bucket.example.com/trees/t1/members/new-photo.webp",
+    });
+
+    const formData = makeFormData({
+      firstName: "Elena",
+      lastName: "",
+      gender: "female",
+      bio: "",
+      isLiving: "false",
+      birthPrecision: "",
+      birthYear: "",
+      birthMonth: "",
+      birthDay: "",
+      deathPrecision: "",
+      deathYear: "",
+      deathMonth: "",
+      deathDay: "",
+      removePhoto: "true",
+    });
+    formData.append("photo", new File(["avatar"], "avatar.png", { type: "image/png" }));
+
+    const request = new NextRequest(
+      "http://localhost/api/trees/t1/members/m1",
+      { method: "PATCH", body: formData },
+    );
+
+    const response = await PATCH(request, {
+      params: Promise.resolve({ treeId: "t1", memberId: "m1" }),
+    });
+
+    expect(response.status).toBe(200);
+    expect(uploadProcessedPhotoMock).toHaveBeenCalled();
+    expect(prismaMock.treeMember.update).toHaveBeenCalledWith({
+      where: { id: "m1" },
+      data: expect.objectContaining({
+        photoKey: "trees/t1/members/new-photo.webp",
+      }),
+    });
+  });
+
+  it("removePhoto is a no-op when the member has no photo", async () => {
+    prismaMock.treeMember.findFirst.mockResolvedValueOnce({
+      id: "m1",
+      treeId: "t1",
+      photoKey: null,
+      photoUrl: null,
+    });
+    prismaMock.treeMember.update.mockResolvedValueOnce({
+      id: "m1",
+      treeId: "t1",
+      firstName: "Elena",
+      isLiving: false,
+      photoKey: null,
+      photoUrl: null,
+    });
+
+    const formData = makeFormData({
+      firstName: "Elena",
+      lastName: "",
+      gender: "female",
+      bio: "",
+      isLiving: "false",
+      birthPrecision: "",
+      birthYear: "",
+      birthMonth: "",
+      birthDay: "",
+      deathPrecision: "",
+      deathYear: "",
+      deathMonth: "",
+      deathDay: "",
+      removePhoto: "true",
+    });
+
+    const request = new NextRequest(
+      "http://localhost/api/trees/t1/members/m1",
+      { method: "PATCH", body: formData },
+    );
+
+    const response = await PATCH(request, {
+      params: Promise.resolve({ treeId: "t1", memberId: "m1" }),
+    });
+
+    expect(response.status).toBe(200);
+    expect(deletePhotoByKeyMock).not.toHaveBeenCalled();
+  });
+
+  it("returns success even when S3 delete fails during photo removal", async () => {
+    prismaMock.treeMember.findFirst.mockResolvedValueOnce({
+      id: "m1",
+      treeId: "t1",
+      photoKey: "trees/t1/members/old-photo.webp",
+      photoUrl: "https://bucket.example.com/trees/t1/members/old-photo.webp",
+    });
+    prismaMock.treeMember.update.mockResolvedValueOnce({
+      id: "m1",
+      treeId: "t1",
+      firstName: "Elena",
+      isLiving: false,
+      photoKey: null,
+      photoUrl: null,
+    });
+    deletePhotoByKeyMock.mockRejectedValueOnce(new Error("S3 failure"));
+
+    const formData = makeFormData({
+      firstName: "Elena",
+      lastName: "",
+      gender: "female",
+      bio: "",
+      isLiving: "false",
+      birthPrecision: "",
+      birthYear: "",
+      birthMonth: "",
+      birthDay: "",
+      deathPrecision: "",
+      deathYear: "",
+      deathMonth: "",
+      deathDay: "",
+      removePhoto: "true",
+    });
+
+    const request = new NextRequest(
+      "http://localhost/api/trees/t1/members/m1",
+      { method: "PATCH", body: formData },
+    );
+
+    const response = await PATCH(request, {
+      params: Promise.resolve({ treeId: "t1", memberId: "m1" }),
+    });
+
+    expect(response.status).toBe(200);
+    expect(prismaMock.treeMember.update).toHaveBeenCalledWith({
+      where: { id: "m1" },
+      data: expect.objectContaining({
+        photoKey: null,
+        photoUrl: null,
+      }),
+    });
+  });
+
   it("deletes the member and removes only its saved position from the arrangement", async () => {
     const existingArrangement = {
       m1: { x: 10, y: 20 },

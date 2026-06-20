@@ -84,6 +84,9 @@ const translations = {
   saving: "Saving...",
   avatarSave: "Save avatar",
   avatarSaving: "Saving avatar...",
+  removeAvatar: "Remove",
+  removeAvatarConfirm: "Confirm",
+  removeAvatarCancel: "Cancel",
   errors: {
     ERR_INVALID_DISPLAY_NAME: "Display name is required",
     ERR_INVALID_EMAIL: "Enter a valid email address",
@@ -380,6 +383,123 @@ describe("AccountSettingsClient", () => {
       await user.upload(input, oversizedFile);
 
       expect(screen.getByText("Image must be 5 MB or smaller")).not.toBeNull();
+    });
+  });
+
+  describe("avatar removal", () => {
+    const profileWithAvatar = {
+      ...baseProfile,
+      avatarUrl: "/api/users/u1/avatar",
+    };
+
+    it("hides Remove button when profile has no avatar", () => {
+      render(
+        <AccountSettingsClient
+          title="Account"
+          lang="en"
+          initialProfile={baseProfile}
+          t={translations}
+          cropEditor={cropEditorTranslations}
+        />,
+      );
+
+      expect(screen.queryByRole("button", { name: "Remove" })).toBeNull();
+    });
+
+    it("shows Remove button when profile has an avatar", () => {
+      render(
+        <AccountSettingsClient
+          title="Account"
+          lang="en"
+          initialProfile={profileWithAvatar}
+          t={translations}
+          cropEditor={cropEditorTranslations}
+        />,
+      );
+
+      expect(
+        screen.getByRole("button", { name: "Remove" }),
+      ).not.toBeNull();
+    });
+
+    it("shows inline confirm/cancel on Remove click and fires DELETE on confirm", async () => {
+      const user = userEvent.setup();
+      const fetchMock = vi.fn().mockImplementation((url: string) => {
+        if (url === "/api/account") {
+          return Promise.resolve({
+            ok: false,
+            json: vi.fn().mockResolvedValue({}),
+          });
+        }
+
+        return Promise.resolve({
+          ok: true,
+          json: vi.fn().mockResolvedValue({
+            profile: { ...baseProfile, avatarUrl: null },
+          }),
+        });
+      });
+      vi.stubGlobal("fetch", fetchMock);
+
+      render(
+        <AccountSettingsClient
+          title="Account"
+          lang="en"
+          initialProfile={profileWithAvatar}
+          t={translations}
+          cropEditor={cropEditorTranslations}
+        />,
+      );
+
+      await user.click(screen.getByRole("button", { name: "Remove" }));
+
+      expect(
+        screen.getByRole("button", { name: "Confirm" }),
+      ).not.toBeNull();
+
+      await user.click(screen.getByRole("button", { name: "Confirm" }));
+
+      await waitFor(() => {
+        expect(fetchMock).toHaveBeenCalledWith("/api/account/avatar", {
+          method: "DELETE",
+        });
+      });
+
+      await waitFor(() => {
+        expect(screen.queryByRole("button", { name: "Remove" })).toBeNull();
+      });
+    });
+
+    it("cancels inline confirmation and returns to Remove button", async () => {
+      const user = userEvent.setup();
+
+      render(
+        <AccountSettingsClient
+          title="Account"
+          lang="en"
+          initialProfile={profileWithAvatar}
+          t={translations}
+          cropEditor={cropEditorTranslations}
+        />,
+      );
+
+      await user.click(screen.getByRole("button", { name: "Remove" }));
+      expect(
+        screen.getByRole("button", { name: "Confirm" }),
+      ).not.toBeNull();
+
+      const cancelButtons = screen.getAllByRole("button", { name: "Cancel" });
+      const inlineCancelButton = cancelButtons.find(
+        (btn) => !(btn as HTMLButtonElement).disabled,
+      )!;
+      await user.click(inlineCancelButton);
+
+      expect(
+        screen.getByRole("button", { name: "Remove" }),
+      ).not.toBeNull();
+      expect(
+        screen.queryByRole("button", { name: "Confirm" }),
+      ).toBeNull();
     });
   });
 

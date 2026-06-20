@@ -8,6 +8,7 @@ import {
   type BirthPrecision,
   validateMemberPhotoSelection,
 } from "./member-form-state";
+import { resolvePhotoIntent, applyPhotoIntentToFormData } from "./photo-intent";
 import MemberDateSection from "./MemberDateSection";
 import PhotoCropModal, {
   type PhotoCropModalT,
@@ -46,6 +47,9 @@ interface EditMemberT {
   currentPhotoAlt: string;
   addPhoto: string;
   updatePhoto: string;
+  removePhoto: string;
+  undoRemovePhoto: string;
+  photoWillBeRemoved: string;
   cancel: string;
   saving: string;
   errors: {
@@ -106,6 +110,7 @@ export default function EditMemberModal({
     memberToFormState(member),
   );
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [pendingRemove, setPendingRemove] = useState(false);
   const [cropSourceFile, setCropSourceFile] = useState<File | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -154,6 +159,7 @@ export default function EditMemberModal({
 
   const handleCropApply = (file: File) => {
     setSelectedFile(file);
+    setPendingRemove(false);
     setCropSourceFile(null);
   };
 
@@ -211,9 +217,10 @@ export default function EditMemberModal({
         body.append("deathMonth", "");
         body.append("deathDay", "");
       }
-      if (selectedFile) {
-        body.append("photo", selectedFile);
-      }
+      applyPhotoIntentToFormData(
+        body,
+        resolvePhotoIntent(selectedFile, pendingRemove),
+      );
       const res = await fetch(`/api/trees/${treeId}/members/${member.id}`, {
         method: "PATCH",
         body,
@@ -254,7 +261,7 @@ export default function EditMemberModal({
           </button>
         </div>
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
-          {(member.photoUrl || croppedPreviewUrl) && (
+          {(member.photoUrl || croppedPreviewUrl) && !pendingRemove && (
             <div className="flex items-center gap-3">
               {(croppedPreviewUrl || member.photoUrl) && (
                 // eslint-disable-next-line @next/next/no-img-element
@@ -267,6 +274,12 @@ export default function EditMemberModal({
               {selectedFile && (
                 <p className="text-sm text-stone-500">{selectedFile.name}</p>
               )}
+            </div>
+          )}
+          {pendingRemove && (
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-full bg-stone-200 border-2 border-stone-300" />
+              <p className="text-sm text-stone-500">{t.photoWillBeRemoved}</p>
             </div>
           )}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -362,17 +375,42 @@ export default function EditMemberModal({
               htmlFor="editMemberPhoto"
               className="block text-sm font-semibold text-stone-900 mb-2"
             >
-              {member.photoUrl ? t.updatePhoto : t.addPhoto}
+              {member.photoUrl && !pendingRemove ? t.updatePhoto : t.addPhoto}
             </label>
             <p className="text-sm text-stone-500 mb-2">{t.profilePhoto}</p>
-            <input
-              id="editMemberPhoto"
-              type="file"
-              accept="image/jpeg,image/png,image/webp"
-              onChange={handlePhotoChange}
-              className="block w-full text-sm text-stone-600 file:mr-4 file:py-2 file:px-3 file:rounded-lg file:border-0 file:bg-stone-100 file:text-stone-700 hover:file:bg-stone-200"
-              disabled={isLoading}
-            />
+            {!pendingRemove && (
+              <input
+                id="editMemberPhoto"
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                onChange={handlePhotoChange}
+                className="block w-full text-sm text-stone-600 file:mr-4 file:py-2 file:px-3 file:rounded-lg file:border-0 file:bg-stone-100 file:text-stone-700 hover:file:bg-stone-200"
+                disabled={isLoading}
+              />
+            )}
+            {member.photoUrl && !selectedFile && !pendingRemove && (
+              <button
+                type="button"
+                onClick={() => {
+                  setPendingRemove(true);
+                  setSelectedFile(null);
+                }}
+                disabled={isLoading}
+                className="mt-2 text-sm text-red-600 hover:text-red-700 transition-colors"
+              >
+                {t.removePhoto}
+              </button>
+            )}
+            {pendingRemove && (
+              <button
+                type="button"
+                onClick={() => setPendingRemove(false)}
+                disabled={isLoading}
+                className="mt-2 text-sm text-amber-900 hover:text-amber-800 transition-colors"
+              >
+                {t.undoRemovePhoto}
+              </button>
+            )}
             {photoError && (
               <p className="mt-2 text-sm text-red-600">
                 {mapError(photoError, t.errors)}

@@ -80,6 +80,9 @@ interface MemberSubT {
   currentPhotoAlt: string;
   addPhoto: string;
   updatePhoto: string;
+  removePhoto: string;
+  undoRemovePhoto: string;
+  photoWillBeRemoved: string;
 }
 interface RelationshipSubT {
   addTitle: string;
@@ -174,7 +177,6 @@ interface TreeT {
     warningBanner: string;
     limitReached: string;
     memberCount: string;
-    resetLayout: string;
     exportGedcom: string;
   };
   treeMenu: {
@@ -688,24 +690,6 @@ export default function TreeDetailClient({
     [],
   );
 
-  const handleResetLayout = useCallback(async () => {
-    try {
-      const response = await fetch(`/api/trees/${treeId}/arrangement`, {
-        method: "DELETE",
-      });
-      if (!response.ok) throw new Error("reset failed");
-      setArrangement(null);
-      setLayoutError(null);
-    } catch {
-      setLayoutError(t.errors.resetLayoutFailed);
-    }
-  }, [treeId, t.errors.resetLayoutFailed]);
-
-  const handleResetLayoutFromTreeMenu = useCallback(() => {
-    closeTreeMenu();
-    void handleResetLayout();
-  }, [closeTreeMenu, handleResetLayout]);
-
   const handleExportGedcom = useCallback(async () => {
     try {
       const response = await fetch(`/api/trees/${treeId}/export`);
@@ -744,7 +728,6 @@ export default function TreeDetailClient({
     warningBanner: t.sidebar.warningBanner,
     limitReached: t.sidebar.limitReached,
     memberCount: t.sidebar.memberCount,
-    resetLayout: t.sidebar.resetLayout,
     exportGedcom: t.sidebar.exportGedcom,
   };
 
@@ -763,7 +746,6 @@ export default function TreeDetailClient({
           onAddMember={openAddMemberFromTreeMenu}
           onAddRelationship={openAddRelationshipFromTreeMenu}
           onOpenShareSettings={openShareSettingsFromTreeMenu}
-          onResetLayout={handleResetLayout}
           onExportGedcom={handleExportGedcom}
           t={treeSidebarTranslations}
         />
@@ -829,7 +811,6 @@ export default function TreeDetailClient({
                     onAddMember={openAddMemberFromTreeMenu}
                     onAddRelationship={openAddRelationshipFromTreeMenu}
                     onOpenShareSettings={openShareSettingsFromTreeMenu}
-                    onResetLayout={handleResetLayoutFromTreeMenu}
                     onExportGedcom={handleExportGedcomFromTreeMenu}
                     className="w-full border-r-0 shadow-none"
                     t={treeSidebarTranslations}

@@ -1,15 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { NextRequest } from "next/server";
 
-const {
-  getSessionMock,
-  getTreeRoleMock,
-  prismaMock,
-  prismaDbNullSentinel,
-} = vi.hoisted(() => {
+const { getSessionMock, getTreeRoleMock, prismaMock } = vi.hoisted(() => {
   const getSessionMock = vi.fn();
   const getTreeRoleMock = vi.fn();
-  const prismaDbNullSentinel = Symbol("DbNull");
   const prismaMock = {
     familyTree: {
       findUnique: vi.fn(),
@@ -21,7 +15,6 @@ const {
     getSessionMock,
     getTreeRoleMock,
     prismaMock,
-    prismaDbNullSentinel,
   };
 });
 
@@ -35,23 +28,12 @@ vi.mock("@/lib/tree-domain/tree-access", () => ({
   getTreeRole: getTreeRoleMock,
 }));
 
-vi.mock("@/generated/prisma/client", () => ({
-  Prisma: { DbNull: prismaDbNullSentinel },
-}));
-
-const { GET, PUT, DELETE } = await import("./route");
+const { GET, PUT } = await import("./route");
 
 function makeGetRequest(treeId = "tree-1") {
   return new NextRequest(
     `http://localhost/api/trees/${treeId}/arrangement`,
     { method: "GET" },
-  );
-}
-
-function makeDeleteRequest(treeId = "tree-1") {
-  return new NextRequest(
-    `http://localhost/api/trees/${treeId}/arrangement`,
-    { method: "DELETE" },
   );
 }
 
@@ -182,50 +164,5 @@ describe("PUT /api/trees/[treeId]/arrangement", () => {
     expect(response.status).toBe(200);
     const body = await response.json();
     expect(body.arrangement).toEqual({});
-  });
-});
-
-describe("DELETE /api/trees/[treeId]/arrangement", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    getSessionMock.mockResolvedValue({ user: { id: "owner-1" } });
-    getTreeRoleMock.mockResolvedValue("owner");
-  });
-
-  it("clears nodePositions for owner and returns null arrangement", async () => {
-    prismaMock.familyTree.update.mockResolvedValue({});
-
-    const response = await DELETE(makeDeleteRequest(), {
-      params: Promise.resolve({ treeId: "tree-1" }),
-    });
-
-    expect(response.status).toBe(200);
-    const body = await response.json();
-    expect(body.arrangement).toBeNull();
-    expect(prismaMock.familyTree.update).toHaveBeenCalledWith(
-      expect.objectContaining({
-        where: { id: "tree-1" },
-        data: { nodePositions: prismaDbNullSentinel },
-      }),
-    );
-  });
-
-  it("clears nodePositions for editor collaborator and returns null arrangement", async () => {
-    getTreeRoleMock.mockResolvedValue("editor");
-    prismaMock.familyTree.update.mockResolvedValue({});
-
-    const response = await DELETE(makeDeleteRequest(), {
-      params: Promise.resolve({ treeId: "tree-1" }),
-    });
-
-    expect(response.status).toBe(200);
-    const body = await response.json();
-    expect(body.arrangement).toBeNull();
-    expect(prismaMock.familyTree.update).toHaveBeenCalledWith(
-      expect.objectContaining({
-        where: { id: "tree-1" },
-        data: { nodePositions: prismaDbNullSentinel },
-      }),
-    );
   });
 });

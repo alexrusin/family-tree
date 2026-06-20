@@ -42,6 +42,9 @@ interface AccountTranslations {
   saving: string;
   avatarSave: string;
   avatarSaving: string;
+  removeAvatar: string;
+  removeAvatarConfirm: string;
+  removeAvatarCancel: string;
   errors: {
     ERR_INVALID_DISPLAY_NAME: string;
     ERR_IMAGE_TOO_LARGE: string;
@@ -117,6 +120,9 @@ export default function AccountSettingsClient({
   const [avatarError, setAvatarError] = useState<string | null>(null);
   const [isSavingAvatar, setIsSavingAvatar] = useState(false);
   const [cropSourceFile, setCropSourceFile] = useState<File | null>(null);
+  const [isRemoveAvatarConfirming, setIsRemoveAvatarConfirming] =
+    useState(false);
+  const [isRemovingAvatar, setIsRemovingAvatar] = useState(false);
 
   const avatarPreviewUrl = useMemo(
     () => (selectedAvatarFile ? URL.createObjectURL(selectedAvatarFile) : null),
@@ -298,6 +304,40 @@ export default function AccountSettingsClient({
       setAvatarError(t.errors.generic);
     } finally {
       setIsSavingAvatar(false);
+    }
+  };
+
+  const removeAvatar = async () => {
+    setIsRemovingAvatar(true);
+    setAvatarError(null);
+
+    try {
+      const response = await fetch("/api/account/avatar", {
+        method: "DELETE",
+      });
+
+      const payload = (await response.json().catch(() => null)) as {
+        profile?: AccountProfile;
+        errorCode?: string;
+      } | null;
+
+      if (!response.ok || !payload?.profile) {
+        setAvatarError(mapErrorCode(payload?.errorCode, t.errors));
+        return;
+      }
+
+      const nextProfile = payload.profile;
+      setProfile((previous) => ({
+        ...nextProfile,
+        pendingEmailChange:
+          nextProfile.pendingEmailChange ?? previous.pendingEmailChange,
+      }));
+      setSelectedAvatarFile(null);
+    } catch {
+      setAvatarError(t.errors.generic);
+    } finally {
+      setIsRemovingAvatar(false);
+      setIsRemoveAvatarConfirming(false);
     }
   };
 
@@ -488,6 +528,40 @@ export default function AccountSettingsClient({
             >
               {isSavingAvatar ? t.avatarSaving : t.avatarSave}
             </button>
+
+            {profile.avatarUrl && !selectedAvatarFile ? (
+              isRemoveAvatarConfirming ? (
+                <span className="ml-auto flex gap-2">
+                  <button
+                    type="button"
+                    className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-60"
+                    onClick={() => {
+                      void removeAvatar();
+                    }}
+                    disabled={isRemovingAvatar}
+                  >
+                    {t.removeAvatarConfirm}
+                  </button>
+                  <button
+                    type="button"
+                    className="rounded-lg bg-stone-100 px-4 py-2 text-sm font-semibold text-stone-900 hover:bg-stone-200 disabled:opacity-60"
+                    onClick={() => setIsRemoveAvatarConfirming(false)}
+                    disabled={isRemovingAvatar}
+                  >
+                    {t.removeAvatarCancel}
+                  </button>
+                </span>
+              ) : (
+                <button
+                  type="button"
+                  className="ml-auto rounded-lg border border-red-300 px-4 py-2 text-sm font-semibold text-red-700 hover:bg-red-50 disabled:opacity-60"
+                  onClick={() => setIsRemoveAvatarConfirming(true)}
+                  disabled={isSavingAvatar}
+                >
+                  {t.removeAvatar}
+                </button>
+              )
+            ) : null}
           </div>
         </section>
 
