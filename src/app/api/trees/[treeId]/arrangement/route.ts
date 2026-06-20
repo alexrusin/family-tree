@@ -1,4 +1,3 @@
-import { Prisma } from "@/generated/prisma/client";
 import { withTreeRole } from "@/lib/with-tree-role";
 import { toPrismaNodePositions } from "@/lib/tree-domain/tree-arrangement-json";
 import {
@@ -39,15 +38,4 @@ export const PUT = withTreeRole("editor", async (ctx) => {
   });
 
   return Response.json({ arrangement }, { status: 200 });
-});
-
-export const DELETE = withTreeRole("editor", async (ctx) => {
-  const { treeId } = ctx.params;
-
-  await ctx.prisma.familyTree.update({
-    where: { id: treeId },
-    data: { nodePositions: Prisma.DbNull },
-  });
-
-  return Response.json({ arrangement: null }, { status: 200 });
 });

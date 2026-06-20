@@ -8,7 +8,6 @@ import {
   AlertTriangle,
   Users,
   Share2,
-  RotateCcw,
   Download,
 } from "lucide-react";
 
@@ -24,7 +23,6 @@ interface TreeSidebarT {
   limitReached: string;
   memberCount: string;
   shareLink: string;
-  resetLayout: string;
   exportGedcom: string;
 }
 
@@ -39,7 +37,6 @@ interface TreeSidebarProps {
   onAddMember: () => void;
   onAddRelationship: () => void;
   onOpenShareSettings: () => void;
-  onResetLayout: () => void;
   onExportGedcom: () => void;
   className?: string;
   t: TreeSidebarT;
@@ -56,7 +53,6 @@ export default function TreeSidebar({
   onAddMember,
   onAddRelationship,
   onOpenShareSettings,
-  onResetLayout,
   onExportGedcom,
   className,
   t,
@@ -138,15 +134,6 @@ export default function TreeSidebar({
               <Link2 className="w-4 h-4" />
               {t.addRelationship}
             </button>
-
-            {/* hide reset layout button for now so users don't accidentally click it. Later on can remove functionality if not needed */}
-            {/*<button
-              onClick={onResetLayout}
-              className="w-full px-4 py-2.5 bg-stone-100 text-stone-900 rounded-lg font-semibold hover:bg-stone-200 transition-colors flex items-center justify-center gap-2 text-sm"
-            >
-              <RotateCcw className="w-4 h-4" />
-              {t.resetLayout}
-            </button> */}
           </>
         ) : (
           <span className="inline-flex items-center px-3 py-1.5 rounded-full bg-blue-50 text-blue-700 text-sm font-semibold">

@@ -382,7 +382,6 @@
       "chooseTwoMembers": "Please choose two members.",
       "chooseDifferentMembers": "Please choose two different members.",
       "dragSaveFailed": "Unable to save member position. The node has been moved back.",
-      "resetLayoutFailed": "Unable to reset layout. Please try again.",
       "exportFailed": "Unable to export tree. Please try again."
     },
     "canvas": {
@@ -430,7 +429,6 @@
       "warningBanner": "Approaching the 300-member limit ({count}/300).",
       "limitReached": "300-member limit reached. No more members can be added.",
       "memberCount": "{count} members",
-      "resetLayout": "Reset Layout",
       "exportGedcom": "Export GEDCOM"
     },
     "treeMenu": {

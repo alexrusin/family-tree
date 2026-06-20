@@ -311,7 +311,6 @@ const translations = {
     warningBanner: "Approaching the 300-member limit ({count}/300).",
     limitReached: "300-member limit reached. No more members can be added.",
     memberCount: "{count} members",
-    resetLayout: "Reset Layout",
   },
   treeMenu: {
     trigger: "Tree Menu",
@@ -411,7 +410,6 @@ const translations = {
     chooseTwoMembers: "Choose two members.",
     chooseDifferentMembers: "Choose different members.",
     dragSaveFailed: "Unable to save member position.",
-    resetLayoutFailed: "Unable to reset layout.",
   },
 };
 
@@ -1264,87 +1262,6 @@ describe("TreeDetailClient drag-and-save", () => {
 
     await screen.findByTestId("tree-canvas");
     expect(screen.queryByRole("button", { name: "Drag member" })).toBeNull();
-  });
-});
-
-describe("TreeDetailClient reset layout", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    currentViewportWidth = 0;
-    mediaQueries = [];
-  });
-
-  afterEach(() => {
-    cleanup();
-    vi.unstubAllGlobals();
-  });
-
-  it("does not show the Reset Layout button to editors (hidden for now)", async () => {
-    mockMatchMedia(1280);
-    vi.stubGlobal(
-      "fetch",
-      vi.fn((input: RequestInfo | URL) => {
-        const url = String(input);
-        if (url.includes("/members"))
-          return Promise.resolve({ ok: true, json: async () => ({ members: [] }) });
-        if (url.includes("/relationships"))
-          return Promise.resolve({ ok: true, json: async () => ({ relationships: [] }) });
-        if (url.includes("/arrangement"))
-          return Promise.resolve({ ok: true, json: async () => ({ arrangement: null }) });
-        return Promise.resolve({ ok: true, json: async () => ({}) });
-      }),
-    );
-
-    render(
-      <TreeDetailClient
-        lang="en"
-        treeId="tree-1"
-        treeName="Family Tree"
-        canEdit={true}
-        isOwner={false}
-        initialMemberCount={0}
-        t={translations}
-      />,
-    );
-
-    await waitFor(() => {
-      expect(screen.getByTestId("tree-canvas")).not.toBeNull();
-    });
-
-    expect(screen.queryByRole("button", { name: "Reset Layout" })).toBeNull();
-  });
-
-  it("does not show Reset Layout button to non-editors (canEdit=false)", async () => {
-    mockMatchMedia(1280);
-    vi.stubGlobal(
-      "fetch",
-      vi.fn((input: RequestInfo | URL) => {
-        const url = String(input);
-        if (url.includes("/members"))
-          return Promise.resolve({ ok: true, json: async () => ({ members: [] }) });
-        if (url.includes("/relationships"))
-          return Promise.resolve({ ok: true, json: async () => ({ relationships: [] }) });
-        if (url.includes("/arrangement"))
-          return Promise.resolve({ ok: true, json: async () => ({ arrangement: null }) });
-        return Promise.resolve({ ok: true, json: async () => ({}) });
-      }),
-    );
-
-    render(
-      <TreeDetailClient
-        lang="en"
-        treeId="tree-1"
-        treeName="Family Tree"
-        canEdit={false}
-        isOwner={false}
-        initialMemberCount={0}
-        t={translations}
-      />,
-    );
-
-    await waitFor(() => {
-      expect(screen.queryByRole("button", { name: "Reset Layout" })).toBeNull();
-    });
   });
 });
 

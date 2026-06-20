@@ -101,6 +101,8 @@ A person represented within one Family Tree. Members participate in Relationship
 ## Profile Photo
 
 The single circularly-displayed image that represents a Member, or the account holder's own avatar. It is framed by the uploader from any source image — typically by cropping one person out of a group photo — rather than requiring a ready-made headshot. The same concept is currently named differently in the two places it appears (Member `photo` versus account `avatar`); this is a known naming divergence, not two different concepts.
+
+A Profile Photo is optional: it may have never been set, or it may have been removed after the fact. When absent, the Member or avatar falls back to its placeholder (initials). Removal discards the stored image — because only the framed crop is ever kept, removing a Profile Photo cannot be undone by the system; restoring one means framing a source image again.
 _Avoid_: headshot, picture
 
 ## Maiden Name
@@ -128,11 +130,6 @@ A shared parental pairing between two Members who have at least one child in com
 
 The persisted set of node positions for one Family Tree's workspace. Editors can change it by dragging nodes so the tree reopens in the same shared arrangement for Collaborator Viewers and Guest Viewers.
 _Avoid_: temporary layout, personal layout
-
-## Reset Layout
-
-An editor action that discards the Manual Tree Arrangement and restores the automatic tree layout. It is the escape hatch when the shared arrangement has become less useful than the computed one.
-_Avoid_: undo drag history, personal reset
 
 ## Drag Lock
 
@@ -178,4 +175,4 @@ The post-import summary shown to the user describing what was brought in (people
 
 **Developer**: And if the arrangement gets messy after a few edits?
 
-**Domain Expert**: An editor can use Reset Layout to discard the Manual Tree Arrangement and return to the automatic layout.
+**Domain Expert**: An editor can drag the nodes back into a clearer arrangement; the new positions are saved and become what everyone sees.

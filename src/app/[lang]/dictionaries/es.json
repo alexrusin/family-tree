@@ -382,7 +382,6 @@
       "chooseTwoMembers": "Por favor elige dos miembros.",
       "chooseDifferentMembers": "Por favor elige dos miembros diferentes.",
       "dragSaveFailed": "No se pudo guardar la posición del miembro. El nodo ha vuelto a su lugar.",
-      "resetLayoutFailed": "No se pudo restablecer la disposición. Por favor inténtalo de nuevo.",
       "exportFailed": "No se pudo exportar el árbol. Por favor inténtalo de nuevo."
     },
     "canvas": {
@@ -430,7 +429,6 @@
       "warningBanner": "Se acerca al límite de 300 miembros ({count}/300).",
       "limitReached": "Se alcanzó el límite de 300 miembros. No se pueden agregar más miembros.",
       "memberCount": "{count} miembros",
-      "resetLayout": "Restablecer disposición",
       "exportGedcom": "Exportar GEDCOM"
     },
     "treeMenu": {
