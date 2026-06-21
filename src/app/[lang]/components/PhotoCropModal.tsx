@@ -41,16 +41,45 @@ export default function PhotoCropModal({
   const [error, setError] = useState<string | null>(null);
 
   const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [isImageReady, setIsImageReady] = useState(false);
 
   // Create the object URL inside the effect (not useMemo) so the same URL we
   // hand to the <img> is the one we revoke. Under React Strict Mode the mount
   // effect runs twice; revoking a useMemo'd URL on the first cleanup would
   // leave the second mount pointing at an already-revoked (dead) blob.
+  //
+  // We pre-decode the bitmap before handing the URL to <Cropper> because mobile
+  // Chrome fires an <img> "load" event before the bitmap is decoded, so
+  // react-easy-crop paints a blank (black) preview on the first open — the same
+  // race already handled for the output canvas in lib/crop-image.ts. Decoding
+  // here primes the browser cache so the Cropper's internal <img>, loading the
+  // same blob URL, gets an already-decoded, paintable bitmap. (Firefox decodes
+  // before firing "load", which is why it never reproduced there.)
   useEffect(() => {
+    let active = true;
     const url = URL.createObjectURL(sourceFile);
     // eslint-disable-next-line react-hooks/set-state-in-effect -- synchronizing with the browser's blob URL store, not derived state
     setImageUrl(url);
-    return () => URL.revokeObjectURL(url);
+    setIsImageReady(false);
+
+    const markReady = () => {
+      if (active) setIsImageReady(true);
+    };
+
+    const image = new Image();
+    image.src = url;
+    if (typeof image.decode === "function") {
+      // Resolve OR reject both mark ready: the bytes are in hand, and a spurious
+      // decode() rejection (or jsdom) must never leave the modal stuck loading.
+      image.decode().then(markReady, markReady);
+    } else {
+      markReady();
+    }
+
+    return () => {
+      active = false;
+      URL.revokeObjectURL(url);
+    };
   }, [sourceFile]);
 
   const handleCropComplete = (_area: Area, areaPixels: Area) => {
@@ -92,20 +121,24 @@ export default function PhotoCropModal({
         <div className="p-6 space-y-4">
           <p className="text-sm text-stone-500">{t.instructions}</p>
           <div className="relative w-full h-64 bg-stone-900 rounded-lg overflow-hidden">
-            {imageUrl && (
-            <Cropper
-              image={imageUrl}
-              crop={crop}
-              zoom={zoom}
-              aspect={1}
-              cropShape="round"
-              showGrid={false}
-              minZoom={1}
-              maxZoom={7}
-              onCropChange={setCrop}
-              onZoomChange={setZoom}
-              onCropComplete={handleCropComplete}
-            />
+            {imageUrl && isImageReady ? (
+              <Cropper
+                image={imageUrl}
+                crop={crop}
+                zoom={zoom}
+                aspect={1}
+                cropShape="round"
+                showGrid={false}
+                minZoom={1}
+                maxZoom={7}
+                onCropChange={setCrop}
+                onZoomChange={setZoom}
+                onCropComplete={handleCropComplete}
+              />
+            ) : (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <span className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              </div>
             )}
           </div>
           <div>
