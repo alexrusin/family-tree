@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { getDictionary, hasLocale } from "./dictionaries/dictionaries";
 import LanguagePicker from "./components/LanguagePicker";
@@ -180,8 +180,12 @@ export default async function LandingPage({ params }: PageProps<"/[lang]">) {
 
   if (!hasLocale(lang)) notFound();
 
-  const t = await getDictionary(lang);
   const user = await getCurrentUser();
+  if (user) {
+    redirect(`/${lang}/dashboard`);
+  }
+
+  const t = await getDictionary(lang);
 
   return (
     <div

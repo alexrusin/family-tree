@@ -39,6 +39,8 @@ describe("PhotoCropModal", () => {
   beforeEach(() => {
     URL.createObjectURL = vi.fn(() => "blob:mock");
     URL.revokeObjectURL = vi.fn();
+    // The modal pre-decodes the source bitmap before rendering the Cropper.
+    HTMLImageElement.prototype.decode = vi.fn().mockResolvedValue(undefined);
   });
 
   afterEach(() => {
@@ -46,7 +48,7 @@ describe("PhotoCropModal", () => {
     vi.restoreAllMocks();
   });
 
-  it("renders the editor for a source file", () => {
+  it("renders the editor for a source file", async () => {
     const file = new File(["source"], "group.png", { type: "image/png" });
 
     render(
@@ -60,7 +62,30 @@ describe("PhotoCropModal", () => {
     );
 
     expect(screen.getByText("Crop Photo")).not.toBeNull();
-    expect(screen.getByRole("button", { name: "Mock Cropper" })).not.toBeNull();
+    expect(
+      await screen.findByRole("button", { name: "Mock Cropper" }),
+    ).not.toBeNull();
+  });
+
+  it("still renders the editor when decode() rejects", async () => {
+    HTMLImageElement.prototype.decode = vi
+      .fn()
+      .mockRejectedValue(new Error("decode failed"));
+    const file = new File(["source"], "group.png", { type: "image/png" });
+
+    render(
+      <PhotoCropModal
+        isOpen
+        sourceFile={file}
+        onApply={vi.fn()}
+        onCancel={vi.fn()}
+        t={translations}
+      />,
+    );
+
+    expect(
+      await screen.findByRole("button", { name: "Mock Cropper" }),
+    ).not.toBeNull();
   });
 
   it("calls onApply with a cropped File when Apply is clicked", async () => {
@@ -85,7 +110,9 @@ describe("PhotoCropModal", () => {
       />,
     );
 
-    await user.click(screen.getByRole("button", { name: "Mock Cropper" }));
+    await user.click(
+      await screen.findByRole("button", { name: "Mock Cropper" }),
+    );
     await user.click(screen.getByRole("button", { name: "Apply" }));
 
     expect(onApply).toHaveBeenCalledWith(croppedFile);
