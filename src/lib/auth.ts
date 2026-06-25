@@ -195,8 +195,15 @@ export const auth = betterAuth({
   },
 
   // ========== Advanced Options ==========
+  // Logs are off in production by default, but can be temporarily enabled by
+  // setting AUTH_DEBUG_LOGS=1 in the runtime env (restart the container after).
+  // Useful for surfacing the real cause behind the captcha plugin's opaque
+  // UNKNOWN_ERROR (e.g. missing secret key vs. Cloudflare verify failure).
   logger: {
-    disabled: process.env.NODE_ENV === "production",
+    disabled:
+      process.env.NODE_ENV === "production" &&
+      process.env.AUTH_DEBUG_LOGS !== "1",
+    level: "error",
   },
   appName: "Family Tree",
   trustedOrigins: (process.env.TRUSTED_ORIGINS || "")
