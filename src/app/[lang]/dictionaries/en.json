@@ -558,6 +558,7 @@
         "requiredConfirmPassword": "Please confirm your password.",
         "passwordStrength": "Password must be at least 8 characters and include a number or symbol.",
         "passwordMismatch": "Passwords do not match.",
+        "captchaRequired": "Please complete the verification challenge.",
         "generic": "We could not create your account. Please try again."
       }
     },
@@ -596,6 +597,7 @@
       "errors": {
         "requiredEmail": "Please enter your email.",
         "invalidEmail": "Enter a valid email address.",
+        "captchaRequired": "Please complete the verification challenge.",
         "generic": "We could not send a reset link. Please try again."
       }
     },

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { FormEvent, useMemo, useState } from "react";
+import { Turnstile } from "@marsidev/react-turnstile";
 import { authClient } from "@/lib/auth-client";
 import {
   buildPostVerificationRedirect,
@@ -33,6 +34,7 @@ interface RegisterTranslations {
     requiredConfirmPassword: string;
     passwordStrength: string;
     passwordMismatch: string;
+    captchaRequired: string;
     generic: string;
   };
 }
@@ -67,6 +69,7 @@ export default function RegisterClient({ lang, t }: RegisterClientProps) {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [errors, setErrors] = useState<FormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const rawCallback = searchParams.get("callback");
 
   const callbackTarget = useMemo(
@@ -123,6 +126,11 @@ export default function RegisterClient({ lang, t }: RegisterClientProps) {
       return;
     }
 
+    if (!captchaToken) {
+      setErrors({ form: t.errors.captchaRequired });
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -131,9 +139,14 @@ export default function RegisterClient({ lang, t }: RegisterClientProps) {
         email: email.trim(),
         password,
         callbackURL: verificationCallback,
+        fetchOptions: {
+          headers: { "x-captcha-response": captchaToken },
+        },
       })) as { error?: { message?: string } };
 
       if (response.error) {
+        // Turnstile tokens are single-use; force a fresh challenge on failure.
+        setCaptchaToken(null);
         setErrors({ form: response.error.message ?? t.errors.generic });
         return;
       }
@@ -147,6 +160,7 @@ export default function RegisterClient({ lang, t }: RegisterClientProps) {
         `/${lang}/verify-email?email=${encodeURIComponent(email.trim())}`,
       );
     } catch {
+      setCaptchaToken(null);
       setErrors({ form: t.errors.generic });
     } finally {
       setIsSubmitting(false);
@@ -282,9 +296,18 @@ export default function RegisterClient({ lang, t }: RegisterClientProps) {
               <p className="text-sm text-error">{errors.form}</p>
             ) : null}
 
+            <div className="flex justify-center">
+              <Turnstile
+                siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY!}
+                onSuccess={setCaptchaToken}
+                onExpire={() => setCaptchaToken(null)}
+                onError={() => setCaptchaToken(null)}
+              />
+            </div>
+
             <button
               type="submit"
-              disabled={isSubmitting}
+              disabled={isSubmitting || !captchaToken}
               className="w-full py-4 bg-primary-container text-on-primary font-label-md text-label-md rounded-lg shadow-lg hover:shadow-xl disabled:opacity-60 disabled:cursor-not-allowed transition-all"
             >
               {isSubmitting ? t.submitting : t.submit}
