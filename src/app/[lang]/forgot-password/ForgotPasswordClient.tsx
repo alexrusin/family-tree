@@ -3,6 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { FormEvent, useMemo, useState } from "react";
+import { Turnstile } from "@marsidev/react-turnstile";
 import { authClient } from "@/lib/auth-client";
 
 interface ForgotPasswordTranslations {
@@ -17,6 +18,7 @@ interface ForgotPasswordTranslations {
   errors: {
     requiredEmail: string;
     invalidEmail: string;
+    captchaRequired: string;
     generic: string;
   };
 }
@@ -43,6 +45,7 @@ export default function ForgotPasswordClient({
   const [errors, setErrors] = useState<FormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
 
   const loginHref = useMemo(() => `/${lang}/login`, [lang]);
 
@@ -68,15 +71,25 @@ export default function ForgotPasswordClient({
       return;
     }
 
+    if (!captchaToken) {
+      setErrors({ form: t.errors.captchaRequired });
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
       const response = (await authClient.requestPasswordReset({
         email: email.trim(),
         redirectTo: `/${lang}/reset-password`,
+        fetchOptions: {
+          headers: { "x-captcha-response": captchaToken },
+        },
       })) as { error?: { message?: string } };
 
       if (response.error) {
+        // Turnstile tokens are single-use; force a fresh challenge on failure.
+        setCaptchaToken(null);
         setErrors({ form: t.errors.generic });
         return;
       }
@@ -84,6 +97,7 @@ export default function ForgotPasswordClient({
       setIsSuccess(true);
       setErrors({});
     } catch {
+      setCaptchaToken(null);
       setErrors({ form: t.errors.generic });
     } finally {
       setIsSubmitting(false);
@@ -151,9 +165,18 @@ export default function ForgotPasswordClient({
                   <p className="text-sm text-error">{errors.form}</p>
                 ) : null}
 
+                <div className="flex justify-center">
+                  <Turnstile
+                    siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY!}
+                    onSuccess={setCaptchaToken}
+                    onExpire={() => setCaptchaToken(null)}
+                    onError={() => setCaptchaToken(null)}
+                  />
+                </div>
+
                 <button
                   type="submit"
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || !captchaToken}
                   className="w-full bg-primary-container text-on-primary py-4 px-6 rounded-lg text-label-md hover:bg-primary transition-all disabled:opacity-60 disabled:cursor-not-allowed"
                 >
                   {isSubmitting ? t.submitting : t.submit}

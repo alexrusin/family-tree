@@ -1,4 +1,5 @@
 import { betterAuth } from "better-auth";
+import { captcha } from "better-auth/plugins";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "@/generated/prisma/client";
@@ -104,6 +105,29 @@ export const auth = betterAuth({
   secret: process.env.BETTER_AUTH_SECRET,
   baseURL: process.env.BETTER_AUTH_URL,
   database: prismaAdapter(prisma, { provider: "postgresql" }),
+
+  // ========== Bot Protection ==========
+  // CAPTCHA on the publicly-abused endpoints only (registration spam + reset-email
+  // flooding). Login is intentionally left unprotected to stay frictionless.
+  plugins: [
+    captcha({
+      provider: "cloudflare-turnstile",
+      secretKey: process.env.TURNSTILE_SECRET_KEY!,
+      endpoints: ["/sign-up/email", "/forget-password"],
+    }),
+  ],
+
+  // In-memory rate limiting (single container). Strict per-IP rules on the abused
+  // paths back up the CAPTCHA; a sane global default covers everything else.
+  rateLimit: {
+    enabled: true,
+    window: 60,
+    max: 100,
+    customRules: {
+      "/sign-up/email": { window: 3600, max: 5 },
+      "/forget-password": { window: 3600, max: 5 },
+    },
+  },
 
   // ========== Email & Password Auth ==========
   emailAndPassword: {

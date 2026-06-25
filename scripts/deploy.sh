@@ -21,8 +21,11 @@ if [ ! -f .env.production ]; then
   touch .env.production
 fi
 
-sed -i "s|^IMAGE_URI=.*|IMAGE_URI=$REPOSITORY_URI:$IMAGE_TAG|" .env.production || true
-echo "IMAGE_URI=$REPOSITORY_URI:$IMAGE_TAG" >> .env.production
+if grep -q "^IMAGE_URI=" .env.production; then
+  sed -i "s|^IMAGE_URI=.*|IMAGE_URI=$REPOSITORY_URI:$IMAGE_TAG|" .env.production
+else
+  echo "IMAGE_URI=$REPOSITORY_URI:$IMAGE_TAG" >> .env.production
+fi
 
 echo "Starting containers..."
 docker compose --env-file .env.production up -d
