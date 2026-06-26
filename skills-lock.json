@@ -1,6 +1,12 @@
 {
   "version": 1,
   "skills": {
+    "diagnosing-bugs": {
+      "source": "mattpocock/skills",
+      "sourceType": "github",
+      "skillPath": "skills/engineering/diagnosing-bugs/SKILL.md",
+      "computedHash": "c8743c51df3760039b2dcb8a5a61437da3128c6efb4c5381734a3f05403e9a84"
+    },
     "frontend-design": {
       "source": "anthropics/skills",
       "sourceType": "github",
