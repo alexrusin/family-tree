@@ -533,6 +533,21 @@
       "createOwn": "Crea tu propio árbol genealógico"
     }
   },
+  "reportIssue": {
+    "button": "Reportar un problema",
+    "title": "Reportar un problema",
+    "close": "Cerrar",
+    "descriptionLabel": "¿Qué salió mal?",
+    "descriptionPlaceholder": "Describe el problema que encontraste...",
+    "submit": "Enviar reporte",
+    "submitting": "Enviando...",
+    "successMessage": "¡Gracias! Tu reporte ha sido enviado.",
+    "errors": {
+      "ERR_DESCRIPTION_REQUIRED": "Por favor describe el problema.",
+      "ERR_DESCRIPTION_TOO_LONG": "La descripción debe tener 2,000 caracteres o menos.",
+      "generic": "No se pudo enviar tu reporte. Por favor intenta de nuevo."
+    }
+  },
   "auth": {
     "register": {
       "title": "Crea tu cuenta",

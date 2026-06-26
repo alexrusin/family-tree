@@ -27,6 +27,12 @@ else
   echo "IMAGE_URI=$REPOSITORY_URI:$IMAGE_TAG" >> .env.production
 fi
 
+if grep -q "^APP_VERSION=" .env.production; then
+  sed -i "s|^APP_VERSION=.*|APP_VERSION=$IMAGE_TAG|" .env.production
+else
+  echo "APP_VERSION=$IMAGE_TAG" >> .env.production
+fi
+
 echo "Starting containers..."
 docker compose --env-file .env.production up -d
 

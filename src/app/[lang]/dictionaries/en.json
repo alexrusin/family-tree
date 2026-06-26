@@ -533,6 +533,21 @@
       "createOwn": "Create your own family tree"
     }
   },
+  "reportIssue": {
+    "button": "Report an issue",
+    "title": "Report an Issue",
+    "close": "Close",
+    "descriptionLabel": "What went wrong?",
+    "descriptionPlaceholder": "Describe the problem you encountered...",
+    "submit": "Submit Report",
+    "submitting": "Submitting...",
+    "successMessage": "Thank you! Your report has been submitted.",
+    "errors": {
+      "ERR_DESCRIPTION_REQUIRED": "Please describe the issue.",
+      "ERR_DESCRIPTION_TOO_LONG": "Description must be 2,000 characters or fewer.",
+      "generic": "Unable to submit your report right now. Please try again."
+    }
+  },
   "auth": {
     "register": {
       "title": "Create your account",

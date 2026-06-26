@@ -14,6 +14,7 @@ services:
       BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
       BETTER_AUTH_URL: ${BETTER_AUTH_URL}
       TURNSTILE_SECRET_KEY: ${TURNSTILE_SECRET_KEY}
+      APP_VERSION: ${APP_VERSION:-unknown}
       # Set to 1 in .env.production (then restart) to surface auth error logs.
       AUTH_DEBUG_LOGS: ${AUTH_DEBUG_LOGS:-0}
       NEXT_PUBLIC_BETTER_AUTH_URL: ${NEXT_PUBLIC_BETTER_AUTH_URL}

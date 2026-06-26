@@ -167,6 +167,11 @@ The act of creating a new Family Tree from an uploaded GEDCOM file. Always produ
 
 The post-import summary shown to the user describing what was brought in (people, relationships) and what was skipped or dropped (unsupported places, events, sources, notes, dropped date ranges, inferred-living members). It is the honesty mechanism behind a lossy import.
 
+## Issue Report
+
+A report a signed-in User submits when something in the app isn't working, so the operator gains insight into problems that would otherwise go unseen. It pairs the User's own description of what went wrong with context captured automatically about where and under what conditions it happened — who reported it, the page they were on, the tree in view if any, their interface language, their browser, and which released version of the app they were running. An Issue Report belongs to the User who filed it and does not outlive that User's account. It is operator-facing support intake, distinct from a developer's bug tracker.
+_Avoid_: ticket, bug, feedback, GitHub issue
+
 ## Example Dialogue
 
 **Developer**: A Collaborator Viewer opened the Family Tree through the app and said the branches still overlap. Will they see the Manual Tree Arrangement an editor saved yesterday?
