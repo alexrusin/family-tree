@@ -32,6 +32,7 @@ model User {
   pendingEmailChange PendingEmailChange?
   ownedTrees         FamilyTree[]        @relation(name: "OwnedTrees")
   collaboratedTrees  Collaborator[]      @relation(name: "CollaboratedTrees")
+  issueReports       IssueReport[]
 }
 
 model Session {
@@ -84,6 +85,28 @@ model PendingEmailChange {
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamp(6)
 
   @@index([newEmail])
+}
+
+enum IssueStatus {
+  open
+  closed
+}
+
+model IssueReport {
+  id         String      @id @default(uuid())
+  userId     String      @map("user_id")
+  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userEmail  String      @map("user_email")
+  description String     @db.VarChar(2000)
+  pageUrl    String      @map("page_url")
+  treeId     String?     @map("tree_id")
+  userAgent  String      @map("user_agent")
+  locale     Locale
+  appVersion String      @map("app_version")
+  status     IssueStatus @default(open)
+  createdAt  DateTime    @default(now()) @map("created_at") @db.Timestamp(6)
+
+  @@index([status, createdAt])
 }
 
 enum CollaboratorRole {

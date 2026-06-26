@@ -1,6 +1,7 @@
 import Link from "next/link";
 import LanguagePicker from "./LanguagePicker";
 import UserMenu from "./UserMenu";
+import ReportIssueWidget from "./ReportIssueWidget";
 import { getCurrentUser } from "@/lib/auth-utils";
 
 interface HeaderProps {
@@ -18,6 +19,21 @@ interface HeaderProps {
   navGallery: string;
   navSettings: string;
   logoutLabel: string;
+  reportIssueT: {
+    button: string;
+    title: string;
+    descriptionLabel: string;
+    descriptionPlaceholder: string;
+    submit: string;
+    submitting: string;
+    successMessage: string;
+    errors: {
+      ERR_DESCRIPTION_REQUIRED: string;
+      ERR_DESCRIPTION_TOO_LONG: string;
+      generic: string;
+      [key: string]: string;
+    };
+  };
 }
 
 export default async function Header({
@@ -26,12 +42,14 @@ export default async function Header({
   navFamilyTree,
   navSettings,
   logoutLabel,
+  reportIssueT,
 }: HeaderProps) {
   const user = await getCurrentUser();
   const avatarLabel = user?.name?.trim() || user?.email?.trim() || "User";
   const avatarFallback = avatarLabel.charAt(0).toUpperCase() || "A";
 
   return (
+    <>
     <header className="bg-[#FAFAF9] flex justify-between items-center w-full px-6 py-3 border-b border-stone-200 shadow-sm shadow-amber-900/5 fixed top-0 z-50">
       <div className="flex items-center gap-8">
         <Link
@@ -67,5 +85,7 @@ export default async function Header({
         />
       </div>
     </header>
+    <ReportIssueWidget lang={lang} t={reportIssueT} />
+    </>
   );
 }

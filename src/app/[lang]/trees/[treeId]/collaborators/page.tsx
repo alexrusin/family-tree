@@ -126,6 +126,7 @@ export default async function CollaboratorsPage({
         navGallery={t.dashboard.navGallery}
         navSettings={t.dashboard.navSettings}
         logoutLabel={t.dashboard.logout}
+        reportIssueT={t.reportIssue}
       />
 
       <CollaboratorsClient

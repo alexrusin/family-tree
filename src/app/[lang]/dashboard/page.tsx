@@ -101,6 +101,7 @@ export default async function DashboardPage({
         navGallery={t.dashboard.navGallery}
         navSettings={t.dashboard.navSettings}
         logoutLabel={t.dashboard.logout}
+        reportIssueT={t.reportIssue}
       />
       <main>
         <DashboardLayout

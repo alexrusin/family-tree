@@ -79,6 +79,7 @@ export default async function TreeDetailPage({
         navGallery={t.dashboard.navGallery}
         navSettings={t.dashboard.navSettings}
         logoutLabel={t.dashboard.logout}
+        reportIssueT={t.reportIssue}
       />
 
       {/* Full-screen canvas below the fixed header (header height ≈ 3.5rem / 56px) */}
