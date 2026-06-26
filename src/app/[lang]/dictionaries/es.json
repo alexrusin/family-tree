@@ -536,6 +536,7 @@
   "reportIssue": {
     "button": "Reportar un problema",
     "title": "Reportar un problema",
+    "close": "Cerrar",
     "descriptionLabel": "¿Qué salió mal?",
     "descriptionPlaceholder": "Describe el problema que encontraste...",
     "submit": "Enviar reporte",

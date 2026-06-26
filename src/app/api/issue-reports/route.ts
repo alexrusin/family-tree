@@ -2,7 +2,7 @@ import { withSession } from "@/lib/with-session";
 import { validateDescriptionInput } from "@/lib/issue-report-form-state";
 import { getAppVersion } from "@/lib/app-version";
 import { sendIssueReportNotification } from "@/lib/issue-report-email";
-import type { Locale } from "@/generated/prisma/client";
+import type { Locale } from "@/generated/prisma/enums";
 
 const VALID_LOCALES = new Set(["en", "es", "ru"]);
 

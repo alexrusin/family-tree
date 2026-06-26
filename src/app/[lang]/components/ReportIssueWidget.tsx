@@ -1,13 +1,14 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { MessageSquareWarning } from "lucide-react";
+import { MessageSquareWarning, X } from "lucide-react";
 
 interface ReportIssueWidgetProps {
   lang: string;
   t: {
     button: string;
     title: string;
+    close: string;
     descriptionLabel: string;
     descriptionPlaceholder: string;
     submit: string;
@@ -101,9 +102,18 @@ export default function ReportIssueWidget({ lang, t }: ReportIssueWidgetProps) {
           className="absolute bottom-14 right-0 w-80 rounded-xl border border-stone-200 bg-white p-4 shadow-xl"
           data-testid="report-issue-popover"
         >
-          <h3 className="mb-3 text-sm font-semibold text-amber-900">
-            {t.title}
-          </h3>
+          <div className="mb-3 flex items-start justify-between gap-2">
+            <h3 className="text-sm font-semibold text-amber-900">{t.title}</h3>
+            <button
+              type="button"
+              onClick={() => setIsOpen(false)}
+              className="-mr-1 -mt-1 rounded-md p-1 text-stone-400 transition-colors hover:bg-stone-100 hover:text-stone-600 focus:outline-none focus:ring-1 focus:ring-amber-500"
+              aria-label={t.close}
+              data-testid="report-issue-close"
+            >
+              <X className="h-4 w-4" aria-hidden="true" />
+            </button>
+          </div>
           <form onSubmit={handleSubmit}>
             <label
               htmlFor="report-issue-description"

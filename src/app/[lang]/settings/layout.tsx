@@ -26,7 +26,6 @@ export default async function SettingsLayout({
         navGallery={t.dashboard.navGallery}
         navSettings={t.dashboard.navSettings}
         logoutLabel={t.dashboard.logout}
-        reportIssueT={t.reportIssue}
       />
       <main className="pt-24 pb-12 px-4 md:px-6 bg-stone-50 min-h-screen">
         <div className="mx-auto w-full max-w-6xl">

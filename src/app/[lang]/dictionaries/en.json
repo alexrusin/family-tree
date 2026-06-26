@@ -536,6 +536,7 @@
   "reportIssue": {
     "button": "Report an issue",
     "title": "Report an Issue",
+    "close": "Close",
     "descriptionLabel": "What went wrong?",
     "descriptionPlaceholder": "Describe the problem you encountered...",
     "submit": "Submit Report",

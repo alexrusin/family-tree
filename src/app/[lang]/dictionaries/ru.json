@@ -536,6 +536,7 @@
   "reportIssue": {
     "button": "Сообщить о проблеме",
     "title": "Сообщить о проблеме",
+    "close": "Закрыть",
     "descriptionLabel": "Что пошло не так?",
     "descriptionPlaceholder": "Опишите возникшую проблему...",
     "submit": "Отправить отчёт",
