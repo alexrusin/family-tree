@@ -1,8 +1,58 @@
+import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { getDictionary, hasLocale } from "./dictionaries/dictionaries";
 import LanguagePicker from "./components/LanguagePicker";
 import { getCurrentUser } from "@/lib/auth-utils";
+import { LOCALES, type Locale } from "@/lib/locale";
+import { SITE_URL } from "@/lib/site";
+
+const OG_LOCALE: Record<Locale, string> = {
+  en: "en_US",
+  es: "es_ES",
+  ru: "ru_RU",
+};
+
+export async function generateMetadata({
+  params,
+}: PageProps<"/[lang]">): Promise<Metadata> {
+  const { lang } = await params;
+  if (!hasLocale(lang)) return {};
+  const t = await getDictionary(lang);
+  return {
+    title: t.meta.title,
+    description: t.meta.description,
+    alternates: {
+      canonical: `/${lang}`,
+      languages: {
+        ...Object.fromEntries(LOCALES.map((l) => [l, `/${l}`])),
+        "x-default": "/en",
+      },
+    },
+    openGraph: {
+      type: "website",
+      siteName: "Generations",
+      title: t.meta.title,
+      description: t.meta.description,
+      url: `/${lang}`,
+      locale: OG_LOCALE[lang],
+      images: [
+        {
+          url: "/og-image.png",
+          width: 1200,
+          height: 630,
+          alt: "Generations — build your family tree together",
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: t.meta.title,
+      description: t.meta.description,
+      images: ["/og-image.png"],
+    },
+  };
+}
 
 // SVG tree demo component — no external images
 function TreeDemo({ t }: { t: Record<string, string> }) {
@@ -187,6 +237,47 @@ export default async function LandingPage({ params }: PageProps<"/[lang]">) {
 
   const t = await getDictionary(lang);
 
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "WebApplication",
+        name: "Generations",
+        url: `${SITE_URL}/${lang}`,
+        applicationCategory: "LifestyleApplication",
+        operatingSystem: "Web",
+        description: t.meta.description,
+        inLanguage: ["en", "es", "ru"],
+        availableLanguage: ["English", "Spanish", "Russian"],
+        featureList: [
+          "Collaborative editing with editor and viewer roles",
+          "Invite relatives by email to build one shared family tree",
+          "Private share links that guests can view without an account",
+          "Available in English, Spanish, and Russian",
+          "Photos, biographies, and life dates for each family member",
+          "Parent, child, spouse, and sibling relationships",
+          "Private by default with owner-controlled sharing",
+        ],
+        publisher: { "@id": `${SITE_URL}/#organization` },
+      },
+      {
+        "@type": "Organization",
+        "@id": `${SITE_URL}/#organization`,
+        name: "Generations",
+        url: SITE_URL,
+        logo: `${SITE_URL}/logo.png`,
+      },
+      {
+        "@type": "FAQPage",
+        mainEntity: t.faq.items.map((item) => ({
+          "@type": "Question",
+          name: item.q,
+          acceptedAnswer: { "@type": "Answer", text: item.a },
+        })),
+      },
+    ],
+  };
+
   return (
     <div
       className="min-h-screen flex flex-col"
@@ -196,6 +287,10 @@ export default async function LandingPage({ params }: PageProps<"/[lang]">) {
         fontFamily: "Inter, sans-serif",
       }}
     >
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       {/* ── Header ── */}
       <header
         className="sticky top-0 z-50 border-b border-stone-200 bg-[#fbf9f8]/95 backdrop-blur-sm shadow-sm"
@@ -326,8 +421,8 @@ export default async function LandingPage({ params }: PageProps<"/[lang]">) {
               </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto">
-              {/* Security */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+              {/* Sharing */}
               <div
                 className="bg-white rounded-2xl p-8 border flex flex-col gap-5 transition-shadow hover:shadow-md"
                 style={{ borderColor: "#e7e5e4" }}
@@ -344,7 +439,10 @@ export default async function LandingPage({ params }: PageProps<"/[lang]">) {
                     strokeWidth="2"
                     aria-hidden="true"
                   >
-                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                    <circle cx="18" cy="5" r="3" />
+                    <circle cx="6" cy="12" r="3" />
+                    <circle cx="18" cy="19" r="3" />
+                    <path d="M8.59 13.51l6.83 3.98M15.41 6.51l-6.82 3.98" />
                   </svg>
                 </div>
                 <div>
@@ -352,13 +450,13 @@ export default async function LandingPage({ params }: PageProps<"/[lang]">) {
                     className="text-lg font-semibold mb-2"
                     style={{ color: "#712c00" }}
                   >
-                    {t.features.security.title}
+                    {t.features.sharing.title}
                   </h3>
                   <p
                     className="text-sm leading-relaxed"
                     style={{ color: "#55433a" }}
                   >
-                    {t.features.security.body}
+                    {t.features.sharing.body}
                   </p>
                 </div>
               </div>
@@ -397,6 +495,85 @@ export default async function LandingPage({ params }: PageProps<"/[lang]">) {
                   </p>
                 </div>
               </div>
+
+              {/* Privacy */}
+              <div
+                className="bg-white rounded-2xl p-8 border flex flex-col gap-5 transition-shadow hover:shadow-md"
+                style={{ borderColor: "#e7e5e4" }}
+              >
+                <div
+                  className="w-12 h-12 rounded-2xl flex items-center justify-center"
+                  style={{ backgroundColor: "#fff7f3" }}
+                >
+                  <svg
+                    className="w-6 h-6"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="#92400e"
+                    strokeWidth="2"
+                    aria-hidden="true"
+                  >
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                  </svg>
+                </div>
+                <div>
+                  <h3
+                    className="text-lg font-semibold mb-2"
+                    style={{ color: "#712c00" }}
+                  >
+                    {t.features.privacy.title}
+                  </h3>
+                  <p
+                    className="text-sm leading-relaxed"
+                    style={{ color: "#55433a" }}
+                  >
+                    {t.features.privacy.body}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ── FAQ ── */}
+        <section className="py-24">
+          <div className="max-w-3xl mx-auto px-6">
+            <div className="text-center mb-14 space-y-3">
+              <h2
+                className="text-2xl font-semibold"
+                style={{ color: "#712c00" }}
+              >
+                {t.faq.headline}
+              </h2>
+              <p
+                className="text-base max-w-xl mx-auto"
+                style={{ color: "#55433a" }}
+              >
+                {t.faq.body}
+              </p>
+            </div>
+            <div className="flex flex-col gap-4">
+              {t.faq.items.map((item) => (
+                <div
+                  key={item.q}
+                  className="bg-white rounded-2xl p-6 border"
+                  style={{ borderColor: "#e7e5e4" }}
+                >
+                  <h3
+                    className="text-lg font-semibold mb-2"
+                    style={{ color: "#712c00" }}
+                  >
+                    {item.q}
+                  </h3>
+                  <p
+                    className="text-sm leading-relaxed"
+                    style={{ color: "#55433a" }}
+                  >
+                    {item.a}
+                  </p>
+                </div>
+              ))}
             </div>
           </div>
         </section>
@@ -446,20 +623,6 @@ export default async function LandingPage({ params }: PageProps<"/[lang]">) {
                   className="pt-4 flex flex-wrap justify-center gap-6 text-xs"
                   style={{ color: "#887269" }}
                 >
-                  <span className="flex items-center gap-1.5">
-                    <svg
-                      className="w-4 h-4"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      aria-hidden="true"
-                    >
-                      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
-                      <polyline points="22 4 12 14.01 9 11.01" />
-                    </svg>
-                    {t.cta.badgeNoCard}
-                  </span>
                   <span className="flex items-center gap-1.5">
                     <svg
                       className="w-4 h-4"
@@ -532,7 +695,12 @@ export default async function LandingPage({ params }: PageProps<"/[lang]">) {
             className="pt-8 border-t flex justify-between items-center text-xs"
             style={{ borderColor: "#44403c", color: "#78716c" }}
           >
-            <span>{t.footer.copyright}</span>
+            <span>
+              {t.footer.copyright.replace(
+                "{year}",
+                String(new Date().getFullYear()),
+              )}
+            </span>
           </div>
         </div>
       </footer>

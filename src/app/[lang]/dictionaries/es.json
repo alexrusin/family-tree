@@ -1,7 +1,7 @@
 {
   "meta": {
-    "title": "Generations — Preserva tu herencia familiar",
-    "description": "Crea un registro vivo del recorrido de tu familia. Agrega miembros, define relaciones y comparte tu árbol con tus seres queridos."
+    "title": "Generations — Crea un árbol genealógico juntos",
+    "description": "Una app de árbol genealógico colaborativa. Crea un árbol compartido con tus familiares y comparte un enlace privado que cualquiera puede ver sin necesidad de cuenta."
   },
   "nav": {
     "logo": "Generations",
@@ -9,34 +9,59 @@
     "signup": "Registrarse"
   },
   "hero": {
-    "badge": "Tu legado comienza aquí",
-    "headline": "Descubre tu herencia.",
-    "headlineSub": "Una rama a la vez.",
-    "body": "Crea un registro vivo del recorrido de tu familia. Generations es un espacio cálido y seguro para documentar historias, preservar retratos y conectar a través de generaciones.",
+    "badge": "Hecho para familias, juntas",
+    "headline": "La historia de tu familia,",
+    "headlineSub": "construida juntos.",
+    "body": "Generations es un árbol genealógico compartido que toda la familia puede construir. Invita a familiares cercanos y lejanos a agregar personas, fotos y fechas, y comparte un enlace privado para que todos puedan explorarlo, sin necesidad de cuenta y cada uno en su propio idioma.",
     "ctaPrimary": "Empieza tu árbol",
     "ctaSecondary": "Iniciar sesión"
   },
   "features": {
-    "sectionHeadline": "Construido para la privacidad y la conexión",
-    "sectionBody": "Tratamos la historia de tu familia con el mismo cuidado que tú, protegiendo tus recuerdos para la siguiente generación.",
-    "security": {
-      "title": "Seguridad de primer nivel",
-      "body": "Tus datos están cifrados en reposo y son privados por defecto. Tú controlas exactamente quién ve tu árbol y qué información se comparte con otros."
+    "sectionHeadline": "Hecho para familias, no solo para investigadores",
+    "sectionBody": "Todo lo que necesitas para construir un árbol genealógico juntos y compartirlo con quienes importan, estén donde estén.",
+    "sharing": {
+      "title": "Comparte con cualquiera",
+      "body": "Envía un enlace privado a familiares en cualquier lugar, sin necesidad de cuenta para verlo. Cada persona ve el árbol en su propio idioma: inglés, español o ruso."
     },
     "collaboration": {
-      "title": "Investigación colaborativa",
-      "body": "Invita a hermanos, primos y personas mayores a contribuir. Reconstruyan su historia juntos sin sobrescribir el trabajo de los demás."
+      "title": "Constrúyanlo juntos",
+      "body": "Invita a hermanos, primos y personas mayores como editores o lectores. Todos contribuyen al mismo árbol genealógico, sin sobrescribir ni hojas de cálculo dispersas."
+    },
+    "privacy": {
+      "title": "Privado por defecto",
+      "body": "Tu árbol permanece privado hasta que decidas compartirlo. Tú decides exactamente quién puede ver o editar, y puedes desactivar el uso compartido en cualquier momento."
     }
   },
+  "faq": {
+    "headline": "Preguntas frecuentes",
+    "body": "Todo lo que necesitas saber sobre cómo construir y compartir tu árbol genealógico.",
+    "items": [
+      {
+        "q": "¿Puedo construir un árbol genealógico junto con mis familiares?",
+        "a": "Sí. Puedes invitar a hermanos, primos y personas mayores por correo electrónico como editores o lectores, para que todos contribuyan al mismo árbol compartido sin sobrescribir el trabajo de los demás."
+      },
+      {
+        "q": "¿Las personas necesitan una cuenta para ver mi árbol genealógico?",
+        "a": "No. Puedes compartir un enlace privado y tus familiares pueden ver el árbol sin registrarse. La vista compartida es de solo lectura."
+      },
+      {
+        "q": "¿Qué idiomas admite Generations?",
+        "a": "Generations está totalmente disponible en inglés, español y ruso. Los invitados que ven un enlace compartido ven el árbol en el idioma del propietario del árbol."
+      },
+      {
+        "q": "¿Mi árbol genealógico es privado?",
+        "a": "Sí. Cada árbol es privado por defecto. El uso compartido público está desactivado hasta que lo actives, y tú controlas exactamente quién puede ver o editar, y puedes desactivar el enlace en cualquier momento."
+      }
+    ]
+  },
   "cta": {
-    "headline": "Tu historia está esperando ser contada.",
-    "body": "Sé de las primeras familias en preservar su herencia con Generations.",
-    "button": "Crea tu cuenta gratuita",
-    "badgeNoCard": "Sin tarjeta de crédito",
+    "headline": "Reúne a toda tu familia.",
+    "body": "Empieza tu árbol genealógico e invita a tus familiares a construirlo contigo, en minutos.",
+    "button": "Crea tu cuenta",
     "badgeGdpr": "Cumple con el RGPD"
   },
   "footer": {
-    "copyright": "© 2026 Generations",
+    "copyright": "© {year} Generations",
     "exploreTitle": "Explorar",
     "links": {
       "login": "Iniciar sesión",
