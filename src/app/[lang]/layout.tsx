@@ -3,7 +3,6 @@ import { notFound } from "next/navigation";
 import { getDictionary, hasLocale } from "./dictionaries/dictionaries";
 import { LangSetter } from "./LangSetter";
 import ReportIssueWidget from "./components/ReportIssueWidget";
-import { getCurrentUser } from "@/lib/auth-utils";
 
 export async function generateMetadata({
   params,
@@ -28,14 +27,13 @@ export default async function LocaleLayout({
   const { lang } = await params;
   if (!hasLocale(lang)) notFound();
 
-  const user = await getCurrentUser();
   const t = await getDictionary(lang);
 
   return (
     <>
       <LangSetter lang={lang} />
       {children}
-      {user && <ReportIssueWidget lang={lang} t={t.reportIssue} />}
+      <ReportIssueWidget lang={lang} t={t.reportIssue} />
     </>
   );
 }

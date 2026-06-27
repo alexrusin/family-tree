@@ -1,6 +1,6 @@
 Project family_tree {
   database_type: "PostgreSQL"
-  Note: "Derived from prisma/schema.prisma and prisma/migrations through 20260528000000_add_es_to_locale_enum."
+  Note: "Derived from prisma/schema.prisma."
 }
 
 Enum Locale {
@@ -20,9 +20,15 @@ Enum InvitationStatus {
   cancelled
 }
 
+Enum IssueStatus {
+  open
+  closed
+}
+
 Enum RelationshipType {
   parent
   spouse
+  divorced
   sibling
 }
 
@@ -105,12 +111,31 @@ Table PendingEmailChange {
   }
 }
 
+Table IssueReport {
+  id text [pk, not null]
+  user_id text [not null]
+  user_email text [not null]
+  description varchar(2000) [not null]
+  page_url text [not null]
+  tree_id text
+  user_agent text [not null]
+  locale Locale [not null]
+  app_version text [not null]
+  status IssueStatus [not null, default: 'open']
+  created_at timestamp [not null, default: `CURRENT_TIMESTAMP`]
+
+  Indexes {
+    (status, created_at) [name: "IssueReport_status_created_at_idx"]
+  }
+}
+
 Table FamilyTree {
   id text [pk, not null]
   name text [not null]
   owner_id text [not null]
   share_token text [not null, unique]
   share_enabled boolean [not null, default: false]
+  node_positions json
   member_count integer [not null, default: 0]
   created_at timestamp [not null, default: `CURRENT_TIMESTAMP`]
   updated_at timestamp [not null]
@@ -175,6 +200,7 @@ Table TreeMember {
   tree_id text [not null]
   first_name text [not null]
   last_name text
+  maiden_name text
   gender MemberGender [not null, default: 'undisclosed']
   is_living boolean [not null, default: false]
   bio varchar(1000)
@@ -213,6 +239,7 @@ Table Relationship {
 Ref: Session.user_id > User.id [delete: cascade, update: cascade]
 Ref: Account.user_id > User.id [delete: cascade, update: cascade]
 Ref: PendingEmailChange.user_id > User.id [delete: cascade, update: cascade]
+Ref: IssueReport.user_id > User.id [delete: cascade, update: cascade]
 Ref: FamilyTree.owner_id > User.id [delete: cascade, update: cascade]
 Ref: PublicShareTokenHistory.tree_id > FamilyTree.id [delete: cascade, update: cascade]
 Ref: Invitation.tree_id > FamilyTree.id [delete: cascade, update: cascade]
