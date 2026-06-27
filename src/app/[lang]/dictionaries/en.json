@@ -1,7 +1,7 @@
 {
   "meta": {
-    "title": "Generations — Preserve Your Family Heritage",
-    "description": "Build a living record of your family's journey. Add members, define relationships, and share your tree with loved ones."
+    "title": "Generations — Build a Family Tree Together",
+    "description": "A collaborative family tree app. Build one shared tree with your relatives, then share a private link anyone can view — no account needed."
   },
   "nav": {
     "logo": "Generations",
@@ -9,34 +9,59 @@
     "signup": "Sign up"
   },
   "hero": {
-    "badge": "Your legacy begins here",
-    "headline": "Discover your heritage.",
-    "headlineSub": "One branch at a time.",
-    "body": "Build a living record of your family's journey. Generations provides a warm, secure space to document stories, preserve portraits, and connect across generations.",
+    "badge": "Built for families, together",
+    "headline": "Your family's story,",
+    "headlineSub": "built together.",
+    "body": "Generations is one shared family tree the whole family can build. Invite relatives near and far to add members, photos, and dates — and share a private link so everyone can explore it, no account needed, each in their own language.",
     "ctaPrimary": "Start Your Tree",
     "ctaSecondary": "Log in"
   },
   "features": {
-    "sectionHeadline": "Built for Privacy & Connection",
-    "sectionBody": "We treat your family history with the same care you do—safeguarding your memories for the next generation.",
-    "security": {
-      "title": "Vault-Grade Security",
-      "body": "Your data is encrypted at rest and private by default. You control exactly who sees your tree and what information is shared with others."
+    "sectionHeadline": "Built for Families, Not Just Researchers",
+    "sectionBody": "Everything you need to build one family tree together and share it with everyone who matters—wherever they are.",
+    "sharing": {
+      "title": "Share With Anyone",
+      "body": "Send a private link to relatives anywhere—no account needed to view. Each person sees the tree in their own language: English, Spanish, or Russian."
     },
     "collaboration": {
-      "title": "Collaborative Research",
-      "body": "Invite siblings, cousins, and elders to contribute. Piece together your history together without overwriting each other's work."
+      "title": "Build It Together",
+      "body": "Invite siblings, cousins, and elders as editors or viewers. Everyone contributes to the same family tree—no overwriting, no scattered spreadsheets."
+    },
+    "privacy": {
+      "title": "Private by Default",
+      "body": "Your tree stays private until you choose to share it. You decide exactly who can view or edit, and you can turn sharing off at any time."
     }
   },
+  "faq": {
+    "headline": "Frequently Asked Questions",
+    "body": "Everything you need to know about building and sharing your family tree.",
+    "items": [
+      {
+        "q": "Can I build a family tree together with relatives?",
+        "a": "Yes. You can invite siblings, cousins, and elders by email as editors or viewers, so everyone contributes to the same shared family tree without overwriting each other's work."
+      },
+      {
+        "q": "Do people need an account to view my family tree?",
+        "a": "No. You can share a private link, and relatives can view the tree without signing up. The shared view is read-only."
+      },
+      {
+        "q": "What languages does Generations support?",
+        "a": "Generations is fully available in English, Spanish, and Russian. Guests viewing a shared link see the tree in the tree owner's language."
+      },
+      {
+        "q": "Is my family tree private?",
+        "a": "Yes. Every tree is private by default. Public sharing is off until you turn it on, and you control exactly who can view or edit, and can disable the link at any time."
+      }
+    ]
+  },
   "cta": {
-    "headline": "Your story is waiting to be told.",
-    "body": "Be among the first families to preserve their heritage with Generations.",
-    "button": "Create Your Free Account",
-    "badgeNoCard": "No Credit Card Required",
+    "headline": "Bring your whole family together.",
+    "body": "Start your family tree and invite relatives to build it with you—in minutes.",
+    "button": "Create Your Account",
     "badgeGdpr": "GDPR Compliant"
   },
   "footer": {
-    "copyright": "© 2026 Generations",
+    "copyright": "© {year} Generations",
     "exploreTitle": "Explore",
     "links": {
       "login": "Log in",

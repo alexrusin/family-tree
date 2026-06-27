@@ -73,7 +73,7 @@ export { DEFAULT_LOCALE };
 
 export const config = {
   matcher: [
-    // Skip _next internals, static files, and API routes
-    "/((?!api|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    // Skip _next internals, static files, API routes, and SEO files
+    "/((?!api|_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };
