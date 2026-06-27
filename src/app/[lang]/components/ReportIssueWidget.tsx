@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { MessageSquareWarning, X } from "lucide-react";
+import { authClient } from "@/lib/auth-client";
 
 interface ReportIssueWidgetProps {
   lang: string;
@@ -24,6 +25,7 @@ interface ReportIssueWidgetProps {
 }
 
 export default function ReportIssueWidget({ lang, t }: ReportIssueWidgetProps) {
+  const { data: session, isPending } = authClient.useSession();
   const [isOpen, setIsOpen] = useState(false);
   const [description, setDescription] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -48,6 +50,8 @@ export default function ReportIssueWidget({ lang, t }: ReportIssueWidgetProps) {
       document.removeEventListener("keydown", handleEscape);
     };
   }, [isOpen]);
+
+  if (isPending || !session) return null;
 
   function handleOpen() {
     setIsOpen(true);
