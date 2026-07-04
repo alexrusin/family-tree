@@ -33,6 +33,8 @@ model User {
   ownedTrees         FamilyTree[]        @relation(name: "OwnedTrees")
   collaboratedTrees  Collaborator[]      @relation(name: "CollaboratedTrees")
   issueReports       IssueReport[]
+  familyPictures     FamilyPicture[]
+  generations        Generation[]
 }
 
 model Session {
@@ -253,4 +255,70 @@ model Relationship {
 
   @@unique([treeId, fromMemberId, toMemberId, type])
   @@index([treeId])
+}
+
+enum GenerationStatus {
+  pending
+  succeeded
+  failed
+}
+
+// A private, user-owned Family Picture. Scoped to a source tree but not
+// shared tree data — deliberately has no relation to FamilyTree so it
+// survives deletion of that tree (PRD: "survives deletion of the source
+// Family Tree"). memberSnapshot denormalizes the depicted Members'
+// identity at generation time so the picture stays self-contained if a
+// Member is later edited or removed.
+model FamilyPicture {
+  id             String                 @id @default(uuid())
+  userId         String                 @map("user_id")
+  user           User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  treeId         String                 @map("tree_id")
+  memberSnapshot Json                   @map("member_snapshot")
+  stylePreset    String                 @map("style_preset")
+  settingPreset  String?                @map("setting_preset")
+  customPlace    String?                @map("custom_place")
+  personalTouch  String?                @map("personal_touch")
+  createdAt      DateTime               @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt      DateTime               @updatedAt @map("updated_at") @db.Timestamp(6)
+  versions       FamilyPictureVersion[]
+  generations    Generation[]
+
+  @@index([userId])
+  @@index([treeId])
+}
+
+// One rendered image per successful Generation. Ordered by versionNumber;
+// v1 is the tracer's only version (tweaks arrive in a later slice).
+model FamilyPictureVersion {
+  id              String        @id @default(uuid())
+  familyPictureId String        @map("family_picture_id")
+  familyPicture   FamilyPicture @relation(fields: [familyPictureId], references: [id], onDelete: Cascade)
+  generationId    String        @unique @map("generation_id")
+  generation      Generation    @relation(fields: [generationId], references: [id], onDelete: Cascade)
+  s3Key           String        @map("s3_key")
+  versionNumber   Int           @map("version_number")
+  createdAt       DateTime      @default(now()) @map("created_at") @db.Timestamp(6)
+
+  @@unique([familyPictureId, versionNumber])
+}
+
+// One billed model call. Created pending, then the in-process async job
+// marks it succeeded (with a linked Version) or failed. A stranded-pending
+// sweep (older than N minutes) fails rows orphaned by a container restart.
+model Generation {
+  id              String                @id @default(uuid())
+  userId          String                @map("user_id")
+  user            User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  familyPictureId String                @map("family_picture_id")
+  familyPicture   FamilyPicture         @relation(fields: [familyPictureId], references: [id], onDelete: Cascade)
+  status          GenerationStatus      @default(pending)
+  errorMessage    String?               @map("error_message")
+  createdAt       DateTime              @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt       DateTime              @updatedAt @map("updated_at") @db.Timestamp(6)
+  version         FamilyPictureVersion?
+
+  @@index([userId])
+  @@index([familyPictureId])
+  @@index([status, createdAt])
 }

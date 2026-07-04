@@ -45,9 +45,8 @@ export interface ImageClient {
   tweak(baseImage: ImageBytes, instruction: string): Promise<ImageBytes>;
 }
 
-// Spike (ADR 0007) ran `gpt-image-2`. The exact live id is a build-time HITL
-// decision (issue 06-preset-catalog-and-model-id); OPENAI_IMAGE_MODEL lets
-// that decision land as configuration instead of a code change.
+// Confirmed in issue 06-preset-catalog-and-model-id (sign-off 2026-07-04).
+// OPENAI_IMAGE_MODEL lets the id be overridden as configuration if it changes.
 const SPIKE_MODEL_ID = "gpt-image-2";
 const OUTPUT_SIZE = "1024x1024";
 

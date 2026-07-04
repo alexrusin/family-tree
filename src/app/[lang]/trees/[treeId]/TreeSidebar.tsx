@@ -9,6 +9,7 @@ import {
   Users,
   Share2,
   Download,
+  Sparkles,
 } from "lucide-react";
 
 const MEMBER_WARN_THRESHOLD = 250;
@@ -18,6 +19,7 @@ interface TreeSidebarT {
   addMember: string;
   addRelationship: string;
   collaborators: string;
+  familyPicture: string;
   viewOnly: string;
   warningBanner: string;
   limitReached: string;
@@ -30,10 +32,12 @@ interface TreeSidebarProps {
   treeName: string;
   memberCount: number;
   collaboratorsHref: string;
+  familyPicturesHref: string;
   canEdit: boolean;
   canAddMember: boolean;
   canManageShare: boolean;
   onCollaboratorsNavigate: () => void;
+  onFamilyPicturesNavigate: () => void;
   onAddMember: () => void;
   onAddRelationship: () => void;
   onOpenShareSettings: () => void;
@@ -46,10 +50,12 @@ export default function TreeSidebar({
   treeName,
   memberCount,
   collaboratorsHref,
+  familyPicturesHref,
   canEdit,
   canManageShare,
   canAddMember,
   onCollaboratorsNavigate,
+  onFamilyPicturesNavigate,
   onAddMember,
   onAddRelationship,
   onOpenShareSettings,
@@ -107,6 +113,15 @@ export default function TreeSidebar({
         >
           <Users className="w-4 h-4" />
           {t.collaborators}
+        </Link>
+
+        <Link
+          href={familyPicturesHref}
+          onClick={onFamilyPicturesNavigate}
+          className="w-full px-4 py-2.5 bg-stone-100 text-stone-900 rounded-lg font-semibold hover:bg-stone-200 transition-colors flex items-center justify-center gap-2 text-sm"
+        >
+          <Sparkles className="w-4 h-4" />
+          {t.familyPicture}
         </Link>
 
         <button

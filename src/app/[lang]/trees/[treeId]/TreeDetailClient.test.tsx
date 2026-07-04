@@ -320,6 +320,7 @@ const translations = {
   collaboration: {
     sidebarLink: "Collaborators",
   },
+  familyPictureSidebarLink: "Family Picture",
   publicShare: {
     sidebarAction: "Share Link",
     modalTitle: "Share link settings",

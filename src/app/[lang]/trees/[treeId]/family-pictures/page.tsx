@@ -1,14 +1,18 @@
 import { notFound, redirect } from "next/navigation";
-import { PrismaClient } from "@/generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
+import { PrismaClient } from "@/generated/prisma/client";
 import { getCurrentUser } from "@/lib/auth-utils";
-import Header from "../../components/Header";
-import { getDictionary, hasLocale } from "../../dictionaries/dictionaries";
-import TreeDetailClient from "./TreeDetailClient";
+import Header from "../../../components/Header";
+import { getDictionary, hasLocale } from "../../../dictionaries/dictionaries";
+import FamilyPictureClient from "./FamilyPictureClient";
 
-export default async function TreeDetailPage({
+export const dynamic = "force-dynamic";
+
+export default async function FamilyPicturesPage({
   params,
-}: PageProps<"/[lang]/trees/[treeId]">) {
+}: {
+  params: Promise<{ lang: string; treeId: string }>;
+}) {
   const { lang, treeId } = await params;
 
   if (!hasLocale(lang)) {
@@ -17,7 +21,8 @@ export default async function TreeDetailPage({
 
   const user = await getCurrentUser();
   if (!user) {
-    redirect(`/${lang}/login`);
+    const callbackPath = `/${lang}/trees/${encodeURIComponent(treeId)}/family-pictures`;
+    redirect(`/${lang}/login?callback=${encodeURIComponent(callbackPath)}`);
   }
 
   const t = await getDictionary(lang);
@@ -32,8 +37,6 @@ export default async function TreeDetailPage({
       id: true,
       name: true,
       ownerId: true,
-      memberCount: true,
-      updatedAt: true,
     },
   });
 
@@ -41,10 +44,9 @@ export default async function TreeDetailPage({
     notFound();
   }
 
-  let canView = tree.ownerId === user.id;
-  let canEdit = tree.ownerId === user.id;
+  let hasAccess = tree.ownerId === user.id;
 
-  if (!canView) {
+  if (!hasAccess) {
     const collaborator = await prisma.collaborator.findUnique({
       where: {
         treeId_userId: {
@@ -53,22 +55,16 @@ export default async function TreeDetailPage({
         },
       },
       select: {
-        role: true,
         acceptedAt: true,
       },
     });
 
-    if (collaborator?.acceptedAt) {
-      canView = true;
-      canEdit = collaborator.role === "editor";
-    }
+    hasAccess = Boolean(collaborator?.acceptedAt);
   }
 
-  if (!canView) {
+  if (!hasAccess) {
     notFound();
   }
-
-  const isOwner = tree.ownerId === user.id;
 
   return (
     <>
@@ -81,18 +77,12 @@ export default async function TreeDetailPage({
         logoutLabel={t.dashboard.logout}
       />
 
-      {/* Full-screen canvas below the fixed header (header height ≈ 3.5rem / 56px) */}
-      <div className="fixed inset-0 top-14 overflow-hidden">
-        <TreeDetailClient
-          lang={lang}
-          treeId={tree.id}
-          treeName={tree.name}
-          canEdit={canEdit}
-          isOwner={isOwner}
-          initialMemberCount={tree.memberCount}
-          t={{ ...t.tree, familyPictureSidebarLink: t.familyPicture.sidebarLink }}
-        />
-      </div>
+      <FamilyPictureClient
+        lang={lang}
+        treeId={tree.id}
+        treeName={tree.name}
+        t={t.familyPicture}
+      />
     </>
   );
 }

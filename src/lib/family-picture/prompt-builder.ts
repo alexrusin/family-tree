@@ -15,8 +15,7 @@ export type SettingPresetId =
  */
 export type Setting = { preset: SettingPresetId } | { place: string };
 
-// Placeholder copy pending the "Preset catalog & model id" (HITL) decision;
-// this module is where the final copy will land.
+// Final copy, signed off in issue 06-preset-catalog-and-model-id.
 const STYLE_PRESET_PHRASES: Record<StylePresetId, string> = {
   realistic: "a realistic photo with true-to-life color",
   bw: "a black-and-white film photo, timeless and grainy",
