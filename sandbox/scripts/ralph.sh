@@ -9,12 +9,12 @@
 #   RALPH_MAX_BUDGET_USD  Per-issue spend cap passed to `claude --max-budget-usd`.
 #                         Defaults to 5. Set to 0 or empty to disable the cap.
 #   RALPH_MODEL           Model alias or full ID passed to `claude --model`.
-#                         Defaults to "sonnet". Set to empty to use claude's default.
+#                         Defaults to "claude-sonnet-5". Set to empty to use claude's default.
 
 set -euo pipefail
 
 MAX_BUDGET=${RALPH_MAX_BUDGET_USD-5}
-MODEL=${RALPH_MODEL-sonnet}
+MODEL=${RALPH_MODEL-claude-sonnet-5}
 
 if [[ $# -lt 1 ]]; then
   echo "usage: $0 <issues-dir>" >&2
