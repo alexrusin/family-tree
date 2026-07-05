@@ -1,5 +1,6 @@
 import { withTreeRole } from "@/lib/with-tree-role";
 import { sweepStrandedGenerations } from "@/lib/family-picture/stranded-sweep";
+import { resolveCurrentVersion } from "@/lib/family-picture/current-version";
 import type { FamilyPictureMemberSnapshot } from "../route";
 
 export const GET = withTreeRole<{ treeId: string; familyPictureId: string }>(
@@ -13,7 +14,7 @@ export const GET = withTreeRole<{ treeId: string; familyPictureId: string }>(
       where: { id: familyPictureId, treeId },
       include: {
         generations: { orderBy: { createdAt: "desc" }, take: 1 },
-        versions: { orderBy: { versionNumber: "desc" }, take: 1 },
+        versions: { orderBy: { versionNumber: "desc" } },
       },
     });
 
@@ -22,7 +23,7 @@ export const GET = withTreeRole<{ treeId: string; familyPictureId: string }>(
     }
 
     const latestGeneration = picture.generations[0] ?? null;
-    const latestVersion = picture.versions[0] ?? null;
+    const currentVersion = resolveCurrentVersion(picture.versions, picture.currentVersionNumber);
 
     return Response.json(
       {
@@ -35,10 +36,10 @@ export const GET = withTreeRole<{ treeId: string; familyPictureId: string }>(
         createdAt: picture.createdAt.toISOString(),
         status: latestGeneration?.status ?? "pending",
         errorMessage: latestGeneration?.errorMessage ?? null,
-        // `?v=` cache-busts so a tweak's new Version doesn't get served the
-        // prior Version's cached bytes from behind the same image URL.
-        imageUrl: latestVersion
-          ? `/api/trees/${treeId}/family-pictures/${picture.id}/image?v=${latestVersion.versionNumber}`
+        // `?v=` both cache-busts and selects which Version to serve, so a
+        // revert's earlier Version shows up here too.
+        imageUrl: currentVersion
+          ? `/api/trees/${treeId}/family-pictures/${picture.id}/image?v=${currentVersion.versionNumber}`
           : null,
       },
       { status: 200 },

@@ -34,11 +34,7 @@ export const POST = withTreeRole<{ treeId: string; familyPictureId: string }>(
       where: { id: familyPictureId, treeId: ctx.params.treeId },
       select: {
         userId: true,
-        versions: {
-          orderBy: { versionNumber: "desc" },
-          take: 1,
-          select: { s3Key: true },
-        },
+        currentVersionNumber: true,
       },
     });
 
@@ -46,7 +42,21 @@ export const POST = withTreeRole<{ treeId: string; familyPictureId: string }>(
       return Response.json({ errorCode: "ERR_NOT_FOUND" }, { status: 404 });
     }
 
-    const baseVersion = picture.versions[0];
+    if (picture.currentVersionNumber === null) {
+      return Response.json({ errorCode: "ERR_NO_VERSION_TO_TWEAK" }, { status: 400 });
+    }
+
+    // Tweak from whichever Version is currently shown — which may be an
+    // earlier one the user reverted to, not necessarily the latest.
+    const baseVersion = await ctx.prisma.familyPictureVersion.findUnique({
+      where: {
+        familyPictureId_versionNumber: {
+          familyPictureId,
+          versionNumber: picture.currentVersionNumber,
+        },
+      },
+      select: { s3Key: true },
+    });
     if (!baseVersion) {
       return Response.json({ errorCode: "ERR_NO_VERSION_TO_TWEAK" }, { status: 400 });
     }

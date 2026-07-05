@@ -1,5 +1,6 @@
 import { withTreeRole } from "@/lib/with-tree-role";
 import { createS3Client, downloadPhotoByKey } from "@/lib/tree-domain/photo-upload";
+import { resolveCurrentVersion } from "@/lib/family-picture/current-version";
 
 function isPhotoNotFoundError(error: unknown): boolean {
   if (!error || typeof error !== "object") {
@@ -18,10 +19,10 @@ export const GET = withTreeRole<{ treeId: string; familyPictureId: string }>(
       where: { id: familyPictureId, treeId },
       select: {
         userId: true,
+        currentVersionNumber: true,
         versions: {
           orderBy: { versionNumber: "desc" },
-          take: 1,
-          select: { s3Key: true },
+          select: { s3Key: true, versionNumber: true },
         },
       },
     });
@@ -30,8 +31,20 @@ export const GET = withTreeRole<{ treeId: string; familyPictureId: string }>(
       return Response.json({ errorCode: "ERR_NOT_FOUND" }, { status: 404 });
     }
 
-    const latestVersion = picture.versions[0];
-    if (!latestVersion) {
+    // `?v=` lets the version gallery fetch any specific Version's thumbnail;
+    // without it, this serves whichever Version is current (the most recent
+    // one, or an earlier one the user reverted to).
+    const requestedVersionParam = new URL(ctx.request.url).searchParams.get("v");
+    const requestedVersionNumber = requestedVersionParam
+      ? Number.parseInt(requestedVersionParam, 10)
+      : null;
+
+    const version =
+      requestedVersionNumber !== null && Number.isInteger(requestedVersionNumber)
+        ? (picture.versions.find((v) => v.versionNumber === requestedVersionNumber) ?? null)
+        : resolveCurrentVersion(picture.versions, picture.currentVersionNumber);
+
+    if (!version) {
       return Response.json({ errorCode: "ERR_NOT_FOUND" }, { status: 404 });
     }
 
@@ -45,7 +58,7 @@ export const GET = withTreeRole<{ treeId: string; familyPictureId: string }>(
       const photo = await downloadPhotoByKey({
         s3Client: createS3Client(),
         bucket,
-        key: latestVersion.s3Key,
+        key: version.s3Key,
       });
 
       const body = Uint8Array.from(photo.body);

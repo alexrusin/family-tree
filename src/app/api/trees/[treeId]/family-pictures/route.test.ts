@@ -271,6 +271,7 @@ describe("/api/trees/[treeId]/family-pictures", () => {
           settingPreset: "garden",
           customPlace: null,
           createdAt: new Date("2026-07-01T00:00:00Z"),
+          currentVersionNumber: 1,
           generations: [{ id: "gen1", status: "succeeded", errorMessage: null }],
           versions: [{ versionNumber: 1 }],
         },

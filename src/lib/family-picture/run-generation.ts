@@ -59,9 +59,17 @@ export async function processFamilyPictureGeneration(
     buildVersionKey: (familyPictureId, versionNumber) =>
       generateFamilyPictureVersionKey(job.userId, familyPictureId, versionNumber),
     createVersion: async ({ familyPictureId, generationId, s3Key, versionNumber }) => {
-      await prisma.familyPictureVersion.create({
-        data: { familyPictureId, generationId, s3Key, versionNumber },
-      });
+      // A new Version becomes the one shown by default, same as a fresh
+      // tweak — the user only lands on an earlier Version by reverting.
+      await prisma.$transaction([
+        prisma.familyPictureVersion.create({
+          data: { familyPictureId, generationId, s3Key, versionNumber },
+        }),
+        prisma.familyPicture.update({
+          where: { id: familyPictureId },
+          data: { currentVersionNumber: versionNumber },
+        }),
+      ]);
     },
     markSucceeded: async (generationId) => {
       await prisma.generation.update({
@@ -116,9 +124,17 @@ export async function processFamilyPictureTweak(job: TweakJob): Promise<void> {
     buildVersionKey: (familyPictureId, versionNumber) =>
       generateFamilyPictureVersionKey(job.userId, familyPictureId, versionNumber),
     createVersion: async ({ familyPictureId, generationId, s3Key, versionNumber }) => {
-      await prisma.familyPictureVersion.create({
-        data: { familyPictureId, generationId, s3Key, versionNumber },
-      });
+      // A new Version becomes the one shown by default, same as a fresh
+      // generation — the user only lands on an earlier Version by reverting.
+      await prisma.$transaction([
+        prisma.familyPictureVersion.create({
+          data: { familyPictureId, generationId, s3Key, versionNumber },
+        }),
+        prisma.familyPicture.update({
+          where: { id: familyPictureId },
+          data: { currentVersionNumber: versionNumber },
+        }),
+      ]);
     },
     markSucceeded: async (generationId) => {
       await prisma.generation.update({

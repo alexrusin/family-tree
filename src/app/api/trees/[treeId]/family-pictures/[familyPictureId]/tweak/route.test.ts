@@ -14,6 +14,7 @@ const {
     familyTree: { findUnique: vi.fn() },
     collaborator: { findUnique: vi.fn() },
     familyPicture: { findFirst: vi.fn() },
+    familyPictureVersion: { findUnique: vi.fn() },
     generation: { create: vi.fn() },
   };
   return {
@@ -66,7 +67,10 @@ describe("/api/trees/[treeId]/family-pictures/[familyPictureId]/tweak", () => {
     prismaMock.familyTree.findUnique.mockResolvedValue({ ownerId: "user-1" });
     prismaMock.familyPicture.findFirst.mockResolvedValue({
       userId: "user-1",
-      versions: [{ s3Key: "users/user-1/family-pictures/fp1/v1.webp" }],
+      currentVersionNumber: 1,
+    });
+    prismaMock.familyPictureVersion.findUnique.mockResolvedValue({
+      s3Key: "users/user-1/family-pictures/fp1/v1.webp",
     });
     reserveGenerationAllowanceMock.mockResolvedValue({
       ok: true,
@@ -106,6 +110,30 @@ describe("/api/trees/[treeId]/family-pictures/[familyPictureId]/tweak", () => {
     });
   });
 
+  it("tweaks from the current (possibly reverted) Version rather than the latest one", async () => {
+    prismaMock.familyPicture.findFirst.mockResolvedValue({
+      userId: "user-1",
+      currentVersionNumber: 1,
+    });
+    prismaMock.familyPictureVersion.findUnique.mockResolvedValue({
+      s3Key: "users/user-1/family-pictures/fp1/v1.webp",
+    });
+
+    await POST(jsonRequest({ instruction: "make it sunset" }), params());
+
+    expect(prismaMock.familyPictureVersion.findUnique).toHaveBeenCalledWith({
+      where: {
+        familyPictureId_versionNumber: { familyPictureId: "fp1", versionNumber: 1 },
+      },
+      select: { s3Key: true },
+    });
+    expect(processFamilyPictureTweakMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        baseImageKey: "users/user-1/family-pictures/fp1/v1.webp",
+      }),
+    );
+  });
+
   it("rejects an empty instruction, reserving nothing", async () => {
     const response = await POST(jsonRequest({ instruction: "   " }), params());
 
@@ -130,7 +158,7 @@ describe("/api/trees/[treeId]/family-pictures/[familyPictureId]/tweak", () => {
   it("404s when the Family Picture doesn't belong to the caller", async () => {
     prismaMock.familyPicture.findFirst.mockResolvedValue({
       userId: "someone-else",
-      versions: [{ s3Key: "k" }],
+      currentVersionNumber: 1,
     });
 
     const response = await POST(jsonRequest({ instruction: "make it sunset" }), params());
@@ -143,7 +171,7 @@ describe("/api/trees/[treeId]/family-pictures/[familyPictureId]/tweak", () => {
   it("blocks tweaking a Family Picture with no successful Version yet", async () => {
     prismaMock.familyPicture.findFirst.mockResolvedValue({
       userId: "user-1",
-      versions: [],
+      currentVersionNumber: null,
     });
 
     const response = await POST(jsonRequest({ instruction: "make it sunset" }), params());
@@ -153,6 +181,7 @@ describe("/api/trees/[treeId]/family-pictures/[familyPictureId]/tweak", () => {
       errorCode: "ERR_NO_VERSION_TO_TWEAK",
     });
     expect(reserveGenerationAllowanceMock).not.toHaveBeenCalled();
+    expect(prismaMock.familyPictureVersion.findUnique).not.toHaveBeenCalled();
   });
 
   it("hard-blocks a user at their monthly cap with the reset time and creates nothing", async () => {
