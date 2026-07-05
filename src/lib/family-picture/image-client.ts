@@ -42,7 +42,11 @@ export class ImageGenerationProviderError extends Error {
  */
 export interface ImageClient {
   generate(referenceImages: ImageBytes[], prompt: string): Promise<ImageBytes>;
-  tweak(baseImage: ImageBytes, instruction: string): Promise<ImageBytes>;
+  tweak(
+    baseImage: ImageBytes,
+    referenceImages: ImageBytes[],
+    prompt: string,
+  ): Promise<ImageBytes>;
 }
 
 // Confirmed in issue 06-preset-catalog-and-model-id (sign-off 2026-07-04).
@@ -135,13 +139,22 @@ export function createFamilyPictureImageClient(
       }
     },
 
-    async tweak(baseImage, instruction) {
+    async tweak(baseImage, referenceImages, prompt) {
       try {
-        const image = await toUploadableImage(baseImage, "base.png");
+        const base = await toUploadableImage(baseImage, "base.png");
+        const references = await Promise.all(
+          referenceImages.map((image, index) =>
+            toUploadableImage(image, `reference-${index}.png`),
+          ),
+        );
+        // The base Version leads (it's the image being edited); the members'
+        // face crops follow as likeness references. With no crops, this stays a
+        // single-image edit exactly as before.
+        const image = references.length > 0 ? [base, ...references] : base;
         const response = await client.images.edit({
           model,
           image,
-          prompt: instruction,
+          prompt,
           size: OUTPUT_SIZE,
           output_format: "webp",
         });

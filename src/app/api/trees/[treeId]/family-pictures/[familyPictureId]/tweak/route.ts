@@ -1,5 +1,7 @@
 import { withTreeRole } from "@/lib/with-tree-role";
 import { FAMILY_PICTURE_FREE_TEXT_MAX_LENGTH } from "@/lib/family-picture/preset-catalog";
+import { checkFamilyPictureContent } from "@/lib/family-picture/content-guard";
+import type { FamilyPictureMemberSnapshot } from "../../route";
 import { processFamilyPictureTweak } from "@/lib/family-picture/run-generation";
 import {
   refundGenerationAllowance,
@@ -29,12 +31,18 @@ export const POST = withTreeRole<{ treeId: string; familyPictureId: string }>(
     if (instruction.length > FAMILY_PICTURE_FREE_TEXT_MAX_LENGTH) {
       return Response.json({ errorCode: "ERR_TEXT_TOO_LONG" }, { status: 400 });
     }
+    // ADR 0008: the tweak instruction is a free-text surface reaching the
+    // model, so it passes the same content guard as the other free-text fields.
+    if (!checkFamilyPictureContent(instruction).ok) {
+      return Response.json({ errorCode: "ERR_TEXT_NOT_ALLOWED" }, { status: 400 });
+    }
 
     const picture = await ctx.prisma.familyPicture.findFirst({
       where: { id: familyPictureId, treeId: ctx.params.treeId },
       select: {
         userId: true,
         currentVersionNumber: true,
+        memberSnapshot: true,
       },
     });
 
@@ -60,6 +68,20 @@ export const POST = withTreeRole<{ treeId: string; familyPictureId: string }>(
     if (!baseVersion) {
       return Response.json({ errorCode: "ERR_NO_VERSION_TO_TWEAK" }, { status: 400 });
     }
+
+    // Re-supply the depicted Members' current face crops as likeness references
+    // (PRD story 17). Looked up live by the snapshot's member ids: the base
+    // Version anchors the composition, so any Member since deleted or without a
+    // Profile Photo simply contributes no crop.
+    const snapshot =
+      (picture.memberSnapshot as unknown as FamilyPictureMemberSnapshot[]) ?? [];
+    const membersWithPhotos = await ctx.prisma.treeMember.findMany({
+      where: { id: { in: snapshot.map((m) => m.id) }, treeId: ctx.params.treeId },
+      select: { photoKey: true },
+    });
+    const referencePhotoKeys = membersWithPhotos
+      .map((m) => m.photoKey)
+      .filter((key): key is string => key !== null);
 
     // Reserve the allowance slot before any paid work and before creating the
     // Generation row itself, so a user at their cap is hard-blocked
@@ -98,6 +120,7 @@ export const POST = withTreeRole<{ treeId: string; familyPictureId: string }>(
       familyPictureId,
       userId: ctx.user.id,
       baseImageKey: baseVersion.s3Key,
+      referencePhotoKeys,
       instruction,
     }).catch((error) => {
       console.error("Family Picture tweak crashed", error);

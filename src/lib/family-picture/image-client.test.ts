@@ -67,20 +67,37 @@ describe("generate", () => {
 });
 
 describe("tweak", () => {
-  it("sends the base image and instruction, and returns decoded image bytes", async () => {
+  it("sends the base image alone (no crops) and returns decoded image bytes", async () => {
     const expectedBytes = Buffer.from("tweaked-bytes");
     const edit = vi.fn().mockResolvedValue(
       fakeResponse(expectedBytes.toString("base64")),
     );
     const client = createFamilyPictureImageClient(fakeClient(edit), "gpt-image-test");
 
-    const result = await client.tweak(new Uint8Array([9, 9, 9]), "make it sunset");
+    const result = await client.tweak(new Uint8Array([9, 9, 9]), [], "make it sunset");
 
     expect(Buffer.from(result)).toEqual(expectedBytes);
     expect(edit).toHaveBeenCalledTimes(1);
     const body = edit.mock.calls[0][0];
     expect(body.prompt).toBe("make it sunset");
+    // With no crops this stays a single-image edit.
     expect(Array.isArray(body.image)).toBe(false);
+  });
+
+  it("leads with the base image and appends the face crops as references", async () => {
+    const edit = vi.fn().mockResolvedValue(fakeResponse(Buffer.from("x").toString("base64")));
+    const client = createFamilyPictureImageClient(fakeClient(edit), "gpt-image-test");
+
+    await client.tweak(
+      new Uint8Array([9]),
+      [new Uint8Array([1]), new Uint8Array([2])],
+      "make it sunset",
+    );
+
+    const body = edit.mock.calls[0][0];
+    // Base Version first (the image being edited), then one entry per crop.
+    expect(Array.isArray(body.image)).toBe(true);
+    expect(body.image).toHaveLength(3);
   });
 });
 
@@ -113,7 +130,7 @@ describe("typed failures", () => {
     const client = createFamilyPictureImageClient(fakeClient(edit), "gpt-image-test");
 
     await expect(
-      client.tweak(new Uint8Array([1]), "instruction"),
+      client.tweak(new Uint8Array([1]), [], "instruction"),
     ).rejects.toBeInstanceOf(ImageGenerationBillingError);
   });
 

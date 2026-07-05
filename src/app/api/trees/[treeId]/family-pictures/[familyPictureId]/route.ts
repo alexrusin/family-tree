@@ -1,5 +1,6 @@
 import { withTreeRole } from "@/lib/with-tree-role";
 import { sweepStrandedGenerations } from "@/lib/family-picture/stranded-sweep";
+import { refundGenerationAllowance } from "@/lib/family-picture/allowance-ledger";
 import { resolveCurrentVersion } from "@/lib/family-picture/current-version";
 import type { FamilyPictureMemberSnapshot } from "../route";
 
@@ -8,7 +9,9 @@ export const GET = withTreeRole<{ treeId: string; familyPictureId: string }>(
   async (ctx) => {
     const { treeId, familyPictureId } = ctx.params;
 
-    await sweepStrandedGenerations(ctx.prisma);
+    await sweepStrandedGenerations(ctx.prisma, (id) =>
+      refundGenerationAllowance(ctx.prisma, id),
+    );
 
     const picture = await ctx.prisma.familyPicture.findFirst({
       where: { id: familyPictureId, treeId },
@@ -28,7 +31,7 @@ export const GET = withTreeRole<{ treeId: string; familyPictureId: string }>(
     return Response.json(
       {
         id: picture.id,
-        memberSnapshot: picture.memberSnapshot as FamilyPictureMemberSnapshot[],
+        memberSnapshot: picture.memberSnapshot as unknown as FamilyPictureMemberSnapshot[],
         stylePreset: picture.stylePreset,
         settingPreset: picture.settingPreset,
         customPlace: picture.customPlace,

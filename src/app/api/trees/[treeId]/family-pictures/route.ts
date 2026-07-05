@@ -8,6 +8,7 @@ import {
   isSettingPresetId,
   isStylePresetId,
 } from "@/lib/family-picture/preset-catalog";
+import { checkFamilyPictureContent } from "@/lib/family-picture/content-guard";
 import type { Setting, SettingPresetId } from "@/lib/family-picture/prompt-builder";
 import { resolveTreeMemberPhotoUrl } from "@/lib/tree-domain/member-photo";
 import { sweepStrandedGenerations } from "@/lib/family-picture/stranded-sweep";
@@ -20,6 +21,7 @@ import {
 import { getGlobalBudgetStatus } from "@/lib/family-picture/global-budget";
 import { resolveCurrentVersion } from "@/lib/family-picture/current-version";
 import type { GenerationStatus } from "@/generated/prisma/enums";
+import type { Prisma } from "@/generated/prisma/client";
 import { randomUUID } from "crypto";
 
 export interface FamilyPictureMemberSnapshot {
@@ -65,7 +67,9 @@ function toFamilyPictureSummary(picture: {
 export const GET = withTreeRole("viewer", async (ctx) => {
   const { treeId } = ctx.params;
 
-  await sweepStrandedGenerations(ctx.prisma);
+  await sweepStrandedGenerations(ctx.prisma, (id) =>
+    refundGenerationAllowance(ctx.prisma, id),
+  );
 
   const [pictures, allowance] = await Promise.all([
     ctx.prisma.familyPicture.findMany({
@@ -126,6 +130,11 @@ export const POST = withTreeRole("viewer", async (ctx) => {
     if (trimmed.length > FAMILY_PICTURE_FREE_TEXT_MAX_LENGTH) {
       return Response.json({ errorCode: "ERR_TEXT_TOO_LONG" }, { status: 400 });
     }
+    // ADR 0008: free text must pass the content guard before it reaches the
+    // prompt builder — reject injection / disallowed-content attempts.
+    if (!checkFamilyPictureContent(trimmed).ok) {
+      return Response.json({ errorCode: "ERR_TEXT_NOT_ALLOWED" }, { status: 400 });
+    }
     customPlace = trimmed;
   } else {
     return Response.json({ errorCode: "ERR_INVALID_SETTING" }, { status: 400 });
@@ -136,6 +145,9 @@ export const POST = withTreeRole("viewer", async (ctx) => {
     const trimmed = body.personalTouch.trim();
     if (trimmed.length > FAMILY_PICTURE_FREE_TEXT_MAX_LENGTH) {
       return Response.json({ errorCode: "ERR_TEXT_TOO_LONG" }, { status: 400 });
+    }
+    if (!checkFamilyPictureContent(trimmed).ok) {
+      return Response.json({ errorCode: "ERR_TEXT_NOT_ALLOWED" }, { status: 400 });
     }
     personalTouch = trimmed;
   }
@@ -196,7 +208,9 @@ export const POST = withTreeRole("viewer", async (ctx) => {
         data: {
           userId: ctx.user.id,
           treeId,
-          memberSnapshot,
+          // Prisma's JSON input type rejects the nullable fields in the
+          // snapshot (`lastName`/`photoUrl`), so widen through `unknown`.
+          memberSnapshot: memberSnapshot as unknown as Prisma.InputJsonValue,
           stylePreset,
           settingPreset,
           customPlace,

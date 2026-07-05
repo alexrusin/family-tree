@@ -63,3 +63,18 @@ export function buildFamilyPicturePrompt(
 
   return sentences.join(" ");
 }
+
+/**
+ * Wraps a user's short tweak instruction with the same likeness-preservation
+ * guardrail the initial prompt carries, so a tweak refines the scene without
+ * drifting anyone's face (PRD story 17: "each tweak to preserve everyone's
+ * likeness"). The base Version is the reference here rather than the per-member
+ * photos, so the language points at the current image. `instruction` is assumed
+ * already server-validated (length + content guard) by the caller.
+ */
+export function buildFamilyPictureTweakPrompt(instruction: string): string {
+  return [
+    `Apply this change to the existing family portrait: ${instruction.trim()}.`,
+    "Preserve every person's facial identity and likeness exactly as in the current image; change only what the instruction asks and keep everyone recognizably the same people.",
+  ].join(" ");
+}

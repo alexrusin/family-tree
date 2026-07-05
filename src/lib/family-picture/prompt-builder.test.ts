@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   buildFamilyPicturePrompt,
+  buildFamilyPictureTweakPrompt,
   type SettingPresetId,
   type StylePresetId,
 } from "./prompt-builder";
@@ -79,5 +80,24 @@ describe("buildFamilyPicturePrompt", () => {
     const b = buildFamilyPicturePrompt("oil", { preset: "beach" }, "a golden retriever in frame");
 
     expect(a).toBe(b);
+  });
+});
+
+describe("buildFamilyPictureTweakPrompt", () => {
+  it("carries the user's instruction", () => {
+    expect(buildFamilyPictureTweakPrompt("make it sunset")).toContain("make it sunset");
+  });
+
+  it("wraps every instruction with likeness-preservation language (story 17)", () => {
+    const prompt = buildFamilyPictureTweakPrompt("add a birthday cake");
+
+    expect(prompt).toMatch(/facial identity and likeness/i);
+    expect(prompt).toMatch(/change only what the instruction asks/i);
+  });
+
+  it("trims surrounding whitespace from the instruction", () => {
+    expect(buildFamilyPictureTweakPrompt("  make it sunset  ")).toContain(
+      "portrait: make it sunset.",
+    );
   });
 });

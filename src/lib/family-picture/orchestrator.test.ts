@@ -100,6 +100,11 @@ function makeTweakDeps(
       tweak: vi.fn().mockResolvedValue(new Uint8Array([4, 5, 6])),
     },
     downloadBaseImage: vi.fn().mockResolvedValue(new Uint8Array([9])),
+    downloadReferenceImage: vi
+      .fn()
+      .mockImplementation((key: string) =>
+        Promise.resolve(new Uint8Array([key.length])),
+      ),
     uploadVersionImage: vi.fn().mockResolvedValue(undefined),
     nextVersionNumber: vi.fn().mockResolvedValue(2),
     buildVersionKey: vi.fn().mockReturnValue("users/u1/family-pictures/fp1/v2.webp"),
@@ -117,6 +122,7 @@ const tweakJob = {
   familyPictureId: "fp1",
   userId: "u1",
   baseImageKey: "users/u1/family-pictures/fp1/v1.webp",
+  referencePhotoKeys: ["trees/t1/members/m1.webp", "trees/t1/members/m2.webp"],
   instruction: "make it sunset",
 };
 
@@ -129,10 +135,18 @@ describe("runFamilyPictureTweak", () => {
     expect(deps.downloadBaseImage).toHaveBeenCalledWith(
       "users/u1/family-pictures/fp1/v1.webp",
     );
+    // Base Version, plus the members' downloaded face crops as likeness
+    // references, plus the wrapped prompt (PRD story 17) — never the bare
+    // instruction.
+    expect(deps.downloadReferenceImage).toHaveBeenCalledWith("trees/t1/members/m1.webp");
+    expect(deps.downloadReferenceImage).toHaveBeenCalledWith("trees/t1/members/m2.webp");
     expect(deps.imageClient.tweak).toHaveBeenCalledWith(
       new Uint8Array([9]),
-      "make it sunset",
+      [new Uint8Array([24]), new Uint8Array([24])],
+      expect.stringContaining("make it sunset"),
     );
+    const tweakPrompt = vi.mocked(deps.imageClient.tweak).mock.calls[0][2];
+    expect(tweakPrompt).toMatch(/likeness/i);
     expect(deps.uploadVersionImage).toHaveBeenCalledWith(
       "users/u1/family-pictures/fp1/v2.webp",
       new Uint8Array([4, 5, 6]),
@@ -177,5 +191,41 @@ describe("runFamilyPictureTweak", () => {
     expect(deps.markSucceeded).not.toHaveBeenCalled();
     expect(deps.markFailed).toHaveBeenCalledWith("gen2", "S3 unavailable");
     expect(deps.refundAllowance).toHaveBeenCalledWith("gen2");
+  });
+
+  it("drops a face crop that fails to download and tweaks with the rest, not failing the Generation", async () => {
+    const deps = makeTweakDeps({
+      downloadReferenceImage: vi
+        .fn()
+        .mockRejectedValueOnce(new Error("crop gone"))
+        .mockResolvedValueOnce(new Uint8Array([7])),
+    });
+
+    await runFamilyPictureTweak(deps, tweakJob);
+
+    // Only the surviving crop reaches the model; the missing one is skipped.
+    expect(deps.imageClient.tweak).toHaveBeenCalledWith(
+      new Uint8Array([9]),
+      [new Uint8Array([7])],
+      expect.any(String),
+    );
+    expect(deps.markSucceeded).toHaveBeenCalledWith("gen2");
+    expect(deps.markFailed).not.toHaveBeenCalled();
+  });
+
+  it("tweaks from the base image alone when no face crops are available", async () => {
+    const deps = makeTweakDeps({
+      downloadReferenceImage: vi.fn(),
+    });
+
+    await runFamilyPictureTweak(deps, { ...tweakJob, referencePhotoKeys: [] });
+
+    expect(deps.downloadReferenceImage).not.toHaveBeenCalled();
+    expect(deps.imageClient.tweak).toHaveBeenCalledWith(
+      new Uint8Array([9]),
+      [],
+      expect.any(String),
+    );
+    expect(deps.markSucceeded).toHaveBeenCalledWith("gen2");
   });
 });

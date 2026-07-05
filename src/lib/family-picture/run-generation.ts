@@ -107,6 +107,10 @@ export async function processFamilyPictureTweak(job: TweakJob): Promise<void> {
       const photo = await downloadPhotoByKey({ s3Client, bucket, key });
       return photo.body;
     },
+    downloadReferenceImage: async (key) => {
+      const photo = await downloadPhotoByKey({ s3Client, bucket, key });
+      return photo.body;
+    },
     uploadVersionImage: async (key, bytes) => {
       await uploadProcessedPhoto({
         s3Client,
