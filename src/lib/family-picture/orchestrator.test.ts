@@ -13,6 +13,8 @@ function makeDeps(overrides: Partial<OrchestratorDeps> = {}): OrchestratorDeps {
     createVersion: vi.fn().mockResolvedValue(undefined),
     markSucceeded: vi.fn().mockResolvedValue(undefined),
     markFailed: vi.fn().mockResolvedValue(undefined),
+    consumeAllowance: vi.fn().mockResolvedValue(undefined),
+    refundAllowance: vi.fn().mockResolvedValue(undefined),
     ...overrides,
   };
 }
@@ -50,9 +52,11 @@ describe("runFamilyPictureGeneration", () => {
     });
     expect(deps.markSucceeded).toHaveBeenCalledWith("gen1");
     expect(deps.markFailed).not.toHaveBeenCalled();
+    expect(deps.consumeAllowance).toHaveBeenCalledWith("gen1");
+    expect(deps.refundAllowance).not.toHaveBeenCalled();
   });
 
-  it("failure path: an image client error marks the Generation failed and writes nothing", async () => {
+  it("failure path: an image client error marks the Generation failed, refunds the allowance, and writes nothing", async () => {
     const deps = makeDeps({
       imageClient: {
         generate: vi.fn().mockRejectedValue(new Error("provider declined")),
@@ -65,9 +69,11 @@ describe("runFamilyPictureGeneration", () => {
     expect(deps.createVersion).not.toHaveBeenCalled();
     expect(deps.markSucceeded).not.toHaveBeenCalled();
     expect(deps.markFailed).toHaveBeenCalledWith("gen1", "provider declined");
+    expect(deps.refundAllowance).toHaveBeenCalledWith("gen1");
+    expect(deps.consumeAllowance).not.toHaveBeenCalled();
   });
 
-  it("failure path: a storage error also marks the Generation failed, not succeeded", async () => {
+  it("failure path: a storage error also marks the Generation failed and refunds, not succeeds", async () => {
     const deps = makeDeps({
       uploadVersionImage: vi.fn().mockRejectedValue(new Error("S3 unavailable")),
     });
@@ -77,5 +83,6 @@ describe("runFamilyPictureGeneration", () => {
     expect(deps.createVersion).not.toHaveBeenCalled();
     expect(deps.markSucceeded).not.toHaveBeenCalled();
     expect(deps.markFailed).toHaveBeenCalledWith("gen1", "S3 unavailable");
+    expect(deps.refundAllowance).toHaveBeenCalledWith("gen1");
   });
 });

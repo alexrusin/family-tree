@@ -568,6 +568,11 @@
       "generate": "Generate",
       "result": "Result"
     },
+    "allowance": {
+      "remainingLabel": "{remaining} of {cap} · resets {date}",
+      "capReachedTitle": "You've used all {cap} generations this month",
+      "capReachedBody": "Your allowance resets on {date}. Your finished pictures stay saved."
+    },
     "picker": {
       "title": "Who's in the picture?",
       "subtitle": "Only relatives with a profile photo can be rendered as themselves.",

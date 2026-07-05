@@ -33,6 +33,10 @@ export interface OrchestratorDeps {
   }) => Promise<void>;
   markSucceeded: (generationId: string) => Promise<void>;
   markFailed: (generationId: string, errorMessage: string) => Promise<void>;
+  /** Converts the Generation's already-open allowance reservation into a consumption. */
+  consumeAllowance: (generationId: string) => Promise<void>;
+  /** Releases the Generation's already-open allowance reservation (never charge for a result the user didn't get). */
+  refundAllowance: (generationId: string) => Promise<void>;
 }
 
 /**
@@ -70,9 +74,11 @@ export async function runFamilyPictureGeneration(
       versionNumber,
     });
 
+    await deps.consumeAllowance(job.generationId);
     await deps.markSucceeded(job.generationId);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
+    await deps.refundAllowance(job.generationId);
     await deps.markFailed(job.generationId, message);
   }
 }

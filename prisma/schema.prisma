@@ -35,6 +35,7 @@ model User {
   issueReports       IssueReport[]
   familyPictures     FamilyPicture[]
   generations        Generation[]
+  generationLedgerEntries GenerationLedgerEntry[]
 }
 
 model Session {
@@ -321,4 +322,28 @@ model Generation {
   @@index([userId])
   @@index([familyPictureId])
   @@index([status, createdAt])
+}
+
+enum GenerationLedgerEntryKind {
+  reservation
+  consumption
+  refund
+}
+
+// Persistence for the per-user monthly Generation Allowance; the pure
+// ledger math lives in `allowance.ts`. One row per transition. `periodKey`
+// (UTC "YYYY-MM") scopes rows to a calendar month so the cap resets without
+// a cron job — the monthly allotment itself is a virtual grant applied in
+// code (see `allowance-ledger.ts`), not a stored row.
+model GenerationLedgerEntry {
+  id            String                    @id @default(uuid())
+  userId        String                    @map("user_id")
+  user          User                      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  kind          GenerationLedgerEntryKind
+  reservationId String                    @map("reservation_id")
+  periodKey     String                    @map("period_key")
+  createdAt     DateTime                  @default(now()) @map("created_at") @db.Timestamp(6)
+
+  @@index([userId, periodKey])
+  @@index([reservationId])
 }

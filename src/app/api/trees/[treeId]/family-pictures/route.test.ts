@@ -1,7 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { NextRequest } from "next/server";
 
-const { getSessionMock, prismaMock, processFamilyPictureGenerationMock } = vi.hoisted(() => {
+const {
+  getSessionMock,
+  prismaMock,
+  processFamilyPictureGenerationMock,
+  reserveGenerationAllowanceMock,
+  refundGenerationAllowanceMock,
+  getAllowanceStatusMock,
+} = vi.hoisted(() => {
   const getSessionMock = vi.fn();
   const prismaMock = {
     familyTree: { findUnique: vi.fn() },
@@ -15,6 +22,9 @@ const { getSessionMock, prismaMock, processFamilyPictureGenerationMock } = vi.ho
     getSessionMock,
     prismaMock,
     processFamilyPictureGenerationMock: vi.fn().mockResolvedValue(undefined),
+    reserveGenerationAllowanceMock: vi.fn(),
+    refundGenerationAllowanceMock: vi.fn().mockResolvedValue(undefined),
+    getAllowanceStatusMock: vi.fn(),
   };
 });
 
@@ -26,6 +36,12 @@ vi.mock("@/lib/prisma", () => ({ prisma: prismaMock }));
 
 vi.mock("@/lib/family-picture/run-generation", () => ({
   processFamilyPictureGeneration: processFamilyPictureGenerationMock,
+}));
+
+vi.mock("@/lib/family-picture/allowance-ledger", () => ({
+  reserveGenerationAllowance: reserveGenerationAllowanceMock,
+  refundGenerationAllowance: refundGenerationAllowanceMock,
+  getAllowanceStatus: getAllowanceStatusMock,
 }));
 
 const { GET, POST } = await import("./route");
@@ -45,6 +61,14 @@ describe("/api/trees/[treeId]/family-pictures", () => {
     prismaMock.familyTree.findUnique.mockResolvedValue({ ownerId: "user-1" });
     prismaMock.generation.updateMany.mockResolvedValue({ count: 0 });
     prismaMock.$transaction.mockImplementation(async (cb) => cb(prismaMock));
+    reserveGenerationAllowanceMock.mockResolvedValue({
+      ok: true,
+      resetAt: new Date("2026-08-01T00:00:00Z"),
+    });
+    getAllowanceStatusMock.mockResolvedValue({
+      remaining: 7,
+      resetAt: new Date("2026-08-01T00:00:00Z"),
+    });
   });
 
   describe("POST", () => {
@@ -86,6 +110,46 @@ describe("/api/trees/[treeId]/family-pictures", () => {
           setting: { preset: "garden" },
         }),
       );
+      expect(reserveGenerationAllowanceMock).toHaveBeenCalledWith(
+        prismaMock,
+        "user-1",
+        expect.any(String),
+      );
+      const reservedBeforeTransaction =
+        reserveGenerationAllowanceMock.mock.invocationCallOrder[0] <
+        prismaMock.$transaction.mock.invocationCallOrder[0];
+      expect(reservedBeforeTransaction).toBe(true);
+    });
+
+    it("hard-blocks a user at their monthly cap with the reset time and creates nothing", async () => {
+      reserveGenerationAllowanceMock.mockResolvedValue({
+        ok: false,
+        resetAt: new Date("2026-08-01T00:00:00Z"),
+      });
+      prismaMock.treeMember.findMany.mockResolvedValue([
+        {
+          id: "m1",
+          firstName: "Alex",
+          lastName: "Rusin",
+          isLiving: true,
+          birthYear: 1972,
+          photoKey: "trees/t1/members/m1.webp",
+          photoUrl: null,
+        },
+      ]);
+
+      const response = await POST(
+        jsonRequest({ memberIds: ["m1"], stylePreset: "bw", settingPreset: "garden" }),
+        { params: Promise.resolve({ treeId: "t1" }) },
+      );
+
+      expect(response.status).toBe(403);
+      await expect(response.json()).resolves.toEqual({
+        errorCode: "ERR_ALLOWANCE_EXHAUSTED",
+        resetAt: "2026-08-01T00:00:00.000Z",
+      });
+      expect(prismaMock.$transaction).not.toHaveBeenCalled();
+      expect(processFamilyPictureGenerationMock).not.toHaveBeenCalled();
     });
 
     it("rejects an ineligible member selection", async () => {
@@ -188,6 +252,8 @@ describe("/api/trees/[treeId]/family-pictures", () => {
             imageUrl: "/api/trees/t1/family-pictures/fp1/image",
           },
         ],
+        remainingGenerations: 7,
+        allowanceResetAt: "2026-08-01T00:00:00.000Z",
       });
     });
   });

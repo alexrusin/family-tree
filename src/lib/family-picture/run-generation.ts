@@ -15,6 +15,10 @@ import {
   type GenerationJob,
   type OrchestratorDeps,
 } from "./orchestrator";
+import {
+  consumeGenerationAllowance,
+  refundGenerationAllowance,
+} from "./allowance-ledger";
 
 /**
  * Server-only adapter wiring the pure orchestrator to the real Prisma
@@ -68,6 +72,8 @@ export async function processFamilyPictureGeneration(
         data: { status: "failed", errorMessage },
       });
     },
+    consumeAllowance: (generationId) => consumeGenerationAllowance(prisma, generationId),
+    refundAllowance: (generationId) => refundGenerationAllowance(prisma, generationId),
   };
 
   await runFamilyPictureGeneration(deps, job);

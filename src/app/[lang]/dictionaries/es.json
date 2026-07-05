@@ -568,6 +568,11 @@
       "generate": "Generar",
       "result": "Resultado"
     },
+    "allowance": {
+      "remainingLabel": "{remaining} de {cap} · se reinicia {date}",
+      "capReachedTitle": "Has usado las {cap} generaciones de este mes",
+      "capReachedBody": "Tu asignación se reinicia el {date}. Tus fotos terminadas siguen guardadas."
+    },
     "picker": {
       "title": "¿Quién está en la foto?",
       "subtitle": "Solo los familiares con foto de perfil pueden representarse como ellos mismos.",

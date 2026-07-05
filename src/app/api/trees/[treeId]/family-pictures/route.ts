@@ -12,7 +12,13 @@ import type { Setting, SettingPresetId } from "@/lib/family-picture/prompt-build
 import { resolveTreeMemberPhotoUrl } from "@/lib/tree-domain/member-photo";
 import { sweepStrandedGenerations } from "@/lib/family-picture/stranded-sweep";
 import { processFamilyPictureGeneration } from "@/lib/family-picture/run-generation";
+import {
+  getAllowanceStatus,
+  refundGenerationAllowance,
+  reserveGenerationAllowance,
+} from "@/lib/family-picture/allowance-ledger";
 import type { GenerationStatus } from "@/generated/prisma/enums";
+import { randomUUID } from "crypto";
 
 export interface FamilyPictureMemberSnapshot {
   id: string;
@@ -55,17 +61,24 @@ export const GET = withTreeRole("viewer", async (ctx) => {
 
   await sweepStrandedGenerations(ctx.prisma);
 
-  const pictures = await ctx.prisma.familyPicture.findMany({
-    where: { treeId, userId: ctx.user.id },
-    orderBy: { createdAt: "desc" },
-    include: {
-      generations: { orderBy: { createdAt: "desc" }, take: 1 },
-      versions: { orderBy: { versionNumber: "desc" }, take: 1 },
-    },
-  });
+  const [pictures, allowance] = await Promise.all([
+    ctx.prisma.familyPicture.findMany({
+      where: { treeId, userId: ctx.user.id },
+      orderBy: { createdAt: "desc" },
+      include: {
+        generations: { orderBy: { createdAt: "desc" }, take: 1 },
+        versions: { orderBy: { versionNumber: "desc" }, take: 1 },
+      },
+    }),
+    getAllowanceStatus(ctx.prisma, ctx.user.id),
+  ]);
 
   return Response.json(
-    { familyPictures: pictures.map(toFamilyPictureSummary) },
+    {
+      familyPictures: pictures.map(toFamilyPictureSummary),
+      remainingGenerations: allowance.remaining,
+      allowanceResetAt: allowance.resetAt.toISOString(),
+    },
     { status: 200 },
   );
 });
@@ -149,29 +162,49 @@ export const POST = withTreeRole("viewer", async (ctx) => {
     }),
   }));
 
-  const { familyPicture, generation } = await ctx.prisma.$transaction(async (tx) => {
-    const familyPicture = await tx.familyPicture.create({
-      data: {
-        userId: ctx.user.id,
-        treeId,
-        memberSnapshot,
-        stylePreset,
-        settingPreset,
-        customPlace,
-        personalTouch,
-      },
-    });
+  // Reserve the allowance slot before any paid work — and before creating the
+  // Generation row itself — so a user at their cap is hard-blocked
+  // synchronously with no Generation ever created.
+  const reservationId = randomUUID();
+  const reservation = await reserveGenerationAllowance(ctx.prisma, ctx.user.id, reservationId);
+  if (!reservation.ok) {
+    return Response.json(
+      { errorCode: "ERR_ALLOWANCE_EXHAUSTED", resetAt: reservation.resetAt.toISOString() },
+      { status: 403 },
+    );
+  }
 
-    const generation = await tx.generation.create({
-      data: {
-        userId: ctx.user.id,
-        familyPictureId: familyPicture.id,
-        status: "pending",
-      },
-    });
+  let familyPicture: { id: string };
+  let generation: { id: string };
+  try {
+    ({ familyPicture, generation } = await ctx.prisma.$transaction(async (tx) => {
+      const familyPicture = await tx.familyPicture.create({
+        data: {
+          userId: ctx.user.id,
+          treeId,
+          memberSnapshot,
+          stylePreset,
+          settingPreset,
+          customPlace,
+          personalTouch,
+        },
+      });
 
-    return { familyPicture, generation };
-  });
+      const generation = await tx.generation.create({
+        data: {
+          id: reservationId,
+          userId: ctx.user.id,
+          familyPictureId: familyPicture.id,
+          status: "pending",
+        },
+      });
+
+      return { familyPicture, generation };
+    }));
+  } catch (error) {
+    await refundGenerationAllowance(ctx.prisma, reservationId);
+    throw error;
+  }
 
   const setting: Setting = settingPreset
     ? { preset: settingPreset }

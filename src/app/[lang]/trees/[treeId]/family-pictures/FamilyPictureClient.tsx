@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Search, X, Check, Sparkles, ImageOff } from "lucide-react";
+import { Search, X, Check, Sparkles, ImageOff, TriangleAlert } from "lucide-react";
 import {
   resolveMemberEligibility,
   FAMILY_PICTURE_MAX_MEMBERS,
@@ -12,6 +12,7 @@ import {
   SETTING_PRESETS,
   FAMILY_PICTURE_FREE_TEXT_MAX_LENGTH,
 } from "@/lib/family-picture/preset-catalog";
+import { MONTHLY_GENERATION_ALLOWANCE } from "@/lib/family-picture/allowance-period";
 import type {
   SettingPresetId,
   StylePresetId,
@@ -33,6 +34,11 @@ export interface FamilyPictureT {
     sceneStyle: string;
     generate: string;
     result: string;
+  };
+  allowance: {
+    remainingLabel: string;
+    capReachedTitle: string;
+    capReachedBody: string;
   };
   picker: {
     title: string;
@@ -169,6 +175,10 @@ function reasonLabel(
   }
 }
 
+function formatAllowanceDate(iso: string): string {
+  return new Date(iso).toLocaleDateString(undefined, { month: "long", day: "numeric" });
+}
+
 function mapErrorCode(
   errorCode: string | null | undefined,
   errors: FamilyPictureT["errors"],
@@ -212,6 +222,11 @@ export default function FamilyPictureClient({
 
   const [gallery, setGallery] = useState<FamilyPictureSummary[] | null>(null);
   const [viewingId, setViewingId] = useState<string | null>(null);
+  const [allowance, setAllowance] = useState<{
+    remaining: number;
+    resetAt: string;
+  } | null>(null);
+  const [capReachedResetAt, setCapReachedResetAt] = useState<string | null>(null);
 
   const capTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -238,8 +253,19 @@ export default function FamilyPictureClient({
       if (!response.ok) return;
       const data = (await response.json()) as {
         familyPictures?: FamilyPictureSummary[];
+        remainingGenerations?: number;
+        allowanceResetAt?: string;
       };
       setGallery(data.familyPictures ?? []);
+      if (
+        typeof data.remainingGenerations === "number" &&
+        typeof data.allowanceResetAt === "string"
+      ) {
+        setAllowance({
+          remaining: data.remainingGenerations,
+          resetAt: data.allowanceResetAt,
+        });
+      }
     } catch {
       // Gallery load failures are non-fatal — the creator flow still works.
     }
@@ -364,12 +390,14 @@ export default function FamilyPictureClient({
     setCustomPlace("");
     setPersonalTouch("");
     setSubmitError(null);
+    setCapReachedResetAt(null);
     setGeneration(null);
   }, []);
 
   const handleSubmit = useCallback(async () => {
     setSubmitting(true);
     setSubmitError(null);
+    setCapReachedResetAt(null);
     try {
       const body: Record<string, unknown> = {
         memberIds: selectedIds,
@@ -391,10 +419,15 @@ export default function FamilyPictureClient({
         familyPictureId?: string;
         generationId?: string;
         errorCode?: string;
+        resetAt?: string;
       } | null;
 
       if (!response.ok || !payload?.familyPictureId) {
-        setSubmitError(mapErrorCode(payload?.errorCode, t.errors));
+        if (payload?.errorCode === "ERR_ALLOWANCE_EXHAUSTED" && payload.resetAt) {
+          setCapReachedResetAt(payload.resetAt);
+        } else {
+          setSubmitError(mapErrorCode(payload?.errorCode, t.errors));
+        }
         setSubmitting(false);
         return;
       }
@@ -406,6 +439,7 @@ export default function FamilyPictureClient({
         errorMessage: null,
       });
       setStep(2);
+      void loadGallery();
     } catch {
       setSubmitError(t.errors.generic);
     } finally {
@@ -419,23 +453,39 @@ export default function FamilyPictureClient({
     personalTouch,
     treeId,
     t.errors,
+    loadGallery,
   ]);
 
   const viewingPicture = gallery?.find((p) => p.id === viewingId) ?? null;
 
   return (
     <div className="max-w-6xl mx-auto px-6 pt-24 pb-24">
-      <header className="mb-8">
-        <div className="flex items-center gap-2 text-sm text-stone-500 mb-3">
-          <Sparkles className="w-4 h-4 text-amber-800" />
-          <span>{treeName}</span>
-          <span className="text-stone-300">/</span>
-          <span className="text-stone-700 font-medium">{t.pageTitle}</span>
+      <header className="mb-8 flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-2 text-sm text-stone-500 mb-3">
+            <Sparkles className="w-4 h-4 text-amber-800" />
+            <span>{treeName}</span>
+            <span className="text-stone-300">/</span>
+            <span className="text-stone-700 font-medium">{t.pageTitle}</span>
+          </div>
+          <h1 className="text-3xl font-semibold leading-tight tracking-tight text-amber-900">
+            {t.pageTitle}
+          </h1>
+          <p className="text-stone-600 mt-1.5 text-[15px]">{t.pageSubtitle}</p>
         </div>
-        <h1 className="text-3xl font-semibold leading-tight tracking-tight text-amber-900">
-          {t.pageTitle}
-        </h1>
-        <p className="text-stone-600 mt-1.5 text-[15px]">{t.pageSubtitle}</p>
+        {allowance && (
+          <div className="shrink-0 bg-white rounded-2xl border border-stone-100 shadow-sm px-4 py-3 flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-amber-100 flex items-center justify-center text-amber-800">
+              <Sparkles className="w-5 h-5" />
+            </div>
+            <div className="text-sm font-semibold text-stone-800">
+              {t.allowance.remainingLabel
+                .replace("{remaining}", String(allowance.remaining))
+                .replace("{cap}", String(MONTHLY_GENERATION_ALLOWANCE))
+                .replace("{date}", formatAllowanceDate(allowance.resetAt))}
+            </div>
+          </div>
+        )}
       </header>
 
       <nav className="mb-8">
@@ -822,6 +872,30 @@ export default function FamilyPictureClient({
               )}
             </div>
           </div>
+
+          {capReachedResetAt && (
+            <div className="rounded-2xl border border-amber-200 bg-amber-50/60 p-5 mt-6">
+              <div className="flex items-start gap-3">
+                <div className="w-9 h-9 rounded-xl bg-amber-100 flex items-center justify-center text-amber-800 shrink-0">
+                  <TriangleAlert className="w-5 h-5" />
+                </div>
+                <div>
+                  <h4 className="font-semibold text-amber-950 text-sm">
+                    {t.allowance.capReachedTitle.replace(
+                      "{cap}",
+                      String(MONTHLY_GENERATION_ALLOWANCE),
+                    )}
+                  </h4>
+                  <p className="text-amber-900/80 text-sm mt-1">
+                    {t.allowance.capReachedBody.replace(
+                      "{date}",
+                      formatAllowanceDate(capReachedResetAt),
+                    )}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
 
           <div className="flex justify-between items-center mt-6">
             <button
