@@ -1,12 +1,17 @@
 "use client";
 
 import { useState } from "react";
-import { AlertTriangle, ArrowLeft, Sparkles, Zap } from "lucide-react";
+import { AlertTriangle, ArrowLeft, Download, Sparkles, Zap } from "lucide-react";
 import type { GenerationStatusValue } from "./FamilyPictureClient";
+import FamilyPictureVersionGallery, {
+  type FamilyPictureVersionGalleryT,
+  type FamilyPictureVersionSummary,
+} from "./FamilyPictureVersionGallery";
 
 interface FamilyPictureResultStepT {
   aiGenerated: string;
   privateNote: string;
+  download: string;
   startAnother: string;
   savedTo: string;
   failedTitle: string;
@@ -22,6 +27,12 @@ interface FamilyPictureResultStepT {
   };
 }
 
+/** The image route and its watermarked-download counterpart differ only in
+ * this one path segment; both carry the same `?v=` Version selector. */
+function toDownloadUrl(imageUrl: string): string {
+  return imageUrl.replace("/image?", "/download?");
+}
+
 interface FamilyPictureResultStepProps {
   t: FamilyPictureResultStepT;
   imageUrl: string | null;
@@ -31,6 +42,10 @@ interface FamilyPictureResultStepProps {
   tweaking: boolean;
   tweakError: string | null;
   tweakFailed: boolean;
+  versionsT: FamilyPictureVersionGalleryT;
+  versions: FamilyPictureVersionSummary[] | null;
+  onRevert: (versionNumber: number) => void;
+  reverting: boolean;
 }
 
 export default function FamilyPictureResultStep({
@@ -42,6 +57,10 @@ export default function FamilyPictureResultStep({
   tweaking,
   tweakError,
   tweakFailed,
+  versionsT,
+  versions,
+  onRevert,
+  reverting,
 }: FamilyPictureResultStepProps) {
   const [instruction, setInstruction] = useState("");
   // A failed tweak keeps the last successful Version on screen — only the
@@ -79,66 +98,86 @@ export default function FamilyPictureResultStep({
 
   return (
     <section>
-      <div className="max-w-2xl mx-auto">
-        <div className="bg-white rounded-2xl border border-stone-100 shadow-sm p-4 sm:p-5">
-          <div className="relative rounded-xl overflow-hidden bg-stone-100">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={imageUrl}
-              alt="Generated family portrait"
-              className="w-full block"
-            />
-            <span className="absolute bottom-3 left-3 inline-flex items-center gap-1.5 bg-black/60 backdrop-blur text-white text-[11px] font-medium px-2.5 py-1.5 rounded-lg">
-              <Sparkles className="w-3.5 h-3.5" />
-              {t.aiGenerated}
-            </span>
+      <div className="grid lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 min-w-0">
+          <div className="bg-white rounded-2xl border border-stone-100 shadow-sm p-4 sm:p-5">
+            <div className="relative rounded-xl overflow-hidden bg-stone-100">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={imageUrl}
+                alt="Generated family portrait"
+                className="w-full block"
+              />
+              <span className="absolute bottom-3 left-3 inline-flex items-center gap-1.5 bg-black/60 backdrop-blur text-white text-[11px] font-medium px-2.5 py-1.5 rounded-lg">
+                <Sparkles className="w-3.5 h-3.5" />
+                {t.aiGenerated}
+              </span>
+            </div>
+            <div className="flex items-center justify-between gap-3 mt-4 px-1">
+              <p className="text-xs text-stone-400">{t.privateNote}</p>
+              <a
+                href={toDownloadUrl(imageUrl)}
+                download
+                title={t.download}
+                aria-label={t.download}
+                className="text-stone-500 hover:text-amber-900 p-2 rounded-lg hover:bg-stone-50 transition-colors shrink-0"
+              >
+                <Download className="w-5 h-5" />
+              </a>
+            </div>
           </div>
-          <p className="text-xs text-stone-400 mt-4 px-1">{t.privateNote}</p>
+
+          <div className="bg-white rounded-2xl border border-stone-100 shadow-sm p-5 mt-5">
+            <label htmlFor="tweak-input" className="text-sm font-semibold text-stone-900">
+              {t.refine.label}
+            </label>
+            <p className="text-stone-500 text-xs mt-1 mb-3">{t.refine.subtitle}</p>
+            <div className="flex flex-col sm:flex-row gap-2">
+              <input
+                id="tweak-input"
+                value={instruction}
+                onChange={(e) => setInstruction(e.target.value)}
+                placeholder={t.refine.placeholder}
+                disabled={tweaking || status === "pending"}
+                className="flex-1 rounded-xl border border-stone-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-amber-800/30 focus:border-amber-800/40 disabled:opacity-60"
+              />
+              <button
+                type="button"
+                disabled={
+                  tweaking || status === "pending" || instruction.trim().length === 0
+                }
+                onClick={() => {
+                  onTweak(instruction.trim());
+                  setInstruction("");
+                }}
+                className="bg-amber-900 text-white px-5 py-3 rounded-xl text-sm font-semibold shadow-sm hover:shadow-md transition-all active:scale-95 whitespace-nowrap flex items-center justify-center gap-2 disabled:opacity-40 disabled:pointer-events-none"
+              >
+                <Zap className="w-4 h-4" />
+                {tweaking || status === "pending" ? t.refine.refining : t.refine.button}
+              </button>
+            </div>
+            {tweakError && (
+              <p className="text-sm text-red-600 mt-2">{tweakError}</p>
+            )}
+            {tweakFailed && !tweakError && (
+              <p className="text-sm text-red-600 mt-2">{t.refine.failedNote}</p>
+            )}
+            <div className="mt-3 flex items-center gap-1.5 text-[11px] text-stone-400">
+              <Zap className="w-3.5 h-3.5 text-amber-700" />
+              {t.refine.note}
+            </div>
+          </div>
         </div>
 
-        <div className="bg-white rounded-2xl border border-stone-100 shadow-sm p-5 mt-5">
-          <label htmlFor="tweak-input" className="text-sm font-semibold text-stone-900">
-            {t.refine.label}
-          </label>
-          <p className="text-stone-500 text-xs mt-1 mb-3">{t.refine.subtitle}</p>
-          <div className="flex flex-col sm:flex-row gap-2">
-            <input
-              id="tweak-input"
-              value={instruction}
-              onChange={(e) => setInstruction(e.target.value)}
-              placeholder={t.refine.placeholder}
-              disabled={tweaking || status === "pending"}
-              className="flex-1 rounded-xl border border-stone-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-amber-800/30 focus:border-amber-800/40 disabled:opacity-60"
-            />
-            <button
-              type="button"
-              disabled={
-                tweaking || status === "pending" || instruction.trim().length === 0
-              }
-              onClick={() => {
-                onTweak(instruction.trim());
-                setInstruction("");
-              }}
-              className="bg-amber-900 text-white px-5 py-3 rounded-xl text-sm font-semibold shadow-sm hover:shadow-md transition-all active:scale-95 whitespace-nowrap flex items-center justify-center gap-2 disabled:opacity-40 disabled:pointer-events-none"
-            >
-              <Zap className="w-4 h-4" />
-              {tweaking || status === "pending" ? t.refine.refining : t.refine.button}
-            </button>
-          </div>
-          {tweakError && (
-            <p className="text-sm text-red-600 mt-2">{tweakError}</p>
-          )}
-          {tweakFailed && !tweakError && (
-            <p className="text-sm text-red-600 mt-2">{t.refine.failedNote}</p>
-          )}
-          <div className="mt-3 flex items-center gap-1.5 text-[11px] text-stone-400">
-            <Zap className="w-3.5 h-3.5 text-amber-700" />
-            {t.refine.note}
-          </div>
-        </div>
+        <FamilyPictureVersionGallery
+          t={versionsT}
+          versions={versions}
+          onRevert={onRevert}
+          reverting={reverting}
+        />
       </div>
 
-      <div className="flex justify-between items-center mt-6 max-w-2xl mx-auto">
+      <div className="flex justify-between items-center mt-6">
         <button
           type="button"
           onClick={onStartAnother}

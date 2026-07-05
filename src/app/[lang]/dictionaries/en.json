@@ -614,6 +614,7 @@
     "result": {
       "aiGenerated": "AI-generated",
       "privateNote": "Private to you · not visible to other collaborators",
+      "download": "Download (AI-generated label included)",
       "startAnother": "Start another",
       "savedTo": "Saved to My Family Pictures",
       "failedTitle": "That generation didn't go through",
@@ -636,6 +637,14 @@
       "failedRefunded": "Failed",
       "empty": "No Family Pictures yet."
     },
+    "versions": {
+      "title": "Version history",
+      "countLabel": "{count} versions",
+      "current": "Shown",
+      "revert": "Revert",
+      "versionLabel": "Version {n}",
+      "footerNote": "Reverting is free — it just picks an older version as current. Later versions are never deleted."
+    },
     "errors": {
       "ERR_MEMBERS_REQUIRED": "Choose at least one relative.",
       "ERR_INVALID_STYLE_PRESET": "Choose a style.",
@@ -647,6 +656,8 @@
       "ERR_INSTRUCTION_REQUIRED": "Describe the change you want.",
       "ERR_NO_VERSION_TO_TWEAK": "Wait for the picture to finish generating before refining it.",
       "ERR_NOT_FOUND": "We couldn't find that Family Picture.",
+      "ERR_VERSION_REQUIRED": "Choose a version to revert to.",
+      "ERR_VERSION_NOT_FOUND": "That version could no longer be found.",
       "generic": "Something went wrong. Please try again."
     }
   },

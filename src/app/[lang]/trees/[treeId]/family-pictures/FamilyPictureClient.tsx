@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Search, X, Check, Sparkles, ImageOff, TriangleAlert } from "lucide-react";
+import { Search, X, Check, Sparkles, ImageOff, TriangleAlert, Download } from "lucide-react";
 import {
   resolveMemberEligibility,
   FAMILY_PICTURE_MAX_MEMBERS,
@@ -20,6 +20,7 @@ import type {
 import FamilyPictureGenerateStep from "./FamilyPictureGenerateStep";
 import FamilyPictureResultStep from "./FamilyPictureResultStep";
 import FamilyPictureGallery from "./FamilyPictureGallery";
+import type { FamilyPictureVersionSummary } from "./FamilyPictureVersionGallery";
 
 const CUSTOM_SETTING = "custom" as const;
 const GENERATION_POLL_INTERVAL_MS = 2500;
@@ -81,6 +82,7 @@ export interface FamilyPictureT {
   result: {
     aiGenerated: string;
     privateNote: string;
+    download: string;
     startAnother: string;
     savedTo: string;
     failedTitle: string;
@@ -103,6 +105,14 @@ export interface FamilyPictureT {
     failedRefunded: string;
     empty: string;
   };
+  versions: {
+    title: string;
+    countLabel: string;
+    current: string;
+    revert: string;
+    versionLabel: string;
+    footerNote: string;
+  };
   errors: {
     ERR_MEMBERS_REQUIRED: string;
     ERR_INVALID_STYLE_PRESET: string;
@@ -114,6 +124,8 @@ export interface FamilyPictureT {
     ERR_INSTRUCTION_REQUIRED: string;
     ERR_NO_VERSION_TO_TWEAK: string;
     ERR_NOT_FOUND: string;
+    ERR_VERSION_REQUIRED: string;
+    ERR_VERSION_NOT_FOUND: string;
     generic: string;
     [key: string]: string;
   };
@@ -188,6 +200,10 @@ function reasonLabel(
   }
 }
 
+function toDownloadUrl(imageUrl: string): string {
+  return imageUrl.replace("/image?", "/download?");
+}
+
 function formatAllowanceDate(iso: string): string {
   return new Date(iso).toLocaleDateString(undefined, { month: "long", day: "numeric" });
 }
@@ -245,6 +261,10 @@ export default function FamilyPictureClient({
   const [tweakError, setTweakError] = useState<string | null>(null);
   const [tweakFailed, setTweakFailed] = useState(false);
   const [tweakCapResetAt, setTweakCapResetAt] = useState<string | null>(null);
+
+  const [versions, setVersions] = useState<FamilyPictureVersionSummary[] | null>(null);
+  const [reverting, setReverting] = useState(false);
+  const [revertError, setRevertError] = useState<string | null>(null);
   // Distinguishes "this pending cycle is a tweak" from the initial
   // generation, so the poll effect knows a failure should keep the last
   // successful Version on screen instead of showing the full failure state.
@@ -293,6 +313,25 @@ export default function FamilyPictureClient({
     }
   }, [treeId]);
 
+  const loadVersions = useCallback(
+    async (familyPictureId: string) => {
+      try {
+        const response = await fetch(
+          `/api/trees/${treeId}/family-pictures/${familyPictureId}/versions`,
+          { cache: "no-store" },
+        );
+        if (!response.ok) return;
+        const data = (await response.json()) as {
+          versions?: FamilyPictureVersionSummary[];
+        };
+        setVersions(data.versions ?? null);
+      } catch {
+        // Non-fatal — the result still shows without the version gallery.
+      }
+    },
+    [treeId],
+  );
+
   useEffect(() => {
     const timerId = window.setTimeout(() => {
       void loadMembers();
@@ -338,13 +377,16 @@ export default function FamilyPictureClient({
           }
           setStep(3);
           void loadGallery();
+          if (data.status === "succeeded") {
+            void loadVersions(generation.familyPictureId);
+          }
         }
       } catch {
         // Keep polling — a transient network error shouldn't stop it.
       }
     }, GENERATION_POLL_INTERVAL_MS);
     return () => clearInterval(timerId);
-  }, [generation, treeId, loadGallery]);
+  }, [generation, treeId, loadGallery, loadVersions]);
 
   const eligibility = useMemo(() => {
     const map = new Map<string, { eligible: boolean; reason?: IneligibleReason }>();
@@ -421,6 +463,7 @@ export default function FamilyPictureClient({
     setTweakError(null);
     setTweakFailed(false);
     setTweakCapResetAt(null);
+    setVersions(null);
     tweakInFlightRef.current = false;
   }, []);
 
@@ -528,6 +571,52 @@ export default function FamilyPictureClient({
       }
     },
     [generation, treeId, t.errors],
+  );
+
+  const handleRevert = useCallback(
+    async (versionNumber: number) => {
+      if (!generation) return;
+      setReverting(true);
+      setRevertError(null);
+      try {
+        const response = await fetch(
+          `/api/trees/${treeId}/family-pictures/${generation.familyPictureId}/revert`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ versionNumber }),
+          },
+        );
+        const payload = (await response.json().catch(() => null)) as {
+          errorCode?: string;
+        } | null;
+
+        if (!response.ok) {
+          setRevertError(mapErrorCode(payload?.errorCode, t.errors));
+          return;
+        }
+
+        setGeneration((prev) =>
+          prev
+            ? {
+                ...prev,
+                imageUrl: `/api/trees/${treeId}/family-pictures/${generation.familyPictureId}/image?v=${versionNumber}`,
+              }
+            : prev,
+        );
+        setVersions((prev) =>
+          prev
+            ? prev.map((v) => ({ ...v, isCurrent: v.versionNumber === versionNumber }))
+            : prev,
+        );
+        void loadGallery();
+      } catch {
+        setRevertError(t.errors.generic);
+      } finally {
+        setReverting(false);
+      }
+    },
+    [generation, treeId, loadGallery, t.errors],
   );
 
   const viewingPicture = gallery?.find((p) => p.id === viewingId) ?? null;
@@ -1007,7 +1096,14 @@ export default function FamilyPictureClient({
             tweaking={tweaking}
             tweakError={tweakError}
             tweakFailed={tweakFailed}
+            versionsT={t.versions}
+            versions={versions}
+            onRevert={(versionNumber) => void handleRevert(versionNumber)}
+            reverting={reverting}
           />
+          {revertError && (
+            <p className="text-sm text-red-600 mt-3">{revertError}</p>
+          )}
           {tweakCapResetAt && (
             <div className="rounded-2xl border border-amber-200 bg-amber-50/60 p-5 mt-6 max-w-2xl mx-auto">
               <div className="flex items-start gap-3">
@@ -1071,7 +1167,18 @@ export default function FamilyPictureClient({
                 {t.result.aiGenerated}
               </span>
             </div>
-            <p className="text-white/70 text-xs mt-2">{t.result.privateNote}</p>
+            <div className="flex items-center justify-between gap-3 mt-2">
+              <p className="text-white/70 text-xs">{t.result.privateNote}</p>
+              <a
+                href={toDownloadUrl(viewingPicture.imageUrl)}
+                download
+                title={t.result.download}
+                aria-label={t.result.download}
+                className="text-white/70 hover:text-white p-2 rounded-lg hover:bg-white/10 transition-colors shrink-0"
+              >
+                <Download className="w-5 h-5" />
+              </a>
+            </div>
           </div>
         </div>
       )}

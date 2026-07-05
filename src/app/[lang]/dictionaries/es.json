@@ -614,6 +614,7 @@
     "result": {
       "aiGenerated": "Generado con IA",
       "privateNote": "Privado para ti · no visible para otros colaboradores",
+      "download": "Descargar (incluye etiqueta de IA)",
       "startAnother": "Empezar otra",
       "savedTo": "Guardado en Mis Fotos familiares",
       "failedTitle": "Esa generación no se completó",
@@ -636,6 +637,14 @@
       "failedRefunded": "Fallida",
       "empty": "Aún no hay Fotos familiares."
     },
+    "versions": {
+      "title": "Historial de versiones",
+      "countLabel": "{count} versiones",
+      "current": "Mostrada",
+      "revert": "Revertir",
+      "versionLabel": "Versión {n}",
+      "footerNote": "Revertir es gratis — solo elige una versión anterior como actual. Las versiones posteriores nunca se eliminan."
+    },
     "errors": {
       "ERR_MEMBERS_REQUIRED": "Elige al menos un familiar.",
       "ERR_INVALID_STYLE_PRESET": "Elige un estilo.",
@@ -647,6 +656,8 @@
       "ERR_INSTRUCTION_REQUIRED": "Describe el cambio que quieres.",
       "ERR_NO_VERSION_TO_TWEAK": "Espera a que la foto termine de generarse antes de retocarla.",
       "ERR_NOT_FOUND": "No pudimos encontrar esa Foto familiar.",
+      "ERR_VERSION_REQUIRED": "Elige una versión a la cual revertir.",
+      "ERR_VERSION_NOT_FOUND": "Ya no se pudo encontrar esa versión.",
       "generic": "Algo salió mal. Inténtalo de nuevo."
     }
   },
