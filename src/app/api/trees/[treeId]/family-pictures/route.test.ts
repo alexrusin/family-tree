@@ -8,6 +8,7 @@ const {
   reserveGenerationAllowanceMock,
   refundGenerationAllowanceMock,
   getAllowanceStatusMock,
+  getGlobalBudgetStatusMock,
 } = vi.hoisted(() => {
   const getSessionMock = vi.fn();
   const prismaMock = {
@@ -15,7 +16,7 @@ const {
     collaborator: { findUnique: vi.fn() },
     treeMember: { findMany: vi.fn() },
     familyPicture: { findMany: vi.fn(), create: vi.fn() },
-    generation: { create: vi.fn(), updateMany: vi.fn() },
+    generation: { create: vi.fn(), updateMany: vi.fn(), count: vi.fn() },
     $transaction: vi.fn(),
   };
   return {
@@ -25,6 +26,7 @@ const {
     reserveGenerationAllowanceMock: vi.fn(),
     refundGenerationAllowanceMock: vi.fn().mockResolvedValue(undefined),
     getAllowanceStatusMock: vi.fn(),
+    getGlobalBudgetStatusMock: vi.fn(),
   };
 });
 
@@ -42,6 +44,10 @@ vi.mock("@/lib/family-picture/allowance-ledger", () => ({
   reserveGenerationAllowance: reserveGenerationAllowanceMock,
   refundGenerationAllowance: refundGenerationAllowanceMock,
   getAllowanceStatus: getAllowanceStatusMock,
+}));
+
+vi.mock("@/lib/family-picture/global-budget", () => ({
+  getGlobalBudgetStatus: getGlobalBudgetStatusMock,
 }));
 
 const { GET, POST } = await import("./route");
@@ -69,6 +75,7 @@ describe("/api/trees/[treeId]/family-pictures", () => {
       remaining: 7,
       resetAt: new Date("2026-08-01T00:00:00Z"),
     });
+    getGlobalBudgetStatusMock.mockResolvedValue("open");
   });
 
   describe("POST", () => {
@@ -177,6 +184,46 @@ describe("/api/trees/[treeId]/family-pictures", () => {
       expect(prismaMock.$transaction).not.toHaveBeenCalled();
     });
 
+    it("proceeds normally when the global budget is open (below ceiling)", async () => {
+      prismaMock.treeMember.findMany.mockResolvedValue([
+        {
+          id: "m1",
+          firstName: "Alex",
+          lastName: "Rusin",
+          isLiving: true,
+          birthYear: 1972,
+          photoKey: "trees/t1/members/m1.webp",
+          photoUrl: null,
+        },
+      ]);
+      prismaMock.familyPicture.create.mockResolvedValue({ id: "fp1" });
+      prismaMock.generation.create.mockResolvedValue({ id: "gen1" });
+      getGlobalBudgetStatusMock.mockResolvedValue("open");
+
+      const response = await POST(
+        jsonRequest({ memberIds: ["m1"], stylePreset: "bw", settingPreset: "garden" }),
+        { params: Promise.resolve({ treeId: "t1" }) },
+      );
+
+      expect(response.status).toBe(202);
+      expect(processFamilyPictureGenerationMock).toHaveBeenCalled();
+    });
+
+    it("refuses new generation with a 'temporarily unavailable' state once the global budget is closed (at ceiling), making no paid call", async () => {
+      getGlobalBudgetStatusMock.mockResolvedValue("closed");
+
+      const response = await POST(
+        jsonRequest({ memberIds: ["m1"], stylePreset: "bw", settingPreset: "garden" }),
+        { params: Promise.resolve({ treeId: "t1" }) },
+      );
+
+      expect(response.status).toBe(503);
+      await expect(response.json()).resolves.toEqual({ errorCode: "ERR_FEATURE_PAUSED" });
+      expect(reserveGenerationAllowanceMock).not.toHaveBeenCalled();
+      expect(prismaMock.$transaction).not.toHaveBeenCalled();
+      expect(processFamilyPictureGenerationMock).not.toHaveBeenCalled();
+    });
+
     it("rejects an unauthenticated (guest) request", async () => {
       getSessionMock.mockResolvedValue(null);
 
@@ -255,6 +302,19 @@ describe("/api/trees/[treeId]/family-pictures", () => {
         remainingGenerations: 7,
         allowanceResetAt: "2026-08-01T00:00:00.000Z",
       });
+    });
+
+    it("still lists existing Family Pictures while the global budget is closed", async () => {
+      getGlobalBudgetStatusMock.mockResolvedValue("closed");
+      prismaMock.familyPicture.findMany.mockResolvedValue([]);
+
+      const response = await GET(
+        new NextRequest("http://localhost/api/trees/t1/family-pictures"),
+        { params: Promise.resolve({ treeId: "t1" }) },
+      );
+
+      expect(response.status).toBe(200);
+      expect(prismaMock.familyPicture.findMany).toHaveBeenCalled();
     });
   });
 });

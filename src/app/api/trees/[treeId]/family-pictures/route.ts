@@ -17,6 +17,7 @@ import {
   refundGenerationAllowance,
   reserveGenerationAllowance,
 } from "@/lib/family-picture/allowance-ledger";
+import { getGlobalBudgetStatus } from "@/lib/family-picture/global-budget";
 import type { GenerationStatus } from "@/generated/prisma/enums";
 import { randomUUID } from "crypto";
 
@@ -85,6 +86,14 @@ export const GET = withTreeRole("viewer", async (ctx) => {
 
 export const POST = withTreeRole("viewer", async (ctx) => {
   const { treeId } = ctx.params;
+
+  // Operator-side global kill-switch: checked first, ahead of any per-user
+  // work or paid call, so a viral spike can never blow past the budget.
+  const budgetStatus = await getGlobalBudgetStatus(ctx.prisma);
+  if (budgetStatus === "closed") {
+    return Response.json({ errorCode: "ERR_FEATURE_PAUSED" }, { status: 503 });
+  }
+
   const body = await ctx.request.json().catch(() => null);
 
   const memberIds = body?.memberIds;

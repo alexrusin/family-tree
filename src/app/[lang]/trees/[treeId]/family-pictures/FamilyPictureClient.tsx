@@ -101,6 +101,7 @@ export interface FamilyPictureT {
     ERR_TEXT_TOO_LONG: string;
     ERR_MEMBER_NOT_FOUND: string;
     ERR_INELIGIBLE_MEMBERS: string;
+    ERR_FEATURE_PAUSED: string;
     generic: string;
     [key: string]: string;
   };

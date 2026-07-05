@@ -634,6 +634,7 @@
       "ERR_TEXT_TOO_LONG": "Máximo 150 caracteres.",
       "ERR_MEMBER_NOT_FOUND": "Ya no se encontró uno de los familiares seleccionados. Por favor revisa tu selección.",
       "ERR_INELIGIBLE_MEMBERS": "Uno o más familiares seleccionados ya no se pueden incluir. Por favor revisa tu selección.",
+      "ERR_FEATURE_PAUSED": "Las Fotos Familiares están en pausa — vuelve a intentarlo el próximo mes.",
       "generic": "Algo salió mal. Inténtalo de nuevo."
     }
   },

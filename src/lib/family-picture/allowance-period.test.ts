@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { currentPeriodKey, nextPeriodResetAt } from "./allowance-period";
+import { currentPeriodKey, currentPeriodStart, nextPeriodResetAt } from "./allowance-period";
 
 describe("currentPeriodKey", () => {
   it("formats a UTC year-month key", () => {
@@ -21,6 +21,14 @@ describe("nextPeriodResetAt", () => {
   it("rolls over into the next year at the December boundary", () => {
     expect(nextPeriodResetAt(new Date("2026-12-31T23:59:59Z"))).toEqual(
       new Date("2027-01-01T00:00:00Z"),
+    );
+  });
+});
+
+describe("currentPeriodStart", () => {
+  it("returns the first moment of the current UTC month", () => {
+    expect(currentPeriodStart(new Date("2026-07-04T12:00:00Z"))).toEqual(
+      new Date("2026-07-01T00:00:00Z"),
     );
   });
 });

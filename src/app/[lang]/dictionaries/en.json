@@ -634,6 +634,7 @@
       "ERR_TEXT_TOO_LONG": "Keep it to 150 characters or fewer.",
       "ERR_MEMBER_NOT_FOUND": "One of the selected relatives could no longer be found. Please review your selection.",
       "ERR_INELIGIBLE_MEMBERS": "One or more selected relatives can no longer be included. Please review your selection.",
+      "ERR_FEATURE_PAUSED": "Family Pictures are taking a break — please check back next month.",
       "generic": "Something went wrong. Please try again."
     }
   },

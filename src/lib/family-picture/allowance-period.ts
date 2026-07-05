@@ -14,3 +14,8 @@ export function currentPeriodKey(now: Date): string {
 export function nextPeriodResetAt(now: Date): Date {
   return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1, 0, 0, 0, 0));
 }
+
+/** First moment (UTC) of `now`'s own month — the start of the current cap period. */
+export function currentPeriodStart(now: Date): Date {
+  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1, 0, 0, 0, 0));
+}
