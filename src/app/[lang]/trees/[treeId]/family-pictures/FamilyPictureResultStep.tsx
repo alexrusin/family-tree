@@ -1,6 +1,7 @@
 "use client";
 
-import { AlertTriangle, ArrowLeft, Sparkles } from "lucide-react";
+import { useState } from "react";
+import { AlertTriangle, ArrowLeft, Sparkles, Zap } from "lucide-react";
 import type { GenerationStatusValue } from "./FamilyPictureClient";
 
 interface FamilyPictureResultStepT {
@@ -10,6 +11,15 @@ interface FamilyPictureResultStepT {
   savedTo: string;
   failedTitle: string;
   failedBody: string;
+  refine: {
+    label: string;
+    subtitle: string;
+    placeholder: string;
+    button: string;
+    refining: string;
+    note: string;
+    failedNote: string;
+  };
 }
 
 interface FamilyPictureResultStepProps {
@@ -17,6 +27,10 @@ interface FamilyPictureResultStepProps {
   imageUrl: string | null;
   status: GenerationStatusValue;
   onStartAnother: () => void;
+  onTweak: (instruction: string) => void;
+  tweaking: boolean;
+  tweakError: string | null;
+  tweakFailed: boolean;
 }
 
 export default function FamilyPictureResultStep({
@@ -24,8 +38,16 @@ export default function FamilyPictureResultStep({
   imageUrl,
   status,
   onStartAnother,
+  onTweak,
+  tweaking,
+  tweakError,
+  tweakFailed,
 }: FamilyPictureResultStepProps) {
-  if (status === "failed" || !imageUrl) {
+  const [instruction, setInstruction] = useState("");
+  // A failed tweak keeps the last successful Version on screen — only the
+  // absence of any Version at all (the initial generation failing) shows the
+  // full failure state.
+  if (!imageUrl) {
     return (
       <section>
         <div className="rounded-2xl border border-red-200 bg-red-50/60 p-6 max-w-2xl mx-auto">
@@ -72,6 +94,47 @@ export default function FamilyPictureResultStep({
             </span>
           </div>
           <p className="text-xs text-stone-400 mt-4 px-1">{t.privateNote}</p>
+        </div>
+
+        <div className="bg-white rounded-2xl border border-stone-100 shadow-sm p-5 mt-5">
+          <label htmlFor="tweak-input" className="text-sm font-semibold text-stone-900">
+            {t.refine.label}
+          </label>
+          <p className="text-stone-500 text-xs mt-1 mb-3">{t.refine.subtitle}</p>
+          <div className="flex flex-col sm:flex-row gap-2">
+            <input
+              id="tweak-input"
+              value={instruction}
+              onChange={(e) => setInstruction(e.target.value)}
+              placeholder={t.refine.placeholder}
+              disabled={tweaking || status === "pending"}
+              className="flex-1 rounded-xl border border-stone-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-amber-800/30 focus:border-amber-800/40 disabled:opacity-60"
+            />
+            <button
+              type="button"
+              disabled={
+                tweaking || status === "pending" || instruction.trim().length === 0
+              }
+              onClick={() => {
+                onTweak(instruction.trim());
+                setInstruction("");
+              }}
+              className="bg-amber-900 text-white px-5 py-3 rounded-xl text-sm font-semibold shadow-sm hover:shadow-md transition-all active:scale-95 whitespace-nowrap flex items-center justify-center gap-2 disabled:opacity-40 disabled:pointer-events-none"
+            >
+              <Zap className="w-4 h-4" />
+              {tweaking || status === "pending" ? t.refine.refining : t.refine.button}
+            </button>
+          </div>
+          {tweakError && (
+            <p className="text-sm text-red-600 mt-2">{tweakError}</p>
+          )}
+          {tweakFailed && !tweakError && (
+            <p className="text-sm text-red-600 mt-2">{t.refine.failedNote}</p>
+          )}
+          <div className="mt-3 flex items-center gap-1.5 text-[11px] text-stone-400">
+            <Zap className="w-3.5 h-3.5 text-amber-700" />
+            {t.refine.note}
+          </div>
         </div>
       </div>
 

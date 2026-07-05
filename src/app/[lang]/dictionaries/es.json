@@ -617,7 +617,16 @@
       "startAnother": "Empezar otra",
       "savedTo": "Guardado en Mis Fotos familiares",
       "failedTitle": "Esa generación no se completó",
-      "failedBody": "No pudimos completar el retrato. No se usó ninguna generación — inténtalo de nuevo en un momento."
+      "failedBody": "No pudimos completar el retrato. No se usó ninguna generación — inténtalo de nuevo en un momento.",
+      "refine": {
+        "label": "Perfecciónala",
+        "subtitle": "Describe un cambio con palabras sencillas. Todos siguen siendo reconocibles.",
+        "placeholder": "hazlo al atardecer · ponlos en la playa · colores más cálidos",
+        "button": "Retocar",
+        "refining": "Retocando…",
+        "note": "Cada retoque es una versión nueva y usa 1 generación. Nada se sobrescribe — siempre puedes revertir.",
+        "failedNote": "Ese retoque no se completó. Nada se sobrescribió y no se usó ninguna generación — inténtalo de nuevo."
+      }
     },
     "gallery": {
       "title": "Mis Fotos familiares",
@@ -635,6 +644,9 @@
       "ERR_MEMBER_NOT_FOUND": "Ya no se encontró uno de los familiares seleccionados. Por favor revisa tu selección.",
       "ERR_INELIGIBLE_MEMBERS": "Uno o más familiares seleccionados ya no se pueden incluir. Por favor revisa tu selección.",
       "ERR_FEATURE_PAUSED": "Las Fotos Familiares están en pausa — vuelve a intentarlo el próximo mes.",
+      "ERR_INSTRUCTION_REQUIRED": "Describe el cambio que quieres.",
+      "ERR_NO_VERSION_TO_TWEAK": "Espera a que la foto termine de generarse antes de retocarla.",
+      "ERR_NOT_FOUND": "No pudimos encontrar esa Foto familiar.",
       "generic": "Algo salió mal. Inténtalo de nuevo."
     }
   },

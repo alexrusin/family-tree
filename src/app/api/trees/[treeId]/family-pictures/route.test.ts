@@ -296,7 +296,7 @@ describe("/api/trees/[treeId]/family-pictures", () => {
             createdAt: "2026-07-01T00:00:00.000Z",
             status: "succeeded",
             errorMessage: null,
-            imageUrl: "/api/trees/t1/family-pictures/fp1/image",
+            imageUrl: "/api/trees/t1/family-pictures/fp1/image?v=1",
           },
         ],
         remainingGenerations: 7,

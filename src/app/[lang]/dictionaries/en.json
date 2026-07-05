@@ -617,7 +617,16 @@
       "startAnother": "Start another",
       "savedTo": "Saved to My Family Pictures",
       "failedTitle": "That generation didn't go through",
-      "failedBody": "We couldn't complete the portrait. No generation was used — try again in a moment."
+      "failedBody": "We couldn't complete the portrait. No generation was used — try again in a moment.",
+      "refine": {
+        "label": "Refine it",
+        "subtitle": "Describe a change in plain words. Everyone stays recognizably themselves.",
+        "placeholder": "make it sunset · put them at the beach · warmer colors",
+        "button": "Tweak",
+        "refining": "Refining…",
+        "note": "Each tweak is a new version and uses 1 generation. Nothing is overwritten — you can always revert.",
+        "failedNote": "That tweak didn't go through. Nothing was overwritten and no generation was used — try again."
+      }
     },
     "gallery": {
       "title": "My Family Pictures",
@@ -635,6 +644,9 @@
       "ERR_MEMBER_NOT_FOUND": "One of the selected relatives could no longer be found. Please review your selection.",
       "ERR_INELIGIBLE_MEMBERS": "One or more selected relatives can no longer be included. Please review your selection.",
       "ERR_FEATURE_PAUSED": "Family Pictures are taking a break — please check back next month.",
+      "ERR_INSTRUCTION_REQUIRED": "Describe the change you want.",
+      "ERR_NO_VERSION_TO_TWEAK": "Wait for the picture to finish generating before refining it.",
+      "ERR_NOT_FOUND": "We couldn't find that Family Picture.",
       "generic": "Something went wrong. Please try again."
     }
   },

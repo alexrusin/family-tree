@@ -13,15 +13,22 @@ export interface GenerationJob {
   personalTouch: string | null;
 }
 
+/** Everything the orchestrator needs to know about the tweak Generation it's running. */
+export interface TweakJob {
+  generationId: string;
+  familyPictureId: string;
+  userId: string;
+  /** S3 key of the Version being refined (the "prior version fed back in" per ADR 0007). */
+  baseImageKey: string;
+  instruction: string;
+}
+
 /**
- * Narrow seams the orchestrator depends on — deliberately not the Prisma
- * client or the real S3 SDK, so tests can supply fakes for the image client
- * and storage (per the PRD's testing decision) without touching a database
- * or network.
+ * Persistence/metering seams shared by both a fresh generation and a tweak:
+ * once an `ImageBytes` result exists, writing the Version and settling the
+ * allowance reservation is identical either way.
  */
-export interface OrchestratorDeps {
-  imageClient: Pick<ImageClient, "generate">;
-  downloadReferenceImage: (key: string) => Promise<ImageBytes>;
+export interface VersionPersistenceDeps {
   uploadVersionImage: (key: string, bytes: ImageBytes) => Promise<void>;
   nextVersionNumber: (familyPictureId: string) => Promise<number>;
   buildVersionKey: (familyPictureId: string, versionNumber: number) => string;
@@ -37,6 +44,54 @@ export interface OrchestratorDeps {
   consumeAllowance: (generationId: string) => Promise<void>;
   /** Releases the Generation's already-open allowance reservation (never charge for a result the user didn't get). */
   refundAllowance: (generationId: string) => Promise<void>;
+}
+
+/**
+ * Narrow seams the orchestrator depends on — deliberately not the Prisma
+ * client or the real S3 SDK, so tests can supply fakes for the image client
+ * and storage (per the PRD's testing decision) without touching a database
+ * or network.
+ */
+export interface OrchestratorDeps extends VersionPersistenceDeps {
+  imageClient: Pick<ImageClient, "generate">;
+  downloadReferenceImage: (key: string) => Promise<ImageBytes>;
+}
+
+/** Same seams as `OrchestratorDeps`, but for the `tweak` image-client path. */
+export interface TweakOrchestratorDeps extends VersionPersistenceDeps {
+  imageClient: Pick<ImageClient, "tweak">;
+  downloadBaseImage: (key: string) => Promise<ImageBytes>;
+}
+
+async function persistSuccessfulVersion(
+  deps: VersionPersistenceDeps,
+  familyPictureId: string,
+  generationId: string,
+  imageBytes: ImageBytes,
+): Promise<void> {
+  const versionNumber = await deps.nextVersionNumber(familyPictureId);
+  const s3Key = deps.buildVersionKey(familyPictureId, versionNumber);
+  await deps.uploadVersionImage(s3Key, imageBytes);
+
+  await deps.createVersion({
+    familyPictureId,
+    generationId,
+    s3Key,
+    versionNumber,
+  });
+
+  await deps.consumeAllowance(generationId);
+  await deps.markSucceeded(generationId);
+}
+
+async function failGeneration(
+  deps: VersionPersistenceDeps,
+  generationId: string,
+  error: unknown,
+): Promise<void> {
+  const message = error instanceof Error ? error.message : "Unknown error";
+  await deps.refundAllowance(generationId);
+  await deps.markFailed(generationId, message);
 }
 
 /**
@@ -62,23 +117,38 @@ export async function runFamilyPictureGeneration(
     );
 
     const imageBytes = await deps.imageClient.generate(referenceImages, prompt);
-
-    const versionNumber = await deps.nextVersionNumber(job.familyPictureId);
-    const s3Key = deps.buildVersionKey(job.familyPictureId, versionNumber);
-    await deps.uploadVersionImage(s3Key, imageBytes);
-
-    await deps.createVersion({
-      familyPictureId: job.familyPictureId,
-      generationId: job.generationId,
-      s3Key,
-      versionNumber,
-    });
-
-    await deps.consumeAllowance(job.generationId);
-    await deps.markSucceeded(job.generationId);
+    await persistSuccessfulVersion(
+      deps,
+      job.familyPictureId,
+      job.generationId,
+      imageBytes,
+    );
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Unknown error";
-    await deps.refundAllowance(job.generationId);
-    await deps.markFailed(job.generationId, message);
+    await failGeneration(deps, job.generationId, error);
+  }
+}
+
+/**
+ * Runs one tweak Generation end to end: fetch the Version being refined →
+ * call the image client's `tweak` with the free-text instruction → store the
+ * result → write the new Version → mark the Generation succeeded. Mirrors
+ * `runFamilyPictureGeneration`'s failure handling (refund + mark failed
+ * instead of throwing) so callers can fire this without awaiting it.
+ */
+export async function runFamilyPictureTweak(
+  deps: TweakOrchestratorDeps,
+  job: TweakJob,
+): Promise<void> {
+  try {
+    const baseImage = await deps.downloadBaseImage(job.baseImageKey);
+    const imageBytes = await deps.imageClient.tweak(baseImage, job.instruction);
+    await persistSuccessfulVersion(
+      deps,
+      job.familyPictureId,
+      job.generationId,
+      imageBytes,
+    );
+  } catch (error) {
+    await failGeneration(deps, job.generationId, error);
   }
 }

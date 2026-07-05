@@ -85,6 +85,15 @@ export interface FamilyPictureT {
     savedTo: string;
     failedTitle: string;
     failedBody: string;
+    refine: {
+      label: string;
+      subtitle: string;
+      placeholder: string;
+      button: string;
+      refining: string;
+      note: string;
+      failedNote: string;
+    };
   };
   gallery: {
     title: string;
@@ -102,6 +111,9 @@ export interface FamilyPictureT {
     ERR_MEMBER_NOT_FOUND: string;
     ERR_INELIGIBLE_MEMBERS: string;
     ERR_FEATURE_PAUSED: string;
+    ERR_INSTRUCTION_REQUIRED: string;
+    ERR_NO_VERSION_TO_TWEAK: string;
+    ERR_NOT_FOUND: string;
     generic: string;
     [key: string]: string;
   };
@@ -229,6 +241,15 @@ export default function FamilyPictureClient({
   } | null>(null);
   const [capReachedResetAt, setCapReachedResetAt] = useState<string | null>(null);
 
+  const [tweaking, setTweaking] = useState(false);
+  const [tweakError, setTweakError] = useState<string | null>(null);
+  const [tweakFailed, setTweakFailed] = useState(false);
+  const [tweakCapResetAt, setTweakCapResetAt] = useState<string | null>(null);
+  // Distinguishes "this pending cycle is a tweak" from the initial
+  // generation, so the poll effect knows a failure should keep the last
+  // successful Version on screen instead of showing the full failure state.
+  const tweakInFlightRef = useRef(false);
+
   const capTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const loadMembers = useCallback(async () => {
@@ -311,6 +332,10 @@ export default function FamilyPictureClient({
           prev ? { ...prev, ...data } : prev,
         );
         if (data.status !== "pending") {
+          if (tweakInFlightRef.current) {
+            tweakInFlightRef.current = false;
+            setTweakFailed(data.status === "failed");
+          }
           setStep(3);
           void loadGallery();
         }
@@ -393,6 +418,10 @@ export default function FamilyPictureClient({
     setSubmitError(null);
     setCapReachedResetAt(null);
     setGeneration(null);
+    setTweakError(null);
+    setTweakFailed(false);
+    setTweakCapResetAt(null);
+    tweakInFlightRef.current = false;
   }, []);
 
   const handleSubmit = useCallback(async () => {
@@ -456,6 +485,50 @@ export default function FamilyPictureClient({
     t.errors,
     loadGallery,
   ]);
+
+  const handleTweak = useCallback(
+    async (instruction: string) => {
+      if (!generation) return;
+      setTweaking(true);
+      setTweakError(null);
+      setTweakCapResetAt(null);
+      try {
+        const response = await fetch(
+          `/api/trees/${treeId}/family-pictures/${generation.familyPictureId}/tweak`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ instruction }),
+          },
+        );
+        const payload = (await response.json().catch(() => null)) as {
+          generationId?: string;
+          errorCode?: string;
+          resetAt?: string;
+        } | null;
+
+        if (!response.ok || !payload?.generationId) {
+          if (payload?.errorCode === "ERR_ALLOWANCE_EXHAUSTED" && payload.resetAt) {
+            setTweakCapResetAt(payload.resetAt);
+          } else {
+            setTweakError(mapErrorCode(payload?.errorCode, t.errors));
+          }
+          return;
+        }
+
+        tweakInFlightRef.current = true;
+        setTweakFailed(false);
+        setGeneration((prev) =>
+          prev ? { ...prev, status: "pending", errorMessage: null } : prev,
+        );
+      } catch {
+        setTweakError(t.errors.generic);
+      } finally {
+        setTweaking(false);
+      }
+    },
+    [generation, treeId, t.errors],
+  );
 
   const viewingPicture = gallery?.find((p) => p.id === viewingId) ?? null;
 
@@ -924,12 +997,41 @@ export default function FamilyPictureClient({
       {step === 2 && <FamilyPictureGenerateStep t={t.progress} />}
 
       {step === 3 && generation && (
-        <FamilyPictureResultStep
-          t={t.result}
-          imageUrl={generation.imageUrl}
-          status={generation.status}
-          onStartAnother={resetCreator}
-        />
+        <>
+          <FamilyPictureResultStep
+            t={t.result}
+            imageUrl={generation.imageUrl}
+            status={generation.status}
+            onStartAnother={resetCreator}
+            onTweak={(instruction) => void handleTweak(instruction)}
+            tweaking={tweaking}
+            tweakError={tweakError}
+            tweakFailed={tweakFailed}
+          />
+          {tweakCapResetAt && (
+            <div className="rounded-2xl border border-amber-200 bg-amber-50/60 p-5 mt-6 max-w-2xl mx-auto">
+              <div className="flex items-start gap-3">
+                <div className="w-9 h-9 rounded-xl bg-amber-100 flex items-center justify-center text-amber-800 shrink-0">
+                  <TriangleAlert className="w-5 h-5" />
+                </div>
+                <div>
+                  <h4 className="font-semibold text-amber-950 text-sm">
+                    {t.allowance.capReachedTitle.replace(
+                      "{cap}",
+                      String(MONTHLY_GENERATION_ALLOWANCE),
+                    )}
+                  </h4>
+                  <p className="text-amber-900/80 text-sm mt-1">
+                    {t.allowance.capReachedBody.replace(
+                      "{date}",
+                      formatAllowanceDate(tweakCapResetAt),
+                    )}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+        </>
       )}
 
       <FamilyPictureGallery

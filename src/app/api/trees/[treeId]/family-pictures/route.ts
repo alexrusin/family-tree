@@ -40,7 +40,7 @@ function toFamilyPictureSummary(picture: {
   versions: { versionNumber: number }[];
 }) {
   const latestGeneration = picture.generations[0] ?? null;
-  const hasImage = picture.versions.length > 0;
+  const latestVersion = picture.versions[0] ?? null;
 
   return {
     id: picture.id,
@@ -51,8 +51,10 @@ function toFamilyPictureSummary(picture: {
     createdAt: picture.createdAt.toISOString(),
     status: latestGeneration?.status ?? "pending",
     errorMessage: latestGeneration?.errorMessage ?? null,
-    imageUrl: hasImage
-      ? `/api/trees/${picture.treeId}/family-pictures/${picture.id}/image`
+    // `?v=` cache-busts so a tweak's new Version doesn't get served the prior
+    // Version's cached bytes from behind the same image URL.
+    imageUrl: latestVersion
+      ? `/api/trees/${picture.treeId}/family-pictures/${picture.id}/image?v=${latestVersion.versionNumber}`
       : null,
   };
 }

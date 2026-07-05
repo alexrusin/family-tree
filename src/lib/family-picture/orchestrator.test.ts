@@ -1,5 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
-import { runFamilyPictureGeneration, type OrchestratorDeps } from "./orchestrator";
+import {
+  runFamilyPictureGeneration,
+  runFamilyPictureTweak,
+  type OrchestratorDeps,
+  type TweakOrchestratorDeps,
+} from "./orchestrator";
 
 function makeDeps(overrides: Partial<OrchestratorDeps> = {}): OrchestratorDeps {
   return {
@@ -84,5 +89,93 @@ describe("runFamilyPictureGeneration", () => {
     expect(deps.markSucceeded).not.toHaveBeenCalled();
     expect(deps.markFailed).toHaveBeenCalledWith("gen1", "S3 unavailable");
     expect(deps.refundAllowance).toHaveBeenCalledWith("gen1");
+  });
+});
+
+function makeTweakDeps(
+  overrides: Partial<TweakOrchestratorDeps> = {},
+): TweakOrchestratorDeps {
+  return {
+    imageClient: {
+      tweak: vi.fn().mockResolvedValue(new Uint8Array([4, 5, 6])),
+    },
+    downloadBaseImage: vi.fn().mockResolvedValue(new Uint8Array([9])),
+    uploadVersionImage: vi.fn().mockResolvedValue(undefined),
+    nextVersionNumber: vi.fn().mockResolvedValue(2),
+    buildVersionKey: vi.fn().mockReturnValue("users/u1/family-pictures/fp1/v2.webp"),
+    createVersion: vi.fn().mockResolvedValue(undefined),
+    markSucceeded: vi.fn().mockResolvedValue(undefined),
+    markFailed: vi.fn().mockResolvedValue(undefined),
+    consumeAllowance: vi.fn().mockResolvedValue(undefined),
+    refundAllowance: vi.fn().mockResolvedValue(undefined),
+    ...overrides,
+  };
+}
+
+const tweakJob = {
+  generationId: "gen2",
+  familyPictureId: "fp1",
+  userId: "u1",
+  baseImageKey: "users/u1/family-pictures/fp1/v1.webp",
+  instruction: "make it sunset",
+};
+
+describe("runFamilyPictureTweak", () => {
+  it("happy path: fetches the base Version, tweaks, stores, writes a new Version, and marks succeeded", async () => {
+    const deps = makeTweakDeps();
+
+    await runFamilyPictureTweak(deps, tweakJob);
+
+    expect(deps.downloadBaseImage).toHaveBeenCalledWith(
+      "users/u1/family-pictures/fp1/v1.webp",
+    );
+    expect(deps.imageClient.tweak).toHaveBeenCalledWith(
+      new Uint8Array([9]),
+      "make it sunset",
+    );
+    expect(deps.uploadVersionImage).toHaveBeenCalledWith(
+      "users/u1/family-pictures/fp1/v2.webp",
+      new Uint8Array([4, 5, 6]),
+    );
+    expect(deps.createVersion).toHaveBeenCalledWith({
+      familyPictureId: "fp1",
+      generationId: "gen2",
+      s3Key: "users/u1/family-pictures/fp1/v2.webp",
+      versionNumber: 2,
+    });
+    expect(deps.markSucceeded).toHaveBeenCalledWith("gen2");
+    expect(deps.markFailed).not.toHaveBeenCalled();
+    expect(deps.consumeAllowance).toHaveBeenCalledWith("gen2");
+    expect(deps.refundAllowance).not.toHaveBeenCalled();
+  });
+
+  it("failure path: an image client error marks the Generation failed, refunds the allowance, and writes nothing", async () => {
+    const deps = makeTweakDeps({
+      imageClient: {
+        tweak: vi.fn().mockRejectedValue(new Error("provider declined")),
+      },
+    });
+
+    await runFamilyPictureTweak(deps, tweakJob);
+
+    expect(deps.uploadVersionImage).not.toHaveBeenCalled();
+    expect(deps.createVersion).not.toHaveBeenCalled();
+    expect(deps.markSucceeded).not.toHaveBeenCalled();
+    expect(deps.markFailed).toHaveBeenCalledWith("gen2", "provider declined");
+    expect(deps.refundAllowance).toHaveBeenCalledWith("gen2");
+    expect(deps.consumeAllowance).not.toHaveBeenCalled();
+  });
+
+  it("failure path: a storage error also marks the Generation failed and refunds, not succeeds", async () => {
+    const deps = makeTweakDeps({
+      uploadVersionImage: vi.fn().mockRejectedValue(new Error("S3 unavailable")),
+    });
+
+    await runFamilyPictureTweak(deps, tweakJob);
+
+    expect(deps.createVersion).not.toHaveBeenCalled();
+    expect(deps.markSucceeded).not.toHaveBeenCalled();
+    expect(deps.markFailed).toHaveBeenCalledWith("gen2", "S3 unavailable");
+    expect(deps.refundAllowance).toHaveBeenCalledWith("gen2");
   });
 });
