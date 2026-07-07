@@ -187,6 +187,7 @@ interface TreeT {
   collaboration: {
     sidebarLink: string;
   };
+  familyPictureSidebarLink: string;
   publicShare: {
     sidebarAction: string;
     modalTitle: string;
@@ -472,6 +473,10 @@ export default function TreeDetailClient({
     closeTreeMenu();
   }, [closeTreeMenu]);
   const collaboratorsHref = `/${lang}/trees/${treeId}/collaborators`;
+  const handleFamilyPicturesNavigate = useCallback(() => {
+    closeTreeMenu();
+  }, [closeTreeMenu]);
+  const familyPicturesHref = `/${lang}/trees/${treeId}/family-pictures`;
 
   const getMemberName = useCallback(
     (id: string) => {
@@ -721,6 +726,7 @@ export default function TreeDetailClient({
 
   const treeSidebarTranslations = {
     collaborators: t.collaboration.sidebarLink,
+    familyPicture: t.familyPictureSidebarLink,
     shareLink: t.publicShare.sidebarAction,
     addMember: t.addMember,
     addRelationship: t.addRelationship,
@@ -739,10 +745,12 @@ export default function TreeDetailClient({
           treeName={treeName}
           memberCount={memberCount}
           collaboratorsHref={collaboratorsHref}
+          familyPicturesHref={familyPicturesHref}
           canEdit={canEdit}
           canManageShare={isOwner}
           canAddMember={canAddMember}
           onCollaboratorsNavigate={handleCollaboratorsNavigate}
+          onFamilyPicturesNavigate={handleFamilyPicturesNavigate}
           onAddMember={openAddMemberFromTreeMenu}
           onAddRelationship={openAddRelationshipFromTreeMenu}
           onOpenShareSettings={openShareSettingsFromTreeMenu}
@@ -804,10 +812,12 @@ export default function TreeDetailClient({
                     treeName={treeName}
                     memberCount={memberCount}
                     collaboratorsHref={collaboratorsHref}
+                    familyPicturesHref={familyPicturesHref}
                     canEdit={canEdit}
                     canManageShare={isOwner}
                     canAddMember={canAddMember}
                     onCollaboratorsNavigate={handleCollaboratorsNavigate}
+                    onFamilyPicturesNavigate={handleFamilyPicturesNavigate}
                     onAddMember={openAddMemberFromTreeMenu}
                     onAddRelationship={openAddRelationshipFromTreeMenu}
                     onOpenShareSettings={openShareSettingsFromTreeMenu}

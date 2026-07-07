@@ -13,6 +13,10 @@ const {
       findUnique: vi.fn(),
       delete: vi.fn(),
     },
+    familyPicture: {
+      deleteMany: vi.fn(),
+      findMany: vi.fn(),
+    },
   };
 
   return { getSessionMock, getTreeRoleMock, prismaMock };
@@ -57,6 +61,23 @@ describe("DELETE /api/trees/[treeId]/delete", () => {
     expect(prismaMock.familyTree.delete).toHaveBeenCalledWith({
       where: { id: "t1" },
     });
+  });
+
+  it("leaves Family Pictures generated from the tree untouched (they have no FK to the tree and survive its deletion)", async () => {
+    prismaMock.familyTree.delete.mockResolvedValue({ id: "t1" });
+
+    const request = new NextRequest(
+      "http://localhost/api/trees/t1/delete",
+      { method: "DELETE" },
+    );
+
+    const response = await DELETE(request, {
+      params: Promise.resolve({ treeId: "t1" }),
+    });
+
+    expect(response.status).toBe(200);
+    expect(prismaMock.familyPicture.deleteMany).not.toHaveBeenCalled();
+    expect(prismaMock.familyPicture.findMany).not.toHaveBeenCalled();
   });
 
   it("returns 403 when user is not owner", async () => {

@@ -558,6 +558,109 @@
       "createOwn": "Create your own family tree"
     }
   },
+  "familyPicture": {
+    "sidebarLink": "Family Picture",
+    "pageTitle": "Create a Family Picture",
+    "pageSubtitle": "An AI portrait of your relatives together — even those you lost, or who were never in the same room.",
+    "steps": {
+      "choosePeople": "Choose people",
+      "sceneStyle": "Scene & style",
+      "generate": "Generate",
+      "result": "Result"
+    },
+    "allowance": {
+      "remainingLabel": "{remaining} of {cap} · resets {date}",
+      "capReachedTitle": "You've used all {cap} generations this month",
+      "capReachedBody": "Your allowance resets on {date}. Your finished pictures stay saved."
+    },
+    "picker": {
+      "title": "Who's in the picture?",
+      "subtitle": "Only relatives with a profile photo can be rendered as themselves.",
+      "maxNote": "Up to 8 — the more faces in one portrait, the harder it is to keep each person recognizable.",
+      "capNote": "That's the 8-person max for sharp likeness — remove someone to add another.",
+      "searchPlaceholder": "Search relatives by name…",
+      "emptyResult": "No relatives match “{query}”.",
+      "legendEligible": "Eligible",
+      "legendIneligible": "Not selectable — reason shown on the card",
+      "reasonNoPhoto": "No profile photo to render from",
+      "reasonLivingMinor": "Living minor — under 18 excluded",
+      "reasonAgeUnconfirmable": "Birth year unknown — age can't be confirmed",
+      "reasonOverMax": "8-person max reached — remove someone to add this person",
+      "selected": "selected",
+      "continue": "Continue",
+      "guestNote": "Guest viewers can't reach this — generation is tied to a signed-in member."
+    },
+    "presets": {
+      "styleTitle": "Style",
+      "styleSubtitle": "The look of the final portrait.",
+      "settingTitle": "Setting",
+      "settingSubtitle": "Where should they be? Pick a preset, or name your own place.",
+      "somewhereSpecific": "Somewhere specific",
+      "somewhereSpecificSub": "Name your own place",
+      "customPlacePlaceholder": "e.g. Chicago — Millennium Park, beside the Bean",
+      "customPlaceHint": "Name a real place or scene. Keep it to the location — describe added objects or actions in the personal touch below.",
+      "personalTouchTitle": "A personal touch",
+      "personalTouchOptional": "optional",
+      "personalTouchSubtitle": "One short detail. Keep it simple so likeness stays sharp.",
+      "personalTouchPlaceholder": "e.g. add a birthday cake on the table",
+      "back": "Back",
+      "generateButton": "Generate portrait"
+    },
+    "progress": {
+      "title": "Painting your family together…",
+      "body": "This usually takes a few minutes. You can close this tab or move around the app — generation keeps running on our side, and your picture will be waiting in My Family Pictures when it's done.",
+      "noTabNote": "No need to keep this page open."
+    },
+    "result": {
+      "aiGenerated": "AI-generated",
+      "privateNote": "Private to you · not visible to other collaborators",
+      "download": "Download (AI-generated label included)",
+      "startAnother": "Start another",
+      "savedTo": "Saved to My Family Pictures",
+      "failedTitle": "That generation didn't go through",
+      "failedBody": "We couldn't complete the portrait. No generation was used — try again in a moment.",
+      "refine": {
+        "label": "Refine it",
+        "subtitle": "Describe a change in plain words. Everyone stays recognizably themselves.",
+        "placeholder": "make it sunset · put them at the beach · warmer colors",
+        "button": "Tweak",
+        "refining": "Refining…",
+        "note": "Each tweak is a new version and uses 1 generation. Nothing is overwritten — you can always revert.",
+        "failedNote": "That tweak didn't go through. Nothing was overwritten and no generation was used — try again."
+      }
+    },
+    "gallery": {
+      "title": "My Family Pictures",
+      "subtitle": "A generation started above shows here as in-progress and fills in when it's done — even if you closed the tab.",
+      "generating": "Generating…",
+      "readyUpdated": "Ready",
+      "failedRefunded": "Failed",
+      "empty": "No Family Pictures yet."
+    },
+    "versions": {
+      "title": "Version history",
+      "countLabel": "{count} versions",
+      "current": "Shown",
+      "revert": "Revert",
+      "versionLabel": "Version {n}",
+      "footerNote": "Reverting is free — it just picks an older version as current. Later versions are never deleted."
+    },
+    "errors": {
+      "ERR_MEMBERS_REQUIRED": "Choose at least one relative.",
+      "ERR_INVALID_STYLE_PRESET": "Choose a style.",
+      "ERR_INVALID_SETTING": "Choose a setting, or name your own place.",
+      "ERR_TEXT_TOO_LONG": "Keep it to 150 characters or fewer.",
+      "ERR_MEMBER_NOT_FOUND": "One of the selected relatives could no longer be found. Please review your selection.",
+      "ERR_INELIGIBLE_MEMBERS": "One or more selected relatives can no longer be included. Please review your selection.",
+      "ERR_FEATURE_PAUSED": "Family Pictures are taking a break — please check back next month.",
+      "ERR_INSTRUCTION_REQUIRED": "Describe the change you want.",
+      "ERR_NO_VERSION_TO_TWEAK": "Wait for the picture to finish generating before refining it.",
+      "ERR_NOT_FOUND": "We couldn't find that Family Picture.",
+      "ERR_VERSION_REQUIRED": "Choose a version to revert to.",
+      "ERR_VERSION_NOT_FOUND": "That version could no longer be found.",
+      "generic": "Something went wrong. Please try again."
+    }
+  },
   "reportIssue": {
     "button": "Report an issue",
     "title": "Report an Issue",

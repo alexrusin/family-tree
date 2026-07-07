@@ -1,0 +1,736 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Family Picture — UI Prototype</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] },
+      },
+    },
+  };
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  body { font-family: 'Inter', system-ui, sans-serif; background-color: #fbf9f8; color: #1b1c1b; }
+  .fade-in { animation: fade 0.35s ease both; }
+  @keyframes fade { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+  .spin { animation: spin 1s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .shimmer {
+    background: linear-gradient(100deg, #f5f3f2 30%, #eae8e7 50%, #f5f3f2 70%);
+    background-size: 200% 100%;
+    animation: shimmer 1.4s ease-in-out infinite;
+  }
+  @keyframes shimmer { to { background-position: -200% 0; } }
+  .bar-fill { transition: width 0.6s ease; }
+</style>
+
+<div class="max-w-6xl mx-auto px-6 pt-10 pb-24">
+
+  <!-- ============ Header ============ -->
+  <header class="mb-8">
+    <div class="flex items-center gap-2 text-sm text-stone-500 mb-3">
+      <span class="inline-flex items-center gap-1.5">
+        <svg class="w-4 h-4 text-amber-800" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 2l2 5 5 .5-4 3.5 1.5 5-4.5-3-4.5 3L15 11l-4-3.5 5-.5z"/></svg>
+        Rusin Family Tree
+      </span>
+      <span class="text-stone-300">/</span>
+      <span class="text-stone-700 font-medium">Family Picture</span>
+    </div>
+    <div class="flex flex-col sm:flex-row items-start sm:items-end justify-between gap-4">
+      <div>
+        <h1 class="text-[34px] font-semibold leading-tight tracking-tight text-amber-900">Create a Family Picture</h1>
+        <p class="text-stone-600 mt-1.5 text-[15px]">An AI portrait of your relatives together — even those you lost, or who were never in the same room.</p>
+      </div>
+      <!-- Allowance indicator -->
+      <div id="allowance-chip" class="shrink-0 bg-white rounded-2xl border border-stone-100 shadow-sm px-4 py-3 flex items-center gap-3">
+        <div class="w-9 h-9 rounded-xl bg-amber-50 flex items-center justify-center text-amber-800">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+        </div>
+        <div class="leading-tight">
+          <div class="text-[11px] uppercase tracking-wider text-stone-400 font-semibold">Generations left</div>
+          <div class="text-sm font-semibold text-stone-800"><span id="allowance-count">5</span> of 10 · resets Aug 1</div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ============ Stepper ============ -->
+  <nav class="mb-8">
+    <ol class="flex items-center gap-2 sm:gap-3 text-sm">
+      <li class="step flex items-center gap-2" data-step="0">
+        <span class="dot w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold">1</span>
+        <span class="label font-medium hidden sm:inline">Choose people</span>
+      </li>
+      <li class="h-px flex-1 bg-stone-200"></li>
+      <li class="step flex items-center gap-2" data-step="1">
+        <span class="dot w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold">2</span>
+        <span class="label font-medium hidden sm:inline">Scene & style</span>
+      </li>
+      <li class="h-px flex-1 bg-stone-200"></li>
+      <li class="step flex items-center gap-2" data-step="2">
+        <span class="dot w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold">3</span>
+        <span class="label font-medium hidden sm:inline">Generate</span>
+      </li>
+      <li class="h-px flex-1 bg-stone-200"></li>
+      <li class="step flex items-center gap-2" data-step="3">
+        <span class="dot w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold">4</span>
+        <span class="label font-medium hidden sm:inline">Result & refine</span>
+      </li>
+    </ol>
+  </nav>
+
+  <!-- ============ STEP 1: Member picker ============ -->
+  <section id="panel-0" class="panel">
+    <div class="bg-white rounded-2xl border border-stone-100 shadow-sm p-6 sm:p-8">
+      <div class="flex items-start justify-between gap-4 mb-6">
+        <div class="min-w-0">
+          <h2 class="text-xl font-semibold text-stone-900">Who's in the picture?</h2>
+          <p class="text-stone-500 text-sm mt-1">Only relatives with a profile photo can be rendered as themselves.</p>
+          <p class="text-stone-400 text-xs mt-1.5 inline-flex items-center gap-1.5">
+            <svg class="w-3.5 h-3.5 text-amber-700 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            Up to 8 — the more faces in one portrait, the harder it is to keep each person recognizable.
+          </p>
+          <div id="cap-note" class="hidden mt-2 text-xs font-medium text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 inline-flex items-center gap-1.5">
+            <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M12 3l9 16H3l9-16z"/></svg>
+            That's the 8-person max for sharp likeness — remove someone to add another.
+          </div>
+        </div>
+        <div class="shrink-0 text-right">
+          <div class="text-2xl font-semibold text-amber-900"><span id="selected-count">0</span><span class="text-stone-300">/8</span></div>
+          <div class="text-[11px] uppercase tracking-wider text-stone-400 font-semibold">selected</div>
+          <div id="hidden-selected" class="hidden text-[11px] text-amber-700 font-medium mt-0.5"></div>
+        </div>
+      </div>
+
+      <!-- Search -->
+      <div class="relative mb-4">
+        <svg class="w-5 h-5 absolute left-3.5 top-1/2 -translate-y-1/2 text-stone-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z"/></svg>
+        <input id="member-search" placeholder="Search relatives by name…" autocomplete="off"
+          class="w-full rounded-xl border border-stone-200 pl-10 pr-10 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-800/30 focus:border-amber-800/40" />
+        <button id="member-search-clear" type="button" aria-label="Clear search"
+          class="hidden absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-700 p-0.5 rounded">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <div id="member-grid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3"></div>
+
+      <!-- Empty search result -->
+      <div id="member-empty" class="hidden text-center py-12 text-stone-400">
+        <svg class="w-8 h-8 mx-auto mb-3 text-stone-300" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z"/></svg>
+        <p class="text-sm">No relatives match “<span id="member-empty-q" class="font-medium text-stone-500"></span>”.</p>
+      </div>
+
+      <!-- Legend -->
+      <div class="mt-6 border-t border-stone-100 pt-5">
+        <div class="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-stone-500">
+          <span class="inline-flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-amber-700"></span>Eligible</span>
+          <span class="inline-flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-stone-300"></span>Not selectable — reason shown on the card</span>
+          <span class="inline-flex items-center gap-1.5 text-stone-400">Deceased relatives are eligible at any age.</span>
+        </div>
+        <div class="mt-3 flex flex-wrap gap-2 text-[11px]">
+          <span class="text-stone-400 self-center">A relative can't be picked when:</span>
+          <span class="inline-flex items-center gap-1 bg-stone-100 text-stone-500 rounded-full px-2.5 py-1">No profile photo</span>
+          <span class="inline-flex items-center gap-1 bg-stone-100 text-stone-500 rounded-full px-2.5 py-1">Living minor (under 18)</span>
+          <span class="inline-flex items-center gap-1 bg-stone-100 text-stone-500 rounded-full px-2.5 py-1">Living, birth year unknown</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="flex justify-between items-center mt-6">
+      <p class="text-sm text-stone-400">Guest viewers can't reach this — generation is tied to a signed-in member.</p>
+      <button onclick="goTo(1)" id="next-1" class="bg-amber-900 text-white px-6 py-3 rounded-xl text-sm font-semibold tracking-wide shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all active:scale-95 disabled:opacity-40 disabled:pointer-events-none flex items-center gap-2">
+        Continue
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+      </button>
+    </div>
+  </section>
+
+  <!-- ============ STEP 2: Scene & style ============ -->
+  <section id="panel-1" class="panel hidden">
+    <div class="grid lg:grid-cols-3 gap-6">
+      <!-- Setting -->
+      <div class="bg-white rounded-2xl border border-stone-100 shadow-sm p-6 lg:col-span-2">
+        <h2 class="text-lg font-semibold text-stone-900 mb-1">Style</h2>
+        <p class="text-stone-500 text-sm mb-5">The look of the final portrait.</p>
+        <div id="style-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-3"></div>
+
+        <h2 class="text-lg font-semibold text-stone-900 mt-8 mb-1">Setting</h2>
+        <p class="text-stone-500 text-sm mb-5">Where should they be? Pick a preset, or name your own place.</p>
+        <div id="setting-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-3"></div>
+
+        <!-- Custom place reveal (shown when "Somewhere specific" is chosen) -->
+        <div id="custom-place-wrap" class="hidden mt-3">
+          <div class="relative">
+            <input id="custom-place" maxlength="150" placeholder="e.g. Chicago — Millennium Park, beside the Bean"
+              class="w-full rounded-xl border border-amber-300 bg-amber-50/40 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-amber-800/30 focus:border-amber-800/50" />
+            <span class="absolute right-3 top-1/2 -translate-y-1/2 text-[11px] text-stone-300"><span id="cp-count">0</span>/150</span>
+          </div>
+          <p class="text-[11px] text-stone-400 mt-1.5">Name a real place or scene. Keep it to the location — describe added objects or actions in the personal touch below.</p>
+        </div>
+
+        <h2 class="text-lg font-semibold text-stone-900 mt-8 mb-1">A personal touch <span class="text-stone-400 font-normal text-sm">— optional</span></h2>
+        <p class="text-stone-500 text-sm mb-3">One short detail. Keep it simple so likeness stays sharp.</p>
+        <div class="relative">
+          <input id="freetext" maxlength="150" placeholder="e.g. add a birthday cake on the table"
+            class="w-full rounded-xl border border-stone-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-amber-800/30 focus:border-amber-800/40" />
+          <span class="absolute right-3 top-1/2 -translate-y-1/2 text-[11px] text-stone-300"><span id="ft-count">0</span>/150</span>
+        </div>
+      </div>
+
+      <!-- Summary rail -->
+      <div class="bg-white rounded-2xl border border-stone-100 shadow-sm p-6 h-fit lg:sticky lg:top-6">
+        <h3 class="text-sm font-semibold uppercase tracking-wider text-stone-400 mb-4">Your portrait</h3>
+        <div class="mb-4">
+          <div class="text-[11px] uppercase tracking-wider text-stone-400 font-semibold mb-2">People</div>
+          <div id="summary-people" class="flex flex-wrap gap-1.5"></div>
+        </div>
+        <dl class="space-y-3 text-sm border-t border-stone-100 pt-4">
+          <div class="flex justify-between"><dt class="text-stone-500">Style</dt><dd id="summary-style" class="font-medium text-stone-800">Vintage film</dd></div>
+          <div class="flex justify-between gap-4"><dt class="text-stone-500 shrink-0">Setting</dt><dd id="summary-setting" class="font-medium text-stone-800 text-right truncate">Garden</dd></div>
+          <div class="flex justify-between gap-4"><dt class="text-stone-500 shrink-0">Touch</dt><dd id="summary-touch" class="font-medium text-stone-800 text-right truncate">—</dd></div>
+        </dl>
+        <div class="mt-5 pt-4 border-t border-stone-100 flex items-center gap-2 text-sm text-stone-500">
+          <svg class="w-4 h-4 text-amber-700 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+          Generating uses <span class="font-semibold text-stone-700">1</span> of your 5 remaining.
+        </div>
+      </div>
+    </div>
+
+    <div class="flex justify-between items-center mt-6">
+      <button onclick="goTo(0)" class="text-stone-500 hover:text-amber-900 px-4 py-3 rounded-xl text-sm font-semibold transition-colors flex items-center gap-2">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+        Back
+      </button>
+      <button onclick="startGenerate()" class="bg-amber-900 text-white px-7 py-3 rounded-xl text-sm font-semibold tracking-wide shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all active:scale-95 flex items-center gap-2">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.5 6.5L22 12l-6.5 2.5L13 21l-2.5-6.5L4 12l6.5-2.5L13 3z"/></svg>
+        Generate portrait
+      </button>
+    </div>
+  </section>
+
+  <!-- ============ STEP 3: Generating ============ -->
+  <section id="panel-2" class="panel hidden">
+    <div class="bg-white rounded-2xl border border-stone-100 shadow-sm p-8 sm:p-12 text-center max-w-2xl mx-auto">
+      <div class="relative w-full aspect-[4/3] rounded-xl shimmer overflow-hidden mb-8 flex items-center justify-center">
+        <div class="w-14 h-14 rounded-full border-4 border-amber-200 border-t-amber-800 spin"></div>
+      </div>
+      <h2 class="text-xl font-semibold text-stone-900">Painting your family together…</h2>
+      <p class="text-stone-500 text-sm mt-2 mb-2">This usually takes a few minutes. You can close this tab or move around the app — generation keeps running on our side, and your picture will be waiting in <span class="font-medium text-stone-600">My Family Pictures</span> when it's done.</p>
+      <p class="text-stone-400 text-xs mb-6 inline-flex items-center gap-1.5">
+        <svg class="w-3.5 h-3.5 text-stone-400 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        No need to keep this page open.
+      </p>
+      <div class="max-w-sm mx-auto">
+        <div class="h-2 rounded-full bg-stone-100 overflow-hidden">
+          <div id="gen-bar" class="bar-fill h-full bg-amber-800 rounded-full" style="width:8%"></div>
+        </div>
+        <div id="gen-status" class="text-xs text-stone-400 mt-3">Reserving generation & sending reference photos…</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ STEP 4: Result ============ -->
+  <section id="panel-3" class="panel hidden">
+    <div class="grid lg:grid-cols-3 gap-6">
+      <!-- Image -->
+      <div class="lg:col-span-2 min-w-0">
+        <div class="bg-white rounded-2xl border border-stone-100 shadow-sm p-4 sm:p-5">
+          <div class="relative rounded-xl overflow-hidden bg-stone-100">
+            <img id="result-img" src="generated-result.png" alt="Generated family portrait" class="w-full block" />
+            <!-- AI-generated provenance label -->
+            <span class="absolute bottom-3 left-3 inline-flex items-center gap-1.5 bg-black/60 backdrop-blur text-white text-[11px] font-medium px-2.5 py-1.5 rounded-lg">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.5 6.5L22 12l-6.5 2.5L13 21l-2.5-6.5L4 12l6.5-2.5L13 3z"/></svg>
+              AI-generated
+            </span>
+            <span id="version-badge" class="absolute top-3 right-3 bg-white/85 backdrop-blur text-stone-700 text-[11px] font-semibold px-2.5 py-1 rounded-lg">Version 2 · current</span>
+          </div>
+          <div class="flex items-center justify-between gap-3 mt-4 px-1">
+            <div class="flex items-center gap-1.5 text-xs text-stone-400 min-w-0">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m0 0v2m0-2h.01M5 11V7a7 7 0 0114 0v4m-1 0H6a2 2 0 00-2 2v6a2 2 0 002 2h12a2 2 0 002-2v-6a2 2 0 00-2-2z"/></svg>
+              Private to you · not visible to other collaborators
+            </div>
+            <div class="flex gap-2">
+              <button class="text-stone-500 hover:text-amber-900 p-2 rounded-lg hover:bg-stone-50 transition-colors" title="Download">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tweak box -->
+        <div class="bg-white rounded-2xl border border-stone-100 shadow-sm p-5 mt-5">
+          <label class="text-sm font-semibold text-stone-900">Refine it</label>
+          <p class="text-stone-500 text-xs mt-1 mb-3">Describe a change in plain words. Everyone stays recognizably themselves.</p>
+          <div class="flex flex-col sm:flex-row gap-2">
+            <input id="tweak-input" placeholder="make it sunset · put them at the beach · warmer colors"
+              class="flex-1 rounded-xl border border-stone-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-amber-800/30 focus:border-amber-800/40" />
+            <button onclick="doTweak()" class="bg-amber-900 text-white px-5 py-3 rounded-xl text-sm font-semibold shadow-sm hover:shadow-md transition-all active:scale-95 whitespace-nowrap flex items-center justify-center gap-2">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.5 6.5L22 12l-6.5 2.5L13 21l-2.5-6.5L4 12l6.5-2.5L13 3z"/></svg>
+              Tweak
+            </button>
+          </div>
+          <div class="mt-3 flex items-center gap-1.5 text-[11px] text-stone-400">
+            <svg class="w-3.5 h-3.5 text-amber-700" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+            Each tweak is a new version and uses 1 generation. Nothing is overwritten — you can always revert.
+          </div>
+        </div>
+      </div>
+
+      <!-- Version gallery -->
+      <div class="bg-white rounded-2xl border border-stone-100 shadow-sm p-6 h-fit min-w-0 lg:sticky lg:top-6">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-sm font-semibold uppercase tracking-wider text-stone-400">Version history</h3>
+          <span class="text-xs text-stone-400"><span id="version-total">2</span> versions</span>
+        </div>
+        <div id="version-list" class="space-y-2.5"></div>
+        <p class="text-[11px] text-stone-400 mt-4 pt-4 border-t border-stone-100">Reverting is free — it just picks an older version as current. Later versions are never deleted.</p>
+      </div>
+    </div>
+
+    <div class="flex justify-between items-center mt-6">
+      <button onclick="goTo(0)" class="text-stone-500 hover:text-amber-900 px-4 py-3 rounded-xl text-sm font-semibold transition-colors flex items-center gap-2">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+        Start another
+      </button>
+      <div class="text-sm text-stone-400">Saved to <span class="font-medium text-stone-600">My Family Pictures</span></div>
+    </div>
+  </section>
+
+  <!-- ============ My Family Pictures gallery ============ -->
+  <section class="mt-14">
+    <div class="flex items-center justify-between mb-1">
+      <h3 class="text-xs font-semibold uppercase tracking-wider text-stone-400">My Family Pictures — the durable landing surface</h3>
+    </div>
+    <p class="text-stone-500 text-sm mb-4">Where a user comes back to. A generation started in the creator shows here as <span class="font-medium text-stone-600">in-progress</span> and fills in when it's done — even if they closed the tab.</p>
+    <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+
+      <!-- Card: in progress -->
+      <div class="bg-white rounded-2xl border border-amber-200 shadow-sm overflow-hidden">
+        <div class="relative aspect-[4/3] shimmer flex items-center justify-center">
+          <div class="w-10 h-10 rounded-full border-4 border-amber-200 border-t-amber-700 spin"></div>
+          <span class="absolute top-3 left-3 inline-flex items-center gap-1.5 bg-amber-100 text-amber-900 text-[11px] font-semibold px-2.5 py-1 rounded-lg">
+            <span class="w-1.5 h-1.5 rounded-full bg-amber-600 animate-pulse"></span>Generating…
+          </span>
+        </div>
+        <div class="p-4">
+          <div class="flex -space-x-2 mb-2">
+            <div class="w-7 h-7 rounded-full overflow-hidden ring-2 ring-white bg-stone-200"><img src="generated-result.png" class="w-full h-full object-cover" style="object-position:49% 26%; filter:grayscale(1);"></div>
+            <div class="w-7 h-7 rounded-full overflow-hidden ring-2 ring-white bg-stone-200"><img src="generated-result.png" class="w-full h-full object-cover" style="object-position:25% 34%; filter:grayscale(1);"></div>
+            <div class="w-7 h-7 rounded-full overflow-hidden ring-2 ring-white bg-stone-200"><img src="generated-result.png" class="w-full h-full object-cover" style="object-position:73% 36%; filter:grayscale(1);"></div>
+          </div>
+          <div class="text-sm font-semibold text-stone-800">Alex, Pyotr & Maria</div>
+          <div class="text-xs text-stone-500 mt-0.5">Garden · B&amp;W film · started 2 min ago</div>
+        </div>
+      </div>
+
+      <!-- Card: ready -->
+      <div class="bg-white rounded-2xl border border-stone-100 shadow-sm overflow-hidden group cursor-pointer hover:shadow-lg transition-shadow">
+        <div class="relative aspect-[4/3] bg-stone-100 overflow-hidden">
+          <img src="generated-result.png" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" style="object-position:center 30%;">
+          <span class="absolute bottom-2 left-2 inline-flex items-center gap-1 bg-black/60 text-white text-[10px] font-medium px-2 py-1 rounded-md">AI-generated</span>
+        </div>
+        <div class="p-4">
+          <div class="flex -space-x-2 mb-2">
+            <div class="w-7 h-7 rounded-full overflow-hidden ring-2 ring-white bg-stone-200"><img src="generated-result.png" class="w-full h-full object-cover" style="object-position:49% 26%; filter:grayscale(1);"></div>
+            <div class="w-7 h-7 rounded-full overflow-hidden ring-2 ring-white bg-stone-200"><img src="generated-result.png" class="w-full h-full object-cover" style="object-position:25% 34%; filter:grayscale(1);"></div>
+            <div class="w-7 h-7 rounded-full overflow-hidden ring-2 ring-white bg-stone-200"><img src="generated-result.png" class="w-full h-full object-cover" style="object-position:73% 36%; filter:grayscale(1);"></div>
+          </div>
+          <div class="text-sm font-semibold text-stone-800">Alex, Pyotr & Maria</div>
+          <div class="text-xs text-stone-500 mt-0.5">3 versions · updated 2 days ago</div>
+        </div>
+      </div>
+
+      <!-- Card: failed (refunded) -->
+      <div class="bg-white rounded-2xl border border-stone-100 shadow-sm overflow-hidden">
+        <div class="relative aspect-[4/3] bg-stone-50 flex items-center justify-center">
+          <svg class="w-8 h-8 text-stone-300" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
+          <span class="absolute top-3 left-3 inline-flex items-center gap-1.5 bg-red-50 text-red-700 text-[11px] font-semibold px-2.5 py-1 rounded-lg">Failed · refunded</span>
+        </div>
+        <div class="p-4">
+          <div class="flex items-center justify-between">
+            <div>
+              <div class="text-sm font-semibold text-stone-800">Nadezhda & Lena</div>
+              <div class="text-xs text-stone-500 mt-0.5">No generation used · yesterday</div>
+            </div>
+            <button class="text-xs font-semibold text-amber-900 hover:underline shrink-0">Retry</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ============ Edge-state previews ============ -->
+  <section class="mt-14">
+    <h3 class="text-xs font-semibold uppercase tracking-wider text-stone-400 mb-4">Edge states worth reviewing</h3>
+    <div class="grid sm:grid-cols-2 gap-4">
+      <!-- Cap reached -->
+      <div class="rounded-2xl border border-amber-200 bg-amber-50/60 p-5">
+        <div class="flex items-start gap-3">
+          <div class="w-9 h-9 rounded-xl bg-amber-100 flex items-center justify-center text-amber-800 shrink-0">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M12 3l9 16H3l9-16z"/></svg>
+          </div>
+          <div>
+            <h4 class="font-semibold text-amber-950 text-sm">You've used all 10 generations this month</h4>
+            <p class="text-amber-900/80 text-sm mt-1">Your allowance resets on <strong>August 1</strong>. Your finished pictures stay saved.</p>
+          </div>
+        </div>
+      </div>
+      <!-- Budget closed -->
+      <div class="rounded-2xl border border-stone-200 bg-stone-50 p-5">
+        <div class="flex items-start gap-3">
+          <div class="w-9 h-9 rounded-xl bg-stone-200 flex items-center justify-center text-stone-600 shrink-0">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/></svg>
+          </div>
+          <div>
+            <h4 class="font-semibold text-stone-800 text-sm">Generation is paused right now</h4>
+            <p class="text-stone-500 text-sm mt-1">We've temporarily hit our overall capacity. Please check back soon — nothing is charged.</p>
+          </div>
+        </div>
+      </div>
+      <!-- Failed generation -->
+      <div class="rounded-2xl border border-red-200 bg-red-50/60 p-5">
+        <div class="flex items-start gap-3">
+          <div class="w-9 h-9 rounded-xl bg-red-100 flex items-center justify-center text-red-600 shrink-0">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+          </div>
+          <div>
+            <h4 class="font-semibold text-red-950 text-sm">That generation didn't go through</h4>
+            <p class="text-red-900/80 text-sm mt-1">We couldn't complete the portrait, so <strong>no generation was used</strong>. Try again in a moment.</p>
+          </div>
+        </div>
+      </div>
+      <!-- Returning to waiting result -->
+      <div class="rounded-2xl border border-emerald-200 bg-emerald-50/60 p-5">
+        <div class="flex items-start gap-3">
+          <div class="w-9 h-9 rounded-xl bg-emerald-100 flex items-center justify-center text-emerald-700 shrink-0">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+          </div>
+          <div>
+            <h4 class="font-semibold text-emerald-950 text-sm">Your picture is ready</h4>
+            <p class="text-emerald-900/80 text-sm mt-1">You closed the tab while it generated — it finished and was waiting for you. Durable by design.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<script>
+  // ---------- Mock data ----------
+  // NOTE: descriptors below are derived only from data the schema actually holds —
+  // living/deceased status and birth/death years on TreeMember. The tree stores
+  // relationships member-to-member (parent/spouse/sibling), NOT relative to the
+  // signed-in user, so there is no "You" anchor or "your grandfather" label today.
+  // `photo` = object-position crop into the shared sample image (this mock only has
+  // one real photo asset — the 3 people actually IN it get real crops; others fall
+  // back to initials to stand in for their real profile photo). `noPhoto` renders the
+  // explicit "missing photo" placeholder, which is itself one not-selectable reason.
+  const members = [
+    { id: 'alex',   name: 'Alex Rusin',       rel: 'Living · b. 1972',   initials: 'AR', tone: 'bg-amber-100 text-amber-900', eligible: true, photo: '49% 26%' },
+    { id: 'pyotr',  name: 'Pyotr Rusin',      rel: '1931 – 2008',        initials: 'PR', tone: 'bg-stone-200 text-stone-700', eligible: true, deceased: true, photo: '25% 34%' },
+    { id: 'maria',  name: 'Maria Rusina',     rel: '1934 – 2011',        initials: 'MR', tone: 'bg-stone-200 text-stone-700', eligible: true, deceased: true, photo: '73% 36%' },
+    { id: 'nadya',  name: 'Nadezhda Rusina',  rel: 'Living · b. 1948',   initials: 'NR', tone: 'bg-rose-100 text-rose-800',   eligible: true },
+    { id: 'ivan',   name: 'Ivan Rusin',       rel: 'Living · b. 1955',   initials: 'IR', tone: 'bg-sky-100 text-sky-800',     eligible: true },
+    { id: 'lena',   name: 'Lena Rusina',      rel: 'Living · b. 1960',   initials: 'LR', tone: 'bg-violet-100 text-violet-800', eligible: true },
+    { id: 'mila',   name: 'Mila Rusina',      rel: 'Living · b. 2017 (9)', initials: 'MR', tone: 'bg-stone-100 text-stone-400', eligible: false, reason: 'Living minor — under 18 excluded' },
+    { id: 'unknown',name: 'Boris Rusin',      rel: 'Living · birth year unknown', initials: 'BR', tone: 'bg-stone-100 text-stone-400', eligible: false, reason: 'Birth year unknown — age can\'t be confirmed' },
+    { id: 'nophoto',name: 'Vera Rusina',      rel: '1918 – 2001',        initials: 'VR', tone: 'bg-stone-100 text-stone-400', eligible: false, noPhoto: true, reason: 'No profile photo to render from' },
+  ];
+
+  // Renders a member's avatar at a given tailwind size class. Photo → cropped image;
+  // noPhoto → dashed placeholder with a photo-off icon; otherwise initials fallback.
+  function avatar(m, sizeCls, textCls) {
+    if (m.photo) {
+      return `<div class="${sizeCls} rounded-full overflow-hidden shrink-0 bg-stone-200 ring-1 ring-black/5">
+        <img src="generated-result.png" alt="${m.name}" class="w-full h-full object-cover" style="object-position:${m.photo}; filter:grayscale(1) contrast(1.05);" /></div>`;
+    }
+    if (m.noPhoto) {
+      return `<div class="${sizeCls} rounded-full shrink-0 bg-stone-100 border border-dashed border-stone-300 flex items-center justify-center text-stone-400" title="No profile photo">
+        <svg class="w-1/2 h-1/2" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3l18 18M9.5 4H16a2 2 0 012 2v6.5m-1.2 3.79A2 2 0 0115 17H5a2 2 0 01-2-2V7a2 2 0 011.8-1.99M9 11a2 2 0 002.8 1.8"/></svg></div>`;
+    }
+    return `<div class="${sizeCls} rounded-full ${m.tone} flex items-center justify-center font-semibold ${textCls} shrink-0">${m.initials}</div>`;
+  }
+
+  const settings = [
+    { id: 'studio',  label: 'Studio',        sub: 'Classic backdrop' },
+    { id: 'garden',  label: 'Garden',        sub: 'Blossoms & greenery', default: true },
+    { id: 'holiday', label: 'Holiday table', sub: 'Gathered for a meal' },
+    { id: 'vintage', label: 'Old homestead', sub: 'By the family house' },
+    { id: 'beach',   label: 'Seaside',       sub: 'Coast at golden hour' },
+    { id: 'park',    label: 'Autumn park',   sub: 'Warm foliage' },
+    { id: 'custom',  label: 'Somewhere specific', sub: 'Name your own place', custom: true },
+  ];
+  const styles = [
+    { id: 'realistic', label: 'Realistic photo', sub: 'True-to-life color' },
+    { id: 'bw',        label: 'B&W film',        sub: 'Timeless & grainy', default: true },
+    { id: 'oil',       label: 'Oil painting',    sub: 'Painterly texture' },
+    { id: 'sepia',     label: 'Sepia heirloom',  sub: 'Aged warm tone' },
+  ];
+
+  const state = {
+    step: 0,
+    query: '',
+    selected: new Set(['alex', 'pyotr', 'maria']),
+    setting: 'garden',
+    customPlace: '',
+    style: 'bw',
+    freetext: '',
+    versions: [
+      { n: 1, note: 'Original — Garden · B&W film' },
+      { n: 2, note: 'Tweak — "warmer, softer light"' },
+    ],
+    current: 2,
+  };
+
+  // ---------- Stepper ----------
+  function paintStepper() {
+    document.querySelectorAll('.step').forEach((el) => {
+      const s = +el.dataset.step;
+      const dot = el.querySelector('.dot');
+      const label = el.querySelector('.label');
+      dot.className = 'dot w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold ';
+      if (s < state.step) { dot.className += 'bg-amber-800 text-white'; dot.innerHTML = '&#10003;'; }
+      else if (s === state.step) { dot.className += 'bg-amber-900 text-white ring-4 ring-amber-900/10'; dot.textContent = s + 1; }
+      else { dot.className += 'bg-stone-100 text-stone-400'; dot.textContent = s + 1; }
+      label.className = 'label font-medium hidden sm:inline ' + (s <= state.step ? 'text-stone-800' : 'text-stone-400');
+    });
+  }
+
+  function goTo(step) {
+    state.step = step;
+    document.querySelectorAll('.panel').forEach((p, i) => {
+      p.classList.toggle('hidden', i !== step);
+    });
+    const active = document.getElementById('panel-' + step);
+    if (active) { active.classList.remove('fade-in'); void active.offsetWidth; active.classList.add('fade-in'); }
+    paintStepper();
+    if (step === 1) renderSummary();
+    if (step === 3) renderVersions();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  // ---------- Step 1: members ----------
+  function renderMembers() {
+    const grid = document.getElementById('member-grid');
+    grid.innerHTML = '';
+    const q = (state.query || '').trim().toLowerCase();
+    const visible = members.filter((m) =>
+      !q || m.name.toLowerCase().includes(q));
+    document.getElementById('member-empty').classList.toggle('hidden', visible.length > 0);
+    document.getElementById('member-grid').classList.toggle('hidden', visible.length === 0);
+    if (visible.length === 0) document.getElementById('member-empty-q').textContent = state.query;
+    visible.forEach((m) => {
+      const chosen = state.selected.has(m.id);
+      const card = document.createElement(m.eligible ? 'button' : 'div');
+      card.className = 'text-left relative rounded-2xl border p-4 transition-all ' + (
+        !m.eligible
+          ? 'border-stone-100 bg-stone-50/60 cursor-not-allowed'
+          : chosen
+            ? 'border-amber-700 bg-amber-50/70 ring-2 ring-amber-700/20 shadow-sm cursor-pointer'
+            : 'border-stone-100 bg-white hover:border-amber-700/40 hover:shadow-sm cursor-pointer'
+      );
+      if (m.eligible) card.onclick = () => toggle(m.id);
+
+      card.innerHTML = `
+        <div class="flex items-start gap-3">
+          ${avatar(m, 'w-12 h-12', 'text-sm')}
+          <div class="min-w-0">
+            <div class="font-semibold text-sm leading-snug ${m.eligible ? 'text-stone-900' : 'text-stone-400'} break-words">${m.name}</div>
+            <div class="text-xs leading-snug ${m.eligible ? 'text-stone-500' : 'text-stone-400'} break-words">${m.rel}</div>
+          </div>
+        </div>
+        ${m.deceased ? `<span class="inline-flex items-center gap-1 mt-3 text-[10px] uppercase tracking-wide font-semibold text-stone-500 bg-stone-100 px-2 py-0.5 rounded-full">In memoriam</span>` : ''}
+        ${!m.eligible ? `<div class="mt-3 flex items-start gap-1.5 text-[11px] text-stone-400 leading-snug">
+            <svg class="w-3.5 h-3.5 shrink-0 mt-px" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/></svg>
+            <span>${m.reason}</span></div>` : ''}
+        ${chosen ? `<span class="absolute top-4 right-4 w-6 h-6 rounded-full bg-amber-700 text-white flex items-center justify-center"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg></span>` : ''}
+      `;
+      grid.appendChild(card);
+    });
+    document.getElementById('selected-count').textContent = state.selected.size;
+    document.getElementById('next-1').disabled = state.selected.size === 0;
+
+    // Note any selected relatives currently hidden by the search filter
+    const hiddenSel = [...state.selected].filter((id) => !visible.some((v) => v.id === id)).length;
+    const hs = document.getElementById('hidden-selected');
+    if (q && hiddenSel > 0) {
+      hs.textContent = hiddenSel + ' selected hidden by search';
+      hs.classList.remove('hidden');
+    } else {
+      hs.classList.add('hidden');
+    }
+  }
+
+  let capTimer;
+  function toggle(id) {
+    if (state.selected.has(id)) state.selected.delete(id);
+    else {
+      if (state.selected.size >= 8) { flashCap(); return; }
+      state.selected.add(id);
+    }
+    renderMembers();
+  }
+  function flashCap() {
+    const note = document.getElementById('cap-note');
+    note.classList.remove('hidden');
+    clearTimeout(capTimer);
+    capTimer = setTimeout(() => note.classList.add('hidden'), 3200);
+  }
+
+  // ---------- Step 2: presets ----------
+  function renderPresets() {
+    const sg = document.getElementById('setting-grid');
+    const yg = document.getElementById('style-grid');
+    sg.innerHTML = ''; yg.innerHTML = '';
+    settings.forEach((o) => sg.appendChild(presetCard(o, 'setting')));
+    styles.forEach((o) => yg.appendChild(presetCard(o, 'style')));
+    // Reveal the custom-place field only when "Somewhere specific" is chosen
+    const showCustom = state.setting === 'custom';
+    document.getElementById('custom-place-wrap').classList.toggle('hidden', !showCustom);
+  }
+  function presetCard(o, kind) {
+    const active = state[kind] === o.id;
+    const b = document.createElement('button');
+    b.className = 'text-left rounded-xl border p-3.5 transition-all ' + (
+      active ? 'border-amber-700 bg-amber-50/70 ring-2 ring-amber-700/20 shadow-sm'
+             : o.custom ? 'border-stone-300 border-dashed bg-white hover:border-amber-700/50 hover:shadow-sm'
+             : 'border-stone-100 bg-white hover:border-amber-700/40 hover:shadow-sm');
+    b.onclick = () => {
+      state[kind] = o.id;
+      renderPresets(); renderSummary();
+      if (o.custom) setTimeout(() => document.getElementById('custom-place').focus(), 0);
+    };
+    const icon = o.custom
+      ? `<svg class="w-4 h-4 ${active ? 'text-amber-800' : 'text-stone-400'} shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a2 2 0 01-2.828 0l-4.243-4.243a8 8 0 1111.314 0z"/><circle cx="12" cy="11" r="2.5"/></svg>`
+      : '';
+    b.innerHTML = `<div class="flex items-center gap-1.5"><div class="font-semibold text-sm ${active ? 'text-amber-900' : 'text-stone-800'}">${o.label}</div>${icon}</div>
+      <div class="text-xs text-stone-500 mt-0.5">${o.sub}</div>`;
+    return b;
+  }
+
+  function renderSummary() {
+    const wrap = document.getElementById('summary-people');
+    wrap.innerHTML = '';
+    [...state.selected].forEach((id) => {
+      const m = members.find((x) => x.id === id);
+      const chip = document.createElement('span');
+      chip.className = 'inline-flex items-center gap-1.5 text-xs bg-stone-100 text-stone-700 rounded-full pl-1 pr-2.5 py-1';
+      chip.innerHTML = `${avatar(m, 'w-5 h-5', 'text-[9px]')}${m.name.split(' ')[0]}`;
+      wrap.appendChild(chip);
+    });
+    const setDef = settings.find((s) => s.id === state.setting);
+    document.getElementById('summary-setting').textContent = setDef.custom
+      ? (document.getElementById('custom-place').value.trim() || 'Custom place…')
+      : setDef.label;
+    document.getElementById('summary-style').textContent = styles.find((s) => s.id === state.style).label;
+    const t = document.getElementById('freetext').value.trim();
+    document.getElementById('summary-touch').textContent = t || '—';
+  }
+
+  document.getElementById('freetext').addEventListener('input', (e) => {
+    document.getElementById('ft-count').textContent = e.target.value.length;
+    renderSummary();
+  });
+  document.getElementById('custom-place').addEventListener('input', (e) => {
+    document.getElementById('cp-count').textContent = e.target.value.length;
+    state.customPlace = e.target.value;
+    renderSummary();
+  });
+
+  // ---------- Step 3: generate ----------
+  const genSteps = [
+    [18, 'Reserving generation & sending reference photos…'],
+    [42, 'Composing faces into the scene…'],
+    [68, 'Rendering photoreal detail at 1K…'],
+    [88, 'Applying finishing & watermark…'],
+    [100, 'Done — saving your picture…'],
+  ];
+  function startGenerate() {
+    goTo(2);
+    const bar = document.getElementById('gen-bar');
+    const status = document.getElementById('gen-status');
+    bar.style.width = '8%';
+    let i = 0;
+    const tick = () => {
+      if (i >= genSteps.length) {
+        // consume one generation
+        const c = document.getElementById('allowance-count');
+        c.textContent = Math.max(0, (+c.textContent) - 1);
+        setTimeout(() => goTo(3), 500);
+        return;
+      }
+      const [pct, msg] = genSteps[i++];
+      bar.style.width = pct + '%';
+      status.textContent = msg;
+      setTimeout(tick, 850);
+    };
+    setTimeout(tick, 600);
+  }
+
+  // ---------- Step 4: versions ----------
+  function renderVersions() {
+    const list = document.getElementById('version-list');
+    list.innerHTML = '';
+    [...state.versions].reverse().forEach((v) => {
+      const isCurrent = v.n === state.current;
+      const row = document.createElement('div');
+      row.className = 'flex items-center gap-3 rounded-xl border p-2.5 transition-all ' + (
+        isCurrent ? 'border-amber-700 bg-amber-50/60' : 'border-stone-100 hover:border-stone-200');
+      row.innerHTML = `
+        <div class="w-14 h-14 rounded-lg overflow-hidden shrink-0 bg-stone-100 ${isCurrent ? 'ring-2 ring-amber-700' : ''}">
+          <img src="generated-result.png" class="w-full h-full object-cover ${v.n === 1 ? 'grayscale contrast-125' : ''}" style="${v.n===1?'filter:grayscale(1) brightness(0.95);':''}" />
+        </div>
+        <div class="min-w-0 flex-1">
+          <div class="text-xs font-semibold text-stone-800">Version ${v.n}${isCurrent ? ' · current' : ''}</div>
+          <div class="text-[11px] text-stone-500 truncate">${v.note}</div>
+        </div>
+        ${isCurrent
+          ? `<span class="text-[10px] font-semibold uppercase tracking-wide text-amber-800 shrink-0">Shown</span>`
+          : `<button onclick="revert(${v.n})" class="text-xs font-semibold text-amber-900 hover:underline shrink-0">Revert</button>`}
+      `;
+      list.appendChild(row);
+    });
+    document.getElementById('version-total').textContent = state.versions.length;
+    document.getElementById('version-badge').textContent = 'Version ' + state.current + ' · current';
+    const img = document.getElementById('result-img');
+    img.style.filter = state.current === 1 ? 'grayscale(1) brightness(0.95)' : '';
+  }
+  function revert(n) { state.current = n; renderVersions(); }
+
+  function doTweak() {
+    const input = document.getElementById('tweak-input');
+    const val = input.value.trim() || 'subtle refinement';
+    const n = state.versions.length + 1;
+    state.versions.push({ n, note: 'Tweak — "' + val + '"' });
+    state.current = n;
+    input.value = '';
+    const c = document.getElementById('allowance-count');
+    c.textContent = Math.max(0, (+c.textContent) - 1);
+    renderVersions();
+  }
+
+  // ---------- search ----------
+  const searchInput = document.getElementById('member-search');
+  const searchClear = document.getElementById('member-search-clear');
+  searchInput.addEventListener('input', (e) => {
+    state.query = e.target.value;
+    searchClear.classList.toggle('hidden', !state.query);
+    renderMembers();
+  });
+  searchClear.addEventListener('click', () => {
+    state.query = ''; searchInput.value = ''; searchClear.classList.add('hidden');
+    renderMembers(); searchInput.focus();
+  });
+
+  // ---------- init ----------
+  renderMembers();
+  renderPresets();
+  paintStepper();
+</script>

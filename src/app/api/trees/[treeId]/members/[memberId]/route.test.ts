@@ -25,6 +25,10 @@ const {
       update: vi.fn(),
       delete: vi.fn(),
     },
+    familyPicture: {
+      deleteMany: vi.fn(),
+      updateMany: vi.fn(),
+    },
     $transaction: vi.fn(async (callback: (tx: unknown) => Promise<unknown>) => {
       await callback(prismaMock);
     }),
@@ -523,5 +527,72 @@ describe("/api/trees/[treeId]/members/[memberId]", () => {
       (call) => call[0]?.data?.nodePositions !== undefined,
     );
     expect(arrangementUpdateCall).toBeUndefined();
+  });
+
+  it("deleting the member leaves any Family Pictures it appears in untouched (denormalized snapshot, no FK to the Member)", async () => {
+    prismaMock.familyTree.findUnique.mockResolvedValueOnce({ nodePositions: null });
+
+    const request = new NextRequest(
+      "http://localhost/api/trees/t1/members/m1",
+      { method: "DELETE" },
+    );
+
+    const response = await DELETE(request, {
+      params: Promise.resolve({ treeId: "t1", memberId: "m1" }),
+    });
+
+    expect(response.status).toBe(200);
+    expect(prismaMock.familyPicture.deleteMany).not.toHaveBeenCalled();
+    expect(prismaMock.familyPicture.updateMany).not.toHaveBeenCalled();
+  });
+
+  it("removing the member's photo leaves any Family Pictures it appears in untouched (they store a snapshot photoUrl, not a live reference)", async () => {
+    prismaMock.treeMember.findFirst.mockResolvedValueOnce({
+      id: "m1",
+      treeId: "t1",
+      photoKey: "trees/t1/members/m1.webp",
+      photoUrl: "https://bucket.example.com/trees/t1/members/m1.webp",
+    });
+    prismaMock.treeMember.update.mockResolvedValueOnce({
+      id: "m1",
+      treeId: "t1",
+      firstName: "Elena",
+      isLiving: false,
+      photoKey: null,
+      photoUrl: null,
+    });
+
+    const formData = makeFormData({
+      firstName: "Elena",
+      lastName: "",
+      gender: "female",
+      bio: "",
+      isLiving: "false",
+      birthPrecision: "",
+      birthYear: "",
+      birthMonth: "",
+      birthDay: "",
+      deathPrecision: "",
+      deathYear: "",
+      deathMonth: "",
+      deathDay: "",
+      removePhoto: "true",
+    });
+
+    const request = new NextRequest(
+      "http://localhost/api/trees/t1/members/m1",
+      { method: "PATCH", body: formData },
+    );
+
+    const response = await PATCH(request, {
+      params: Promise.resolve({ treeId: "t1", memberId: "m1" }),
+    });
+
+    expect(response.status).toBe(200);
+    expect(deletePhotoByKeyMock).toHaveBeenCalledWith(
+      expect.objectContaining({ key: "trees/t1/members/m1.webp" }),
+    );
+    expect(prismaMock.familyPicture.deleteMany).not.toHaveBeenCalled();
+    expect(prismaMock.familyPicture.updateMany).not.toHaveBeenCalled();
   });
 });

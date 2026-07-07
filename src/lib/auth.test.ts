@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll } from "vitest";
+import { describe, it, expect, beforeAll, vi } from "vitest";
 
 type AuthOptions = {
   plugins?: Array<{ id?: string }>;
@@ -6,9 +6,26 @@ type AuthOptions = {
     enabled?: boolean;
     customRules?: Record<string, { window: number; max: number }>;
   };
+  user?: {
+    deleteUser?: {
+      enabled?: boolean;
+      beforeDelete?: (user: { id: string }) => Promise<void>;
+    };
+  };
 };
 
 let options: AuthOptions;
+
+const deleteFamilyPictureImagesForUserMock = vi.fn().mockResolvedValue(undefined);
+
+vi.mock("@/lib/family-picture/user-deletion", () => ({
+  deleteFamilyPictureImagesForUser: deleteFamilyPictureImagesForUserMock,
+}));
+
+vi.mock("@/lib/tree-domain/photo-upload", () => ({
+  createS3Client: vi.fn(() => ({})),
+  deletePhotoByKey: vi.fn(),
+}));
 
 // auth.ts reads env at import time and pulls in the generated Prisma client,
 // which is slow to cold-load — set env and import once with a generous timeout.
@@ -39,5 +56,21 @@ describe("auth bot-protection config", () => {
       window: 3600,
       max: 5,
     });
+  });
+});
+
+describe("auth account-deletion lifecycle", () => {
+  it("cleans up Family Picture S3 images before the User row (and its cascades) are deleted", async () => {
+    const beforeDelete = options.user?.deleteUser?.beforeDelete;
+    expect(typeof beforeDelete).toBe("function");
+
+    deleteFamilyPictureImagesForUserMock.mockClear();
+    await beforeDelete!({ id: "user-1" });
+
+    expect(deleteFamilyPictureImagesForUserMock).toHaveBeenCalledTimes(1);
+    expect(deleteFamilyPictureImagesForUserMock).toHaveBeenCalledWith(
+      expect.objectContaining({ deletePhoto: expect.any(Function) }),
+      "user-1",
+    );
   });
 });

@@ -90,7 +90,7 @@ export default async function TreeDetailPage({
           canEdit={canEdit}
           isOwner={isOwner}
           initialMemberCount={tree.memberCount}
-          t={t.tree}
+          t={{ ...t.tree, familyPictureSidebarLink: t.familyPicture.sidebarLink }}
         />
       </div>
     </>

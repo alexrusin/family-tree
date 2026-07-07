@@ -1,0 +1,5 @@
+{
+  "//": "Type-check config for the pre-commit hook. Extends the base config but excludes test files, which are compiled by vitest (esbuild, no type-check) and next build (skips them), so they are never type-checked and have drifted. This mirrors what `next build` validates: source reachable from the app.",
+  "extends": "./tsconfig.json",
+  "exclude": ["node_modules", "**/*.test.ts", "**/*.test.tsx"]
+}

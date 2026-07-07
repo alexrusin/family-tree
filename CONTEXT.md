@@ -172,6 +172,23 @@ The post-import summary shown to the user describing what was brought in (people
 A report a signed-in User submits when something in the app isn't working, so the operator gains insight into problems that would otherwise go unseen. It pairs the User's own description of what went wrong with context captured automatically about where and under what conditions it happened — who reported it, the page they were on, the tree in view if any, their interface language, their browser, and which released version of the app they were running. An Issue Report belongs to the User who filed it and does not outlive that User's account. It is operator-facing support intake, distinct from a developer's bug tracker.
 _Avoid_: ticket, bug, feedback, GitHub issue
 
+## Family Picture
+
+An AI-generated group portrait that places selected Members of one Family Tree together in a single image, produced from those Members' Profile Photos. Only Members who have a Profile Photo can appear in a Family Picture, since each depicted Member needs a reference face; a Member without a Profile Photo is not selectable. Living Members who are minors are also excluded: a Member is ineligible when they are living and either their recorded birth year makes them under 18 or their age cannot be confirmed because no birth year is recorded. It is a new artifact distinct from a Profile Photo: a Profile Photo represents one Member and is framed by a human from a source image, whereas a Family Picture is synthesized by a model to depict several Members together in a scene. A Family Picture may be refined through successive tweaks, each of which re-generates the image. It is a private artifact owned by the User who generated it, scoped to the source Family Tree but not part of that tree's shared data — other Collaborators and Guest Viewers do not see it. Any authenticated member of a tree (viewer, editor, or owner) may generate one; Guest Viewers cannot. A Family Picture is a self-contained snapshot: once generated it persists unchanged even if a depicted Member is edited or deleted, that Member's Profile Photo is changed, or the source Family Tree is deleted. It is destroyed only when the owning User is deleted.
+_Avoid_: family photo, group photo, collage
+
+## Generation
+
+A single billed call to the image model that produces or refines a Family Picture. The initial creation is one Generation and every subsequent tweak is another Generation. It is the unit that is metered and capped, not the finished Family Picture — one Family Picture may cost many Generations. Each Generation produces one Family Picture Version.
+
+## Family Picture Version
+
+One image in a Family Picture's ordered history, produced by a single Generation. The first Generation produces the first Version; each tweak produces a new Version by refining a prior one. Every Version is retained so the User can browse and revert to an earlier one; the Version shown by default is the most recent unless the User selects an earlier one.
+
+## Generation Allowance
+
+The per-User, monthly cap on the number of Generations a User may consume. It exists to bound spend on an otherwise free feature and is the lever later monetization (subscription tier or purchased credits) will adjust.
+
 ## Example Dialogue
 
 **Developer**: A Collaborator Viewer opened the Family Tree through the app and said the branches still overlap. Will they see the Manual Tree Arrangement an editor saved yesterday?

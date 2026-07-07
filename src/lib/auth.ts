@@ -6,6 +6,11 @@ import { PrismaClient } from "@/generated/prisma/client";
 import { sendEmail } from "@/lib/email";
 import { buildPostVerificationRedirect } from "@/lib/auth-callback";
 import { buildResetPasswordEmail } from "@/lib/reset-password-email";
+import { deleteFamilyPictureImagesForUser } from "@/lib/family-picture/user-deletion";
+import {
+  createS3Client,
+  deletePhotoByKey,
+} from "@/lib/tree-domain/photo-upload";
 import enDictionary from "@/app/[lang]/dictionaries/en.json";
 import esDictionary from "@/app/[lang]/dictionaries/es.json";
 import ruDictionary from "@/app/[lang]/dictionaries/ru.json";
@@ -191,6 +196,24 @@ export const auth = betterAuth({
     },
     deleteUser: {
       enabled: true,
+      // Family Pictures are a self-contained, user-owned snapshot: they
+      // survive edits to Members and deletion of the source tree, and are
+      // destroyed only with the owning User (Account Deletion Boundary).
+      // Postgres cascades the FamilyPicture/Version rows once the User row
+      // goes, but not their S3 images — so those must be deleted here,
+      // before that cascade removes the s3Key list this needs to run.
+      beforeDelete: async (user) => {
+        const bucket = process.env.S3_BUCKET ?? "";
+        const s3Client = createS3Client();
+
+        await deleteFamilyPictureImagesForUser(
+          {
+            prisma,
+            deletePhoto: (key) => deletePhotoByKey({ s3Client, bucket, key }),
+          },
+          user.id,
+        );
+      },
     },
   },
 
