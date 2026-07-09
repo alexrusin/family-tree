@@ -142,22 +142,103 @@ export function buildTreeGraph(
   const spouseRels = relationships.filter((r) => r.type === "spouse");
   const divorcedRels = relationships.filter((r) => r.type === "divorced");
 
-  // ── Dagre layout (parent edges only drive the hierarchy) ──────────────
+  const memberIds = new Set(members.map((m) => m.id));
+
+  // ── Parent → children & child → parents maps ──────────────────────────
+  const childrenOf = new Map<string, Set<string>>();
+  const parentsOf = new Map<string, Set<string>>();
+  const parentRelIdByPair = new Map<string, string>();
+  for (const r of parentRels) {
+    if (!childrenOf.has(r.fromMemberId))
+      childrenOf.set(r.fromMemberId, new Set());
+    childrenOf.get(r.fromMemberId)!.add(r.toMemberId);
+    if (!parentsOf.has(r.toMemberId)) parentsOf.set(r.toMemberId, new Set());
+    parentsOf.get(r.toMemberId)!.add(r.fromMemberId);
+    parentRelIdByPair.set(`${r.fromMemberId}::${r.toMemberId}`, r.id);
+  }
+
+  // ── Unions (spouse/divorced pairs with shared children) ───────────────
+  // Detected up front so the marriage point can drive the Dagre hierarchy,
+  // not just the rendered edges.
+  const unionMap = new Map<
+    string,
+    { spouseA: string; spouseB: string; children: Set<string> }
+  >();
+  const couplePairRelId = new Map<string, string>();
+  const couplePairType = new Map<string, "spouse" | "divorced">();
+  const coupleRels = [...spouseRels, ...divorcedRels];
+
+  for (const r of coupleRels) {
+    const [a, b] = [r.fromMemberId, r.toMemberId].sort();
+    const key = `${a}::${b}`;
+    couplePairRelId.set(key, r.id);
+    couplePairType.set(key, r.type as "spouse" | "divorced");
+    const kidsA = childrenOf.get(a) ?? new Set<string>();
+    const kidsB = childrenOf.get(b) ?? new Set<string>();
+    const kids = new Set([...kidsA].filter((k) => kidsB.has(k)));
+    if (kids.size === 0) continue;
+    unionMap.set(key, { spouseA: a, spouseB: b, children: kids });
+  }
+
+  // ── Dagre layout ──────────────────────────────────────────────────────
+  // Every parent → child link is routed through an intermediate node so that
+  // *every* generation spans exactly the same number of ranks (2). This is the
+  // key to keeping generations on one level: if some children hung directly off
+  // a parent (1 rank) while others hung under a couple's union node (2 ranks),
+  // branches would drift half a generation out of alignment wherever the two
+  // meet (e.g. through a marriage). Couples with shared children funnel through
+  // one shared union node; every other child (single parent, or co-parents who
+  // are not a registered couple) gets a per-child group node. These
+  // intermediates are layout-only — they are not rendered.
+  //
+  // Anchoring *every* couple (even childless ones) is likewise essential: a
+  // married-in spouse with no children would otherwise be disconnected and
+  // dagre would float it to the top row.
   const g = new Dagre.graphlib.Graph();
   g.setGraph({
     rankdir: "TB",
-    ranksep: 80,
+    ranksep: 40,
     nodesep: 40,
     marginx: 40,
     marginy: 40,
   });
   g.setDefaultEdgeLabel(() => ({}));
 
-  const memberIds = new Set(members.map((m) => m.id));
   for (const m of members) g.setNode(m.id, { width: NODE_W, height: NODE_H });
-  for (const r of parentRels) {
-    if (memberIds.has(r.fromMemberId) && memberIds.has(r.toMemberId))
-      g.setEdge(r.fromMemberId, r.toMemberId);
+
+  // Couple union nodes (shared by the couple's children).
+  const unionChildren = new Set<string>();
+  const seenCoupleKeys = new Set<string>();
+  for (const r of coupleRels) {
+    const [a, b] = [r.fromMemberId, r.toMemberId].sort();
+    const key = `${a}::${b}`;
+    if (seenCoupleKeys.has(key)) continue;
+    seenCoupleKeys.add(key);
+    if (!memberIds.has(a) || !memberIds.has(b)) continue;
+    const layoutId = `ulayout-${key}`;
+    g.setNode(layoutId, { width: UNION_SIZE, height: 1 });
+    g.setEdge(a, layoutId);
+    g.setEdge(b, layoutId);
+    const union = unionMap.get(key);
+    if (union) {
+      for (const cid of union.children) {
+        if (memberIds.has(cid)) {
+          g.setEdge(layoutId, cid);
+          unionChildren.add(cid);
+        }
+      }
+    }
+  }
+  // Every child not funnelled through a couple union gets a per-child group
+  // node, so its parent(s) sit exactly 2 ranks above it — same as union kids.
+  for (const [child, parents] of parentsOf) {
+    if (!memberIds.has(child) || unionChildren.has(child)) continue;
+    const groupId = `pgroup-${child}`;
+    g.setNode(groupId, { width: UNION_SIZE, height: 1 });
+    for (const p of parents) {
+      if (memberIds.has(p)) g.setEdge(p, groupId);
+    }
+    g.setEdge(groupId, child);
   }
   Dagre.layout(g);
 
@@ -179,47 +260,23 @@ export function buildTreeGraph(
     data: { member: m },
   }));
 
-  // ── Parent → children map ─────────────────────────────────────────────
-  const childrenOf = new Map<string, Set<string>>();
-  const parentRelIdByPair = new Map<string, string>();
-  for (const r of parentRels) {
-    if (!childrenOf.has(r.fromMemberId))
-      childrenOf.set(r.fromMemberId, new Set());
-    childrenOf.get(r.fromMemberId)!.add(r.toMemberId);
-    parentRelIdByPair.set(`${r.fromMemberId}::${r.toMemberId}`, r.id);
-  }
-
-  // ── Union nodes (spouse/divorced pairs with shared children) ──────────
+  // ── Rendered union nodes (positioned from the two spouses) ────────────
   const unionNodes: TreeFlowNode[] = [];
-  const unionMap = new Map<
-    string,
-    { spouseA: string; spouseB: string; children: Set<string> }
-  >();
-  const couplePairRelId = new Map<string, string>();
-  const couplePairType = new Map<string, "spouse" | "divorced">();
-  const coupleRels = [...spouseRels, ...divorcedRels];
-
-  for (const r of coupleRels) {
-    const [a, b] = [r.fromMemberId, r.toMemberId].sort();
-    const key = `${a}::${b}`;
-    couplePairRelId.set(key, r.id);
-    couplePairType.set(key, r.type as "spouse" | "divorced");
-    const kidsA = childrenOf.get(a) ?? new Set<string>();
-    const kidsB = childrenOf.get(b) ?? new Set<string>();
-    const kids = new Set([...kidsA].filter((k) => kidsB.has(k)));
-    if (kids.size === 0) continue;
-    const pa = pos.get(a);
-    const pb = pos.get(b);
-    if (!pa || !pb) continue;
+  for (const [key, { spouseA, spouseB }] of unionMap) {
+    const pa = pos.get(spouseA);
+    const pb = pos.get(spouseB);
+    if (!pa || !pb) {
+      unionMap.delete(key);
+      continue;
+    }
     const { x: ux, y: uy } = computeUnionPosition(pa, pb);
-    unionMap.set(key, { spouseA: a, spouseB: b, children: kids });
     unionNodes.push({
       id: `union-${key}`,
       type: "union" as const,
       position: { x: ux, y: uy },
       draggable: false,
       selectable: false,
-      data: { spouseIds: [a, b] as [string, string] },
+      data: { spouseIds: [spouseA, spouseB] as [string, string] },
     });
   }
 

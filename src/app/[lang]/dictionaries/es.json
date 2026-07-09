@@ -420,6 +420,11 @@
       "addMember": "Agregar miembro",
       "lockDragging": "Bloquear arrastre",
       "unlockDragging": "Desbloquear arrastre",
+      "resetLayout": "Restablecer disposición",
+      "resetLayoutConfirmTitle": "Restablecer disposición",
+      "resetLayoutConfirmBody": "¿Restablecer la disposición a la organización automática? Esto descarta las posiciones que hayas movido manualmente y no se puede deshacer.",
+      "resetLayoutConfirm": "Restablecer",
+      "resetLayoutCancel": "Cancelar",
       "loading": "Cargando árbol..."
     },
     "panel": {
