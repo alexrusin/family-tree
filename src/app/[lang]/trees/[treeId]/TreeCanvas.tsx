@@ -36,7 +36,7 @@ import { UnionNode } from "./UnionNode";
 import { SpouseEdge } from "./SpouseEdge";
 import { DivorcedEdge } from "./DivorcedEdge";
 import { ParentEdge } from "./ParentEdge";
-import { Plus, ZoomIn, ZoomOut, Maximize2, Lock, Unlock } from "lucide-react";
+import { Plus, ZoomIn, ZoomOut, Maximize2, Lock, Unlock, Sparkles } from "lucide-react";
 import { resolveDragLockPreference, setStoredDragLockPreference } from "@/lib/tree-domain/drag-lock-preference";
 
 const nodeTypes: NodeTypes = { member: MemberNode, union: UnionNode };
@@ -55,6 +55,12 @@ interface TreeCanvasProps {
   onNodeClick: (memberId: string) => void;
   onEdgeClick: (event: React.MouseEvent, edge: TreeFlowEdge) => void;
   onAddMember: () => void;
+  onResetLayout?: () => void;
+  /**
+   * Incremented by the parent after a layout reset clears the arrangement, so
+   * the canvas re-frames the freshly auto-laid-out tree. Ignored on mount.
+   */
+  fitViewSignal?: number;
   onDragStop?: (memberId: string, position: { x: number; y: number }) => void;
   onSelectionDragStop?: (
     positions: Array<{ memberId: string; position: { x: number; y: number } }>,
@@ -89,6 +95,7 @@ interface TreeCanvasProps {
     addMember: string;
     lockDragging: string;
     unlockDragging: string;
+    resetLayout?: string;
     loading?: string;
   };
 }
@@ -100,6 +107,7 @@ function CanvasToolbar({
   canEdit,
   dragLocked,
   onToggleDragLock,
+  onResetLayout,
   t,
 }: {
   canAddMember: boolean;
@@ -107,6 +115,7 @@ function CanvasToolbar({
   canEdit: boolean;
   dragLocked: boolean;
   onToggleDragLock: () => void;
+  onResetLayout?: () => void;
   t: {
     fitToScreen: string;
     zoomIn: string;
@@ -114,6 +123,7 @@ function CanvasToolbar({
     addMember: string;
     lockDragging: string;
     unlockDragging: string;
+    resetLayout?: string;
   };
 }) {
   const { fitView, zoomIn, zoomOut } = useReactFlow();
@@ -174,6 +184,16 @@ function CanvasToolbar({
                 <Unlock className="w-4 h-4" />
               )}
             </button>
+            {onResetLayout && (
+              <button
+                onClick={onResetLayout}
+                className="p-2 text-stone-600 hover:bg-stone-100 rounded-lg transition-colors"
+                title={t.resetLayout}
+                aria-label={t.resetLayout}
+              >
+                <Sparkles className="w-4 h-4" />
+              </button>
+            )}
           </>
         )}
       </div>
@@ -209,6 +229,21 @@ function ViewportCenterReporter({
   return null;
 }
 
+// Rendered inside <ReactFlow> so it can call useReactFlow(). Re-fits the view
+// whenever `signal` changes (after the initial mount), used to frame the tree
+// after a layout reset re-lays the nodes out.
+function FitViewOnSignal({ signal }: { signal: number | undefined }) {
+  const { fitView } = useReactFlow();
+  const lastSignal = useRef(signal);
+  useEffect(() => {
+    if (signal === undefined) return;
+    if (signal === lastSignal.current) return;
+    lastSignal.current = signal;
+    void fitView({ padding: 0.2, duration: 400 });
+  }, [signal, fitView]);
+  return null;
+}
+
 export default function TreeCanvas({
   members,
   relationships,
@@ -218,6 +253,8 @@ export default function TreeCanvas({
   onNodeClick,
   onEdgeClick,
   onAddMember,
+  onResetLayout,
+  fitViewSignal,
   onDragStop,
   onSelectionDragStop,
   onSelectionChange,
@@ -465,8 +502,10 @@ export default function TreeCanvas({
           canEdit={canEdit}
           dragLocked={dragLocked}
           onToggleDragLock={handleToggleDragLock}
+          onResetLayout={onResetLayout}
           t={t}
         />
+        <FitViewOnSignal signal={fitViewSignal} />
         {registerViewportCenter && (
           <ViewportCenterReporter
             containerRef={containerRef}

@@ -420,6 +420,11 @@
       "addMember": "Add member",
       "lockDragging": "Lock dragging",
       "unlockDragging": "Unlock dragging",
+      "resetLayout": "Reset layout",
+      "resetLayoutConfirmTitle": "Reset layout",
+      "resetLayoutConfirmBody": "Reset the layout to the automatic arrangement? This discards any positions you've moved by hand and cannot be undone.",
+      "resetLayoutConfirm": "Reset layout",
+      "resetLayoutCancel": "Cancel",
       "loading": "Loading tree..."
     },
     "panel": {

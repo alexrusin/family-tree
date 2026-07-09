@@ -420,6 +420,11 @@
       "addMember": "Добавить участника",
       "lockDragging": "Заблокировать перемещение",
       "unlockDragging": "Разблокировать перемещение",
+      "resetLayout": "Сбросить расположение",
+      "resetLayoutConfirmTitle": "Сбросить расположение",
+      "resetLayoutConfirmBody": "Сбросить расположение к автоматическому? Это удалит все позиции, которые вы задали вручную, и не может быть отменено.",
+      "resetLayoutConfirm": "Сбросить",
+      "resetLayoutCancel": "Отмена",
       "loading": "Загрузка дерева..."
     },
     "panel": {

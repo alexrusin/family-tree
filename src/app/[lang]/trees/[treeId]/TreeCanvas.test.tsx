@@ -81,6 +81,7 @@ const t = {
   addMember: "Add member",
   lockDragging: "Lock dragging",
   unlockDragging: "Unlock dragging",
+  resetLayout: "Reset layout",
 };
 
 const members: TreeMemberData[] = [
@@ -364,6 +365,40 @@ describe("TreeCanvas Escape clears multi-selection", () => {
     fireEvent.keyDown(document.body, { key: "Escape" });
 
     expect(setNodesSpy).not.toHaveBeenCalled();
+  });
+});
+
+describe("TreeCanvas Reset layout button", () => {
+  beforeEach(() => {
+    window.localStorage.clear();
+    window.matchMedia = vi.fn().mockReturnValue({ matches: false }) as unknown as typeof window.matchMedia;
+  });
+
+  afterEach(() => {
+    cleanup();
+  });
+
+  it("renders the reset button and invokes onResetLayout when clicked", () => {
+    const onResetLayout = vi.fn();
+    renderCanvas({ canEdit: true, onResetLayout });
+
+    const button = screen.getByRole("button", { name: t.resetLayout });
+    fireEvent.click(button);
+
+    expect(onResetLayout).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not render the reset button when onResetLayout is not provided", () => {
+    renderCanvas({ canEdit: true });
+
+    expect(screen.queryByRole("button", { name: t.resetLayout })).toBeNull();
+  });
+
+  it("does not render the reset button when canEdit is false", () => {
+    const onResetLayout = vi.fn();
+    renderCanvas({ canEdit: false, onResetLayout });
+
+    expect(screen.queryByRole("button", { name: t.resetLayout })).toBeNull();
   });
 });
 

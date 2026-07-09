@@ -26,6 +26,7 @@ vi.mock("next/dynamic", () => ({
       onDragStop,
       onSelectionDragStop,
       onSelectionChange,
+      onResetLayout,
       registerViewportCenter,
       canEdit,
       arrangement,
@@ -38,6 +39,7 @@ vi.mock("next/dynamic", () => ({
         positions: Array<{ memberId: string; position: { x: number; y: number } }>,
       ) => void;
       onSelectionChange?: (selectedNodeIds: string[]) => void;
+      onResetLayout?: () => void;
       registerViewportCenter?: (
         getter: (() => { x: number; y: number } | null) | null,
       ) => void;
@@ -98,6 +100,11 @@ vi.mock("next/dynamic", () => ({
               Clear selection
             </button>
           </>
+        )}
+        {canEdit && onResetLayout && (
+          <button type="button" onClick={() => onResetLayout()}>
+            Open reset layout
+          </button>
         )}
         {registerViewportCenter && (
           <button
@@ -279,6 +286,13 @@ const translations = {
     zoomIn: "Zoom in",
     zoomOut: "Zoom out",
     addMember: "Add member",
+    lockDragging: "Lock dragging",
+    unlockDragging: "Unlock dragging",
+    resetLayout: "Reset layout",
+    resetLayoutConfirmTitle: "Reset layout",
+    resetLayoutConfirmBody: "Reset the layout to the automatic arrangement? This discards manual positions and cannot be undone.",
+    resetLayoutConfirm: "Reset layout",
+    resetLayoutCancel: "Cancel",
     loading: "Loading tree...",
   },
   panel: {
@@ -1512,5 +1526,163 @@ describe("TreeDetailClient multi-select and multi-drag", () => {
     await screen.findByTestId("tree-canvas");
     expect(screen.queryByRole("button", { name: "Drag selection" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Multi-select members" })).toBeNull();
+  });
+});
+
+describe("TreeDetailClient reset layout", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    currentViewportWidth = 0;
+    mediaQueries = [];
+  });
+
+  afterEach(() => {
+    cleanup();
+    vi.unstubAllGlobals();
+  });
+
+  function setupFetch(
+    arrangementHandler: (body: { arrangement?: unknown }) => Response | Promise<Response>,
+  ) {
+    mockMatchMedia(1280);
+    vi.stubGlobal(
+      "fetch",
+      vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
+        const url = String(input);
+        if (url.includes("/members"))
+          return Promise.resolve({
+            ok: true,
+            json: async () => ({ members: [{ id: "member-1", firstName: "Alice" }] }),
+          });
+        if (url.includes("/relationships"))
+          return Promise.resolve({ ok: true, json: async () => ({ relationships: [] }) });
+        if (url.includes("/arrangement") && init?.method === "PUT") {
+          const body = JSON.parse(String(init.body)) as { arrangement?: unknown };
+          return Promise.resolve(arrangementHandler(body));
+        }
+        if (url.includes("/arrangement"))
+          return Promise.resolve({
+            ok: true,
+            json: async () => ({ arrangement: { "member-1": { x: 100, y: 200 } } }),
+          });
+        return Promise.resolve({ ok: true, json: async () => ({}) });
+      }),
+    );
+  }
+
+  it("clears the arrangement to an empty object after confirming the reset", async () => {
+    const user = userEvent.setup();
+    const savedArrangements: unknown[] = [];
+    setupFetch((body) => {
+      savedArrangements.push(body.arrangement);
+      return { ok: true, json: async () => ({ arrangement: body.arrangement }) } as Response;
+    });
+
+    render(
+      <TreeDetailClient
+        lang="en"
+        treeId="tree-1"
+        treeName="Family Tree"
+        canEdit={true}
+        isOwner={false}
+        initialMemberCount={1}
+        t={translations}
+      />,
+    );
+
+    // The saved arrangement is applied first.
+    await waitFor(() => {
+      expect(
+        JSON.parse(
+          screen.getByTestId("tree-canvas").getAttribute("data-arrangement") ?? "null",
+        ),
+      ).toEqual({ "member-1": { x: 100, y: 200 } });
+    });
+
+    await user.click(screen.getByRole("button", { name: "Open reset layout" }));
+
+    // Confirmation dialog appears; confirm it.
+    await user.click(screen.getByRole("button", { name: "Reset layout" }));
+
+    await waitFor(() => {
+      expect(savedArrangements).toEqual([{}]);
+      // Dialog closed and the canvas now uses the empty (auto-layout) arrangement.
+      expect(
+        JSON.parse(
+          screen.getByTestId("tree-canvas").getAttribute("data-arrangement") ?? "null",
+        ),
+      ).toEqual({});
+    });
+    expect(screen.queryByText("Reset the layout to the automatic arrangement? This discards manual positions and cannot be undone.")).toBeNull();
+  });
+
+  it("does not persist and keeps positions when the reset is cancelled", async () => {
+    const user = userEvent.setup();
+    const savedArrangements: unknown[] = [];
+    setupFetch((body) => {
+      savedArrangements.push(body.arrangement);
+      return { ok: true, json: async () => ({ arrangement: body.arrangement }) } as Response;
+    });
+
+    render(
+      <TreeDetailClient
+        lang="en"
+        treeId="tree-1"
+        treeName="Family Tree"
+        canEdit={true}
+        isOwner={false}
+        initialMemberCount={1}
+        t={translations}
+      />,
+    );
+
+    await screen.findByTestId("tree-canvas");
+    await user.click(screen.getByRole("button", { name: "Open reset layout" }));
+    await user.click(screen.getByRole("button", { name: "Cancel" }));
+
+    await waitFor(() => {
+      expect(
+        screen.queryByText(
+          "Reset the layout to the automatic arrangement? This discards manual positions and cannot be undone.",
+        ),
+      ).toBeNull();
+    });
+    expect(savedArrangements).toHaveLength(0);
+    expect(
+      JSON.parse(
+        screen.getByTestId("tree-canvas").getAttribute("data-arrangement") ?? "null",
+      ),
+    ).toEqual({ "member-1": { x: 100, y: 200 } });
+  });
+
+  it("surfaces an error and keeps the dialog open when the reset fails to save", async () => {
+    const user = userEvent.setup();
+    setupFetch(() => ({ ok: false, json: async () => ({ errorCode: "ERR_INTERNAL" }) } as Response));
+
+    render(
+      <TreeDetailClient
+        lang="en"
+        treeId="tree-1"
+        treeName="Family Tree"
+        canEdit={true}
+        isOwner={false}
+        initialMemberCount={1}
+        t={translations}
+      />,
+    );
+
+    await screen.findByTestId("tree-canvas");
+    await user.click(screen.getByRole("button", { name: "Open reset layout" }));
+    await user.click(screen.getByRole("button", { name: "Reset layout" }));
+
+    await waitFor(() => {
+      expect(screen.getByText("Unable to save member position.")).not.toBeNull();
+    });
+    // Dialog stays open so the user can retry.
+    expect(
+      screen.getByText(
+        "Reset the layout to the automatic arrangement? This discards manual positions and cannot be undone.",
+      ),
+    ).not.toBeNull();
   });
 });

@@ -142,6 +142,11 @@ interface TreeT {
     addMember: string;
     lockDragging: string;
     unlockDragging: string;
+    resetLayout: string;
+    resetLayoutConfirmTitle: string;
+    resetLayoutConfirmBody: string;
+    resetLayoutConfirm: string;
+    resetLayoutCancel: string;
     loading: string;
   };
   panel: {
@@ -290,6 +295,11 @@ export default function TreeDetailClient({
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [layoutError, setLayoutError] = useState<string | null>(null);
+  const [isResetLayoutOpen, setIsResetLayoutOpen] = useState(false);
+  const [isResettingLayout, setIsResettingLayout] = useState(false);
+  // Bumped after a layout reset clears the arrangement, so TreeCanvas re-frames
+  // the freshly auto-laid-out tree.
+  const [fitViewSignal, setFitViewSignal] = useState(0);
 
   const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
   const [isAddRelationshipOpen, setIsAddRelationshipOpen] = useState(false);
@@ -695,6 +705,23 @@ export default function TreeDetailClient({
     [],
   );
 
+  const handleResetLayout = useCallback(async () => {
+    setIsResettingLayout(true);
+    // An empty arrangement clears all saved positions, so buildTreeGraph falls
+    // back to the automatic (Dagre) layout — the optimal, low-crossing one.
+    const emptyArrangement = {} as TreeArrangement;
+    const ok = await persistArrangement(emptyArrangement);
+    setIsResettingLayout(false);
+    if (ok) {
+      setArrangement(emptyArrangement);
+      setLayoutError(null);
+      setIsResetLayoutOpen(false);
+      setFitViewSignal((prev) => prev + 1);
+    } else {
+      setLayoutError(t.errors.dragSaveFailed);
+    }
+  }, [persistArrangement, t.errors.dragSaveFailed]);
+
   const handleExportGedcom = useCallback(async () => {
     try {
       const response = await fetch(`/api/trees/${treeId}/export`);
@@ -864,6 +891,8 @@ export default function TreeDetailClient({
             }}
             onEdgeClick={handleEdgeClick}
             onAddMember={openAddMemberModal}
+            onResetLayout={canEdit ? () => setIsResetLayoutOpen(true) : undefined}
+            fitViewSignal={fitViewSignal}
             onDragStop={canEdit ? handleNodeDragStop : undefined}
             onSelectionDragStop={canEdit ? handleSelectionDragStop : undefined}
             onSelectionChange={canEdit ? handleSelectionChange : undefined}
@@ -935,6 +964,49 @@ export default function TreeDetailClient({
             removeFailed: t.relationship.removeFailed,
           }}
         />
+      )}
+
+      {/* Reset layout confirmation */}
+      {isResetLayoutOpen && (
+        <div
+          className="absolute inset-0 z-40 flex items-center justify-center p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-label={t.canvas.resetLayoutConfirmTitle}
+        >
+          <button
+            type="button"
+            className="absolute inset-0 bg-black/30"
+            onClick={() => setIsResetLayoutOpen(false)}
+            aria-label={t.panel.close}
+          />
+          <div className="relative w-full max-w-sm rounded-2xl bg-white p-5 shadow-xl">
+            <h2 className="text-base font-semibold text-stone-900">
+              {t.canvas.resetLayoutConfirmTitle}
+            </h2>
+            <p className="mt-2 text-sm text-stone-600">
+              {t.canvas.resetLayoutConfirmBody}
+            </p>
+            <div className="mt-5 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setIsResetLayoutOpen(false)}
+                disabled={isResettingLayout}
+                className="rounded-lg px-4 py-2 text-sm font-medium text-stone-700 hover:bg-stone-100 disabled:opacity-60"
+              >
+                {t.canvas.resetLayoutCancel}
+              </button>
+              <button
+                type="button"
+                onClick={() => void handleResetLayout()}
+                disabled={isResettingLayout}
+                className="rounded-lg bg-amber-900 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-800 disabled:opacity-60"
+              >
+                {isResettingLayout ? t.saving : t.canvas.resetLayoutConfirm}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       <ShareLinkSettingsModal
