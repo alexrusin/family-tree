@@ -593,7 +593,10 @@
       "reasonOverMax": "8-person max reached — remove someone to add this person",
       "selected": "selected",
       "continue": "Continue",
-      "guestNote": "Guest viewers can't reach this — generation is tied to a signed-in member."
+      "guestNote": "Guest viewers can't reach this — generation is tied to a signed-in member.",
+      "showing": "Showing {from}–{to} of {total}",
+      "prevPage": "Previous",
+      "nextPage": "Next"
     },
     "presets": {
       "styleTitle": "Style",

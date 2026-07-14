@@ -25,6 +25,7 @@ import type { FamilyPictureVersionSummary } from "./FamilyPictureVersionGallery"
 const CUSTOM_SETTING = "custom" as const;
 const GENERATION_POLL_INTERVAL_MS = 2500;
 const GALLERY_POLL_INTERVAL_MS = 4000;
+const PICKER_PAGE_SIZE = 20;
 
 export interface FamilyPictureT {
   sidebarLink: string;
@@ -57,6 +58,9 @@ export interface FamilyPictureT {
     selected: string;
     continue: string;
     guestNote: string;
+    showing: string;
+    prevPage: string;
+    nextPage: string;
   };
   presets: {
     styleTitle: string;
@@ -204,6 +208,23 @@ function toDownloadUrl(imageUrl: string): string {
   return imageUrl.replace("/image?", "/download?");
 }
 
+// Compact, windowed page list: first, last, current ±1, with "…" gaps.
+function pageWindow(current: number, total: number): (number | "ellipsis")[] {
+  const shown = new Set<number>();
+  for (const n of [1, total, current, current - 1, current + 1]) {
+    if (n >= 1 && n <= total) shown.add(n);
+  }
+  const sorted = [...shown].sort((a, b) => a - b);
+  const out: (number | "ellipsis")[] = [];
+  let prev = 0;
+  for (const n of sorted) {
+    if (n - prev > 1) out.push("ellipsis");
+    out.push(n);
+    prev = n;
+  }
+  return out;
+}
+
 function formatAllowanceDate(iso: string): string {
   return new Date(iso).toLocaleDateString(undefined, { month: "long", day: "numeric" });
 }
@@ -228,6 +249,7 @@ export default function FamilyPictureClient({
   const [members, setMembers] = useState<ApiTreeMember[] | null>(null);
   const [membersError, setMembersError] = useState<string | null>(null);
   const [query, setQuery] = useState("");
+  const [page, setPage] = useState(1);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [capFlash, setCapFlash] = useState(false);
 
@@ -419,6 +441,24 @@ export default function FamilyPictureClient({
       memberDisplayName(m).toLowerCase().includes(q),
     );
   }, [members, query]);
+
+  const totalPages = Math.max(
+    1,
+    Math.ceil(filteredMembers.length / PICKER_PAGE_SIZE),
+  );
+
+  // Clamp during render so a shrinking list (search/reload) never strands the
+  // view on an out-of-range page — no setState-in-effect needed.
+  const safePage = Math.min(page, totalPages);
+
+  const pagedMembers = useMemo(
+    () =>
+      filteredMembers.slice(
+        (safePage - 1) * PICKER_PAGE_SIZE,
+        safePage * PICKER_PAGE_SIZE,
+      ),
+    [filteredMembers, safePage],
+  );
 
   const flashCap = useCallback(() => {
     setCapFlash(true);
@@ -622,7 +662,7 @@ export default function FamilyPictureClient({
   const viewingPicture = gallery?.find((p) => p.id === viewingId) ?? null;
 
   return (
-    <div className="max-w-6xl mx-auto px-6 pt-24 pb-24">
+    <div className="w-full max-w-6xl mx-auto px-6 pt-24 pb-24">
       <header className="mb-8 flex flex-wrap items-start justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 text-sm text-stone-500 mb-3">
@@ -716,7 +756,10 @@ export default function FamilyPictureClient({
               <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-stone-400" />
               <input
                 value={query}
-                onChange={(e) => setQuery(e.target.value)}
+                onChange={(e) => {
+                  setQuery(e.target.value);
+                  setPage(1);
+                }}
                 placeholder={t.picker.searchPlaceholder}
                 autoComplete="off"
                 className="w-full rounded-xl border border-stone-200 pl-10 pr-10 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-800/30 focus:border-amber-800/40"
@@ -725,7 +768,10 @@ export default function FamilyPictureClient({
                 <button
                   type="button"
                   aria-label="Clear search"
-                  onClick={() => setQuery("")}
+                  onClick={() => {
+                    setQuery("");
+                    setPage(1);
+                  }}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-700"
                 >
                   <X className="w-4 h-4" />
@@ -738,7 +784,7 @@ export default function FamilyPictureClient({
             )}
 
             {members === null ? (
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-4 gap-3">
                 {Array.from({ length: 8 }).map((_, i) => (
                   <div
                     key={i}
@@ -754,8 +800,8 @@ export default function FamilyPictureClient({
                 </p>
               </div>
             ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-                {filteredMembers.map((member) => {
+              <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                {pagedMembers.map((member) => {
                   const decision = eligibility.get(member.id);
                   const isEligible = decision?.eligible ?? false;
                   const isSelected = selectedIds.includes(member.id);
@@ -831,6 +877,73 @@ export default function FamilyPictureClient({
                     </button>
                   );
                 })}
+              </div>
+            )}
+
+            {filteredMembers.length > PICKER_PAGE_SIZE && (
+              <div className="mt-6 flex flex-col items-center gap-3">
+                <div className="text-sm text-stone-500 tabular-nums">
+                  {t.picker.showing
+                    .replace(
+                      "{from}",
+                      String((safePage - 1) * PICKER_PAGE_SIZE + 1),
+                    )
+                    .replace(
+                      "{to}",
+                      String(
+                        Math.min(
+                          safePage * PICKER_PAGE_SIZE,
+                          filteredMembers.length,
+                        ),
+                      ),
+                    )
+                    .replace("{total}", String(filteredMembers.length))}
+                </div>
+                <div className="flex items-center gap-1.5 flex-wrap justify-center">
+                  <button
+                    type="button"
+                    aria-label={t.picker.prevPage}
+                    disabled={safePage === 1}
+                    onClick={() => setPage(Math.max(1, safePage - 1))}
+                    className="h-9 px-3 rounded-lg text-sm font-medium bg-white text-stone-600 border border-stone-200 hover:border-amber-700/40 transition-all active:scale-95 disabled:opacity-40 disabled:pointer-events-none"
+                  >
+                    {t.picker.prevPage}
+                  </button>
+                  {pageWindow(safePage, totalPages).map((entry, i) =>
+                    entry === "ellipsis" ? (
+                      <span
+                        key={`gap-${i}`}
+                        className="px-1 text-stone-300 select-none"
+                      >
+                        …
+                      </span>
+                    ) : (
+                      <button
+                        key={entry}
+                        type="button"
+                        aria-current={entry === safePage ? "page" : undefined}
+                        onClick={() => setPage(entry)}
+                        className={[
+                          "min-w-[36px] h-9 px-2 rounded-lg text-sm font-medium transition-all active:scale-95",
+                          entry === safePage
+                            ? "bg-amber-900 text-white"
+                            : "bg-white text-stone-600 border border-stone-200 hover:border-amber-700/40",
+                        ].join(" ")}
+                      >
+                        {entry}
+                      </button>
+                    ),
+                  )}
+                  <button
+                    type="button"
+                    aria-label={t.picker.nextPage}
+                    disabled={safePage === totalPages}
+                    onClick={() => setPage(Math.min(totalPages, safePage + 1))}
+                    className="h-9 px-3 rounded-lg text-sm font-medium bg-white text-stone-600 border border-stone-200 hover:border-amber-700/40 transition-all active:scale-95 disabled:opacity-40 disabled:pointer-events-none"
+                  >
+                    {t.picker.nextPage}
+                  </button>
+                </div>
               </div>
             )}
 
