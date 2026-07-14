@@ -593,7 +593,10 @@
       "reasonOverMax": "Máximo de 8 personas alcanzado — quita a alguien para añadir a esta persona",
       "selected": "seleccionados",
       "continue": "Continuar",
-      "guestNote": "Los visitantes invitados no pueden acceder aquí — la generación está vinculada a un miembro con sesión iniciada."
+      "guestNote": "Los visitantes invitados no pueden acceder aquí — la generación está vinculada a un miembro con sesión iniciada.",
+      "showing": "Mostrando {from}–{to} de {total}",
+      "prevPage": "Anterior",
+      "nextPage": "Siguiente"
     },
     "presets": {
       "styleTitle": "Estilo",
