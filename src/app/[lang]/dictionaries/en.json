@@ -643,7 +643,14 @@
       "generating": "Generating…",
       "readyUpdated": "Ready",
       "failedRefunded": "Failed",
-      "empty": "No Family Pictures yet."
+      "empty": "No Family Pictures yet.",
+      "delete": "Delete",
+      "deleteConfirmTitle": "Delete this Family Picture?",
+      "deleteConfirmBody": "You're about to delete {name}.",
+      "deleteConfirmWarning": "This permanently removes the image and every version of it. It cannot be undone, and it does not give the generation back to your monthly allowance.",
+      "deleteCancel": "Cancel",
+      "deleteConfirm": "Delete",
+      "deleting": "Deleting…"
     },
     "versions": {
       "title": "Version history",
@@ -666,6 +673,7 @@
       "ERR_NOT_FOUND": "We couldn't find that Family Picture.",
       "ERR_VERSION_REQUIRED": "Choose a version to revert to.",
       "ERR_VERSION_NOT_FOUND": "That version could no longer be found.",
+      "ERR_GENERATION_IN_PROGRESS": "This picture is still being generated. Try again once it finishes.",
       "generic": "Something went wrong. Please try again."
     }
   },

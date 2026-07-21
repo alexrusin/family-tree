@@ -2,30 +2,42 @@
 
 import { AlertTriangle, X } from "lucide-react";
 
-interface RemoveCollaboratorConfirmationProps {
-  isOpen: boolean;
-  isRemoving: boolean;
-  collaboratorName: string;
-  onClose: () => void;
-  onConfirm: () => void;
-  t: {
-    title: string;
-    body: string;
-    warning: string;
-    cancel: string;
-    confirm: string;
-    removing: string;
-  };
+export interface DestructiveConfirmationT {
+  title: string;
+  /** Names the thing being destroyed; `{name}` is replaced with `subject`. */
+  body: string;
+  /** What is irreversible about it — shown in the red callout. */
+  warning: string;
+  cancel: string;
+  confirm: string;
+  /** Label shown on the confirm button while the action is running. */
+  busy: string;
 }
 
-export default function RemoveCollaboratorConfirmation({
+interface DestructiveConfirmationProps {
+  isOpen: boolean;
+  /** Disables both buttons and swaps the confirm label for a spinner. */
+  isBusy: boolean;
+  /** The thing being destroyed, emphasized inside `t.body`'s `{name}` slot. */
+  subject: string;
+  onClose: () => void;
+  onConfirm: () => void;
+  t: DestructiveConfirmationT;
+}
+
+/**
+ * The app's one modal for confirming an irreversible destructive action:
+ * a red-headed dialog naming the subject, stating what can't be undone, and
+ * offering cancel/confirm. Callers own the action itself and supply the copy.
+ */
+export default function DestructiveConfirmation({
   isOpen,
-  isRemoving,
-  collaboratorName,
+  isBusy,
+  subject,
   onClose,
   onConfirm,
   t,
-}: RemoveCollaboratorConfirmationProps) {
+}: DestructiveConfirmationProps) {
   if (!isOpen) return null;
 
   const bodyParts = t.body.split("{name}");
@@ -41,7 +53,7 @@ export default function RemoveCollaboratorConfirmation({
           </div>
           <button
             onClick={onClose}
-            disabled={isRemoving}
+            disabled={isBusy}
             className="p-1 text-red-400 hover:text-red-600 transition-colors rounded-lg hover:bg-red-100 disabled:opacity-60 disabled:cursor-not-allowed"
             aria-label={t.cancel}
           >
@@ -53,7 +65,7 @@ export default function RemoveCollaboratorConfirmation({
         <div className="p-6 space-y-4">
           <p className="text-stone-700">
             {bodyParts[0]}
-            <strong>{collaboratorName}</strong>
+            <strong>{subject}</strong>
             {bodyParts[1] ?? ""}
           </p>
 
@@ -64,20 +76,20 @@ export default function RemoveCollaboratorConfirmation({
           <div className="flex gap-3 pt-4">
             <button
               onClick={onClose}
-              disabled={isRemoving}
+              disabled={isBusy}
               className="flex-1 px-4 py-2 bg-stone-100 text-stone-900 rounded-lg font-semibold hover:bg-stone-200 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
             >
               {t.cancel}
             </button>
             <button
               onClick={onConfirm}
-              disabled={isRemoving}
+              disabled={isBusy}
               className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
-              {isRemoving ? (
+              {isBusy ? (
                 <>
                   <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  {t.removing}
+                  {t.busy}
                 </>
               ) : (
                 t.confirm

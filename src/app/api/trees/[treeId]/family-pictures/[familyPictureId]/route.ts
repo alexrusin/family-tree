@@ -1,7 +1,11 @@
+import { NextRequest } from "next/server";
 import { withTreeRole } from "@/lib/with-tree-role";
+import { withSession } from "@/lib/with-session";
 import { sweepStrandedGenerations } from "@/lib/family-picture/stranded-sweep";
 import { refundGenerationAllowance } from "@/lib/family-picture/allowance-ledger";
 import { resolveCurrentVersion } from "@/lib/family-picture/current-version";
+import { deleteFamilyPicture } from "@/lib/family-picture/deletion";
+import { createS3Client, deletePhotoByKey } from "@/lib/tree-domain/photo-upload";
 import type { FamilyPictureMemberSnapshot } from "../route";
 
 export const GET = withTreeRole<{ treeId: string; familyPictureId: string }>(
@@ -49,3 +53,47 @@ export const GET = withTreeRole<{ treeId: string; familyPictureId: string }>(
     );
   },
 );
+
+// Unlike its sibling handlers this one is gated on `withSession`, not
+// `withTreeRole`: a Family Picture outlives its source tree, so requiring a
+// tree role here would make an orphaned picture permanently undeletable.
+// `deleteFamilyPicture` authorizes on ownership instead — see the rationale
+// on that function.
+export async function DELETE(
+  request: NextRequest,
+  { params: paramsPromise }: { params: Promise<{ treeId: string; familyPictureId: string }> },
+) {
+  const { treeId, familyPictureId } = await paramsPromise;
+
+  const handler = withSession(async (ctx) => {
+    await sweepStrandedGenerations(ctx.prisma, (id) =>
+      refundGenerationAllowance(ctx.prisma, id),
+    );
+
+    const bucket = process.env.S3_BUCKET;
+    if (!bucket) {
+      console.error("S3_BUCKET is required for family picture deletion");
+      return Response.json({ errorCode: "ERR_INTERNAL" }, { status: 500 });
+    }
+
+    const s3Client = createS3Client();
+    const outcome = await deleteFamilyPicture(
+      {
+        prisma: ctx.prisma,
+        deletePhoto: (key) => deletePhotoByKey({ s3Client, bucket, key }),
+      },
+      { familyPictureId, treeId, userId: ctx.user.id },
+    );
+
+    if (!outcome.ok) {
+      return Response.json(
+        { errorCode: outcome.errorCode },
+        { status: outcome.errorCode === "ERR_NOT_FOUND" ? 404 : 409 },
+      );
+    }
+
+    return Response.json({ success: true }, { status: 200 });
+  });
+
+  return handler(request);
+}
