@@ -643,7 +643,14 @@
       "generating": "Generando…",
       "readyUpdated": "Lista",
       "failedRefunded": "Fallida",
-      "empty": "Aún no hay Fotos familiares."
+      "empty": "Aún no hay Fotos familiares.",
+      "delete": "Eliminar",
+      "deleteConfirmTitle": "¿Eliminar esta Foto familiar?",
+      "deleteConfirmBody": "Estás a punto de eliminar {name}.",
+      "deleteConfirmWarning": "Esto elimina permanentemente la imagen y todas sus versiones. No se puede deshacer, y no devuelve la generación a tu límite mensual.",
+      "deleteCancel": "Cancelar",
+      "deleteConfirm": "Eliminar",
+      "deleting": "Eliminando…"
     },
     "versions": {
       "title": "Historial de versiones",
@@ -666,6 +673,7 @@
       "ERR_NOT_FOUND": "No pudimos encontrar esa Foto familiar.",
       "ERR_VERSION_REQUIRED": "Elige una versión a la cual revertir.",
       "ERR_VERSION_NOT_FOUND": "Ya no se pudo encontrar esa versión.",
+      "ERR_GENERATION_IN_PROGRESS": "Esta foto todavía se está generando. Inténtalo de nuevo cuando termine.",
       "generic": "Algo salió mal. Inténtalo de nuevo."
     }
   },

@@ -1,7 +1,8 @@
 "use client";
 
-import { AlertTriangle, ImageOff, Loader2, Sparkles } from "lucide-react";
+import { AlertTriangle, ImageOff, Loader2, Sparkles, Trash2 } from "lucide-react";
 import type { FamilyPictureSummary } from "./FamilyPictureClient";
+import { familyPictureTitle } from "./family-picture-title";
 
 interface FamilyPictureGalleryT {
   title: string;
@@ -10,25 +11,21 @@ interface FamilyPictureGalleryT {
   readyUpdated: string;
   failedRefunded: string;
   empty: string;
+  delete: string;
 }
 
 interface FamilyPictureGalleryProps {
   t: FamilyPictureGalleryT;
   pictures: FamilyPictureSummary[] | null;
   onView: (id: string) => void;
-}
-
-function galleryTitle(picture: FamilyPictureSummary): string {
-  const names = picture.memberSnapshot.map((m) => m.firstName);
-  if (names.length === 0) return "";
-  if (names.length <= 3) return names.join(", ");
-  return `${names.slice(0, 2).join(", ")} & ${names.length - 2} more`;
+  onDelete: (id: string) => void;
 }
 
 export default function FamilyPictureGallery({
   t,
   pictures,
   onView,
+  onDelete,
 }: FamilyPictureGalleryProps) {
   return (
     <section className="mt-14">
@@ -54,7 +51,7 @@ export default function FamilyPictureGallery({
             <div
               key={picture.id}
               className={[
-                "bg-white rounded-2xl border shadow-sm overflow-hidden",
+                "relative bg-white rounded-2xl border shadow-sm overflow-hidden",
                 picture.status === "pending"
                   ? "border-amber-200"
                   : "border-stone-100",
@@ -64,6 +61,20 @@ export default function FamilyPictureGallery({
               ].join(" ")}
               onClick={() => picture.status === "succeeded" && onView(picture.id)}
             >
+              {picture.status !== "pending" && (
+                <button
+                  type="button"
+                  title={t.delete}
+                  aria-label={t.delete}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDelete(picture.id);
+                  }}
+                  className="absolute top-2.5 right-2.5 z-10 w-8 h-8 rounded-lg bg-white/85 backdrop-blur text-stone-500 hover:text-red-600 hover:bg-white shadow-sm flex items-center justify-center transition-colors"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              )}
               <div className="relative aspect-[4/3] bg-stone-100">
                 {picture.status === "pending" && (
                   <div className="w-full h-full flex items-center justify-center">
@@ -100,7 +111,7 @@ export default function FamilyPictureGallery({
               </div>
               <div className="p-4">
                 <div className="text-sm font-semibold text-stone-800">
-                  {galleryTitle(picture)}
+                  {familyPictureTitle(picture)}
                 </div>
                 <div className="text-xs text-stone-500 mt-0.5">
                   {new Date(picture.createdAt).toLocaleDateString()}
