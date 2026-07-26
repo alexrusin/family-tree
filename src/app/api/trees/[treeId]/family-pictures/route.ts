@@ -5,11 +5,13 @@ import {
 } from "@/lib/family-picture/eligibility";
 import {
   FAMILY_PICTURE_FREE_TEXT_MAX_LENGTH,
+  isOrientation,
   isSettingPresetId,
   isStylePresetId,
 } from "@/lib/family-picture/preset-catalog";
 import { checkFamilyPictureContent } from "@/lib/family-picture/content-guard";
 import type { Setting, SettingPresetId } from "@/lib/family-picture/prompt-builder";
+import type { Orientation } from "@/lib/family-picture/image-client";
 import { resolveTreeMemberPhotoUrl } from "@/lib/tree-domain/member-photo";
 import { sweepStrandedGenerations } from "@/lib/family-picture/stranded-sweep";
 import { processFamilyPictureGeneration } from "@/lib/family-picture/run-generation";
@@ -140,6 +142,14 @@ export const POST = withTreeRole("viewer", async (ctx) => {
     return Response.json({ errorCode: "ERR_INVALID_SETTING" }, { status: 400 });
   }
 
+  let orientation: Orientation = "landscape";
+  if (body?.orientation !== undefined) {
+    if (typeof body.orientation !== "string" || !isOrientation(body.orientation)) {
+      return Response.json({ errorCode: "ERR_INVALID_ORIENTATION" }, { status: 400 });
+    }
+    orientation = body.orientation;
+  }
+
   let personalTouch: string | null = null;
   if (typeof body?.personalTouch === "string" && body.personalTouch.trim().length > 0) {
     const trimmed = body.personalTouch.trim();
@@ -215,6 +225,7 @@ export const POST = withTreeRole("viewer", async (ctx) => {
           settingPreset,
           customPlace,
           personalTouch,
+          orientation,
         },
       });
 
@@ -246,6 +257,7 @@ export const POST = withTreeRole("viewer", async (ctx) => {
     stylePreset,
     setting,
     personalTouch,
+    orientation,
   }).catch((error) => {
     console.error("Family Picture generation crashed", error);
   });

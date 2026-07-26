@@ -280,6 +280,9 @@ model FamilyPicture {
   settingPreset  String?                @map("setting_preset")
   customPlace    String?                @map("custom_place")
   personalTouch  String?                @map("personal_touch")
+  // Fixed landscape-or-portrait shape, chosen at creation and locked for
+  // every Version and tweak (CONTEXT.md "Family Picture Orientation").
+  orientation    String                 @default("landscape")
   // The Version shown by default. Set to each new Version's number as it's
   // created (initial generation or tweak); reverting simply points this at
   // an earlier number without touching any Version row itself, so nothing

@@ -2,6 +2,7 @@ import { withTreeRole } from "@/lib/with-tree-role";
 import { FAMILY_PICTURE_FREE_TEXT_MAX_LENGTH } from "@/lib/family-picture/preset-catalog";
 import { checkFamilyPictureContent } from "@/lib/family-picture/content-guard";
 import type { FamilyPictureMemberSnapshot } from "../../route";
+import { isOrientation } from "@/lib/family-picture/preset-catalog";
 import { processFamilyPictureTweak } from "@/lib/family-picture/run-generation";
 import {
   refundGenerationAllowance,
@@ -43,6 +44,7 @@ export const POST = withTreeRole<{ treeId: string; familyPictureId: string }>(
         userId: true,
         currentVersionNumber: true,
         memberSnapshot: true,
+        orientation: true,
       },
     });
 
@@ -122,6 +124,10 @@ export const POST = withTreeRole<{ treeId: string; familyPictureId: string }>(
       baseImageKey: baseVersion.s3Key,
       referencePhotoKeys,
       instruction,
+      // Orientation is locked at creation (CONTEXT.md "Family Picture
+      // Orientation") — sourced from the stored Family Picture, never the
+      // tweak request.
+      orientation: isOrientation(picture.orientation) ? picture.orientation : "landscape",
     }).catch((error) => {
       console.error("Family Picture tweak crashed", error);
     });

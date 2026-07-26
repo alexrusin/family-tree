@@ -116,7 +116,11 @@ describe("/api/trees/[treeId]/family-pictures", () => {
           referencePhotoKeys: ["trees/t1/members/m1.webp"],
           stylePreset: "bw",
           setting: { preset: "garden" },
+          orientation: "landscape",
         }),
+      );
+      expect(prismaMock.familyPicture.create).toHaveBeenCalledWith(
+        expect.objectContaining({ data: expect.objectContaining({ orientation: "landscape" }) }),
       );
       expect(reserveGenerationAllowanceMock).toHaveBeenCalledWith(
         prismaMock,
@@ -294,6 +298,85 @@ describe("/api/trees/[treeId]/family-pictures", () => {
       await expect(response.json()).resolves.toEqual({
         errorCode: "ERR_INVALID_STYLE_PRESET",
       });
+    });
+
+    it("accepts an explicit portrait orientation and persists it on the Family Picture", async () => {
+      prismaMock.treeMember.findMany.mockResolvedValue([
+        {
+          id: "m1",
+          firstName: "Alex",
+          lastName: "Rusin",
+          isLiving: true,
+          birthYear: 1972,
+          photoKey: "trees/t1/members/m1.webp",
+          photoUrl: null,
+        },
+      ]);
+      prismaMock.familyPicture.create.mockResolvedValue({ id: "fp1" });
+      prismaMock.generation.create.mockResolvedValue({ id: "gen1" });
+
+      const response = await POST(
+        jsonRequest({
+          memberIds: ["m1"],
+          stylePreset: "bw",
+          settingPreset: "garden",
+          orientation: "portrait",
+        }),
+        { params: Promise.resolve({ treeId: "t1" }) },
+      );
+
+      expect(response.status).toBe(202);
+      expect(prismaMock.familyPicture.create).toHaveBeenCalledWith(
+        expect.objectContaining({ data: expect.objectContaining({ orientation: "portrait" }) }),
+      );
+      expect(processFamilyPictureGenerationMock).toHaveBeenCalledWith(
+        expect.objectContaining({ orientation: "portrait" }),
+      );
+    });
+
+    it("defaults to landscape when orientation is absent", async () => {
+      prismaMock.treeMember.findMany.mockResolvedValue([
+        {
+          id: "m1",
+          firstName: "Alex",
+          lastName: "Rusin",
+          isLiving: true,
+          birthYear: 1972,
+          photoKey: "trees/t1/members/m1.webp",
+          photoUrl: null,
+        },
+      ]);
+      prismaMock.familyPicture.create.mockResolvedValue({ id: "fp1" });
+      prismaMock.generation.create.mockResolvedValue({ id: "gen1" });
+
+      const response = await POST(
+        jsonRequest({ memberIds: ["m1"], stylePreset: "bw", settingPreset: "garden" }),
+        { params: Promise.resolve({ treeId: "t1" }) },
+      );
+
+      expect(response.status).toBe(202);
+      expect(prismaMock.familyPicture.create).toHaveBeenCalledWith(
+        expect.objectContaining({ data: expect.objectContaining({ orientation: "landscape" }) }),
+      );
+    });
+
+    it("rejects an invalid orientation, making no paid call", async () => {
+      const response = await POST(
+        jsonRequest({
+          memberIds: ["m1"],
+          stylePreset: "bw",
+          settingPreset: "garden",
+          orientation: "square",
+        }),
+        { params: Promise.resolve({ treeId: "t1" }) },
+      );
+
+      expect(response.status).toBe(400);
+      await expect(response.json()).resolves.toEqual({
+        errorCode: "ERR_INVALID_ORIENTATION",
+      });
+      expect(reserveGenerationAllowanceMock).not.toHaveBeenCalled();
+      expect(processFamilyPictureGenerationMock).not.toHaveBeenCalled();
     });
   });
 
