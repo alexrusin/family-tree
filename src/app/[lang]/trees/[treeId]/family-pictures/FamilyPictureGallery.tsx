@@ -64,7 +64,12 @@ export default function FamilyPictureGallery({
               ].join(" ")}
               onClick={() => picture.status === "succeeded" && onView(picture.id)}
             >
-              <div className="relative aspect-[4/3] bg-stone-100">
+              <div
+                className={[
+                  "relative bg-stone-100",
+                  picture.orientation === "portrait" ? "aspect-[2/3]" : "aspect-[3/2]",
+                ].join(" ")}
+              >
                 {picture.status === "pending" && (
                   <div className="w-full h-full flex items-center justify-center">
                     <Loader2 className="w-8 h-8 text-amber-700 animate-spin" />

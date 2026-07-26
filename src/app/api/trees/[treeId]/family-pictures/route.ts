@@ -40,6 +40,7 @@ function toFamilyPictureSummary(picture: {
   stylePreset: string;
   settingPreset: string | null;
   customPlace: string | null;
+  orientation: string;
   createdAt: Date;
   currentVersionNumber: number | null;
   generations: { id: string; status: GenerationStatus; errorMessage: string | null }[];
@@ -54,6 +55,7 @@ function toFamilyPictureSummary(picture: {
     stylePreset: picture.stylePreset,
     settingPreset: picture.settingPreset,
     customPlace: picture.customPlace,
+    orientation: isOrientation(picture.orientation) ? picture.orientation : "landscape",
     createdAt: picture.createdAt.toISOString(),
     status: latestGeneration?.status ?? "pending",
     errorMessage: latestGeneration?.errorMessage ?? null,

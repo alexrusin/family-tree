@@ -17,6 +17,7 @@ import type {
   SettingPresetId,
   StylePresetId,
 } from "@/lib/family-picture/prompt-builder";
+import type { Orientation } from "@/lib/family-picture/image-client";
 import FamilyPictureGenerateStep from "./FamilyPictureGenerateStep";
 import FamilyPictureResultStep from "./FamilyPictureResultStep";
 import FamilyPictureGallery from "./FamilyPictureGallery";
@@ -75,6 +76,12 @@ export interface FamilyPictureT {
     personalTouchOptional: string;
     personalTouchSubtitle: string;
     personalTouchPlaceholder: string;
+    orientationTitle: string;
+    orientationSubtitle: string;
+    landscapeLabel: string;
+    landscapeSub: string;
+    portraitLabel: string;
+    portraitSub: string;
     back: string;
     generateButton: string;
   };
@@ -121,6 +128,7 @@ export interface FamilyPictureT {
     ERR_MEMBERS_REQUIRED: string;
     ERR_INVALID_STYLE_PRESET: string;
     ERR_INVALID_SETTING: string;
+    ERR_INVALID_ORIENTATION: string;
     ERR_TEXT_TOO_LONG: string;
     ERR_MEMBER_NOT_FOUND: string;
     ERR_INELIGIBLE_MEMBERS: string;
@@ -168,6 +176,7 @@ export interface FamilyPictureSummary {
   stylePreset: string;
   settingPreset: string | null;
   customPlace: string | null;
+  orientation: string;
   createdAt: string;
   status: GenerationStatusValue;
   errorMessage: string | null;
@@ -261,6 +270,7 @@ export default function FamilyPictureClient({
   >(SETTING_PRESETS[0].id);
   const [customPlace, setCustomPlace] = useState("");
   const [personalTouch, setPersonalTouch] = useState("");
+  const [orientation, setOrientation] = useState<Orientation>("landscape");
 
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -497,6 +507,7 @@ export default function FamilyPictureClient({
     setSettingChoice(SETTING_PRESETS[0].id);
     setCustomPlace("");
     setPersonalTouch("");
+    setOrientation("landscape");
     setSubmitError(null);
     setCapReachedResetAt(null);
     setGeneration(null);
@@ -516,6 +527,7 @@ export default function FamilyPictureClient({
         memberIds: selectedIds,
         stylePreset,
         personalTouch: personalTouch.trim() || undefined,
+        orientation,
       };
       if (settingChoice === CUSTOM_SETTING) {
         body.customPlace = customPlace.trim();
@@ -564,6 +576,7 @@ export default function FamilyPictureClient({
     settingChoice,
     customPlace,
     personalTouch,
+    orientation,
     treeId,
     t.errors,
     loadGallery,
@@ -1109,6 +1122,59 @@ export default function FamilyPictureClient({
                 <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[11px] text-stone-300">
                   {personalTouch.length}/{FAMILY_PICTURE_FREE_TEXT_MAX_LENGTH}
                 </span>
+              </div>
+
+              <h2 className="text-lg font-semibold text-stone-900 mt-8 mb-1">
+                {t.presets.orientationTitle}
+              </h2>
+              <p className="text-stone-500 text-sm mb-5">
+                {t.presets.orientationSubtitle}
+              </p>
+              <div className="grid grid-cols-2 gap-3">
+                {(
+                  [
+                    {
+                      id: "landscape",
+                      label: t.presets.landscapeLabel,
+                      sub: t.presets.landscapeSub,
+                      glyphClass: "w-8 h-5",
+                    },
+                    {
+                      id: "portrait",
+                      label: t.presets.portraitLabel,
+                      sub: t.presets.portraitSub,
+                      glyphClass: "w-5 h-8",
+                    },
+                  ] as const
+                ).map((preset) => (
+                  <button
+                    key={preset.id}
+                    type="button"
+                    onClick={() => setOrientation(preset.id)}
+                    className={[
+                      "text-left rounded-xl border p-3.5 transition-all",
+                      orientation === preset.id
+                        ? "border-amber-700 bg-amber-50/70 ring-2 ring-amber-700/20 shadow-sm"
+                        : "border-stone-100 bg-white hover:border-amber-700/40 hover:shadow-sm",
+                    ].join(" ")}
+                  >
+                    <span
+                      className={[
+                        "block border-2 border-current rounded-[4px] mb-2.5",
+                        preset.glyphClass,
+                      ].join(" ")}
+                    />
+                    <div
+                      className={[
+                        "font-semibold text-sm",
+                        orientation === preset.id ? "text-amber-900" : "text-stone-800",
+                      ].join(" ")}
+                    >
+                      {preset.label}
+                    </div>
+                    <div className="text-xs text-stone-500 mt-0.5">{preset.sub}</div>
+                  </button>
+                ))}
               </div>
             </div>
 
