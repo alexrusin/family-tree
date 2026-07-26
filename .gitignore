@@ -43,6 +43,7 @@ next-env.d.ts
 /src/generated/prisma
 /docs/*
 !/docs/adr
+!/docs/agents/*
 
 # Claude Code personal settings
 .claude/settings.local.json
