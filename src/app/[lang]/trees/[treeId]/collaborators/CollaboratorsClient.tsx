@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useMemo, useState } from "react";
 import { Mail, UserMinus, Users } from "lucide-react";
 import InviteCollaboratorModal from "./InviteCollaboratorModal";
-import RemoveCollaboratorConfirmation from "./RemoveCollaboratorConfirmation";
+import DestructiveConfirmation from "../../../components/DestructiveConfirmation";
 
 type CollaboratorRole = "editor" | "viewer";
 
@@ -603,13 +603,13 @@ export default function CollaboratorsClient({
       )}
 
       {isOwner && (
-        <RemoveCollaboratorConfirmation
+        <DestructiveConfirmation
           isOpen={collaboratorToRemove !== null}
-          isRemoving={
+          isBusy={
             collaboratorToRemove !== null &&
             removingCollaboratorId === collaboratorToRemove.id
           }
-          collaboratorName={
+          subject={
             collaboratorToRemove
               ? collaboratorToRemove.user.name?.trim() ||
                 collaboratorToRemove.user.email
@@ -630,7 +630,7 @@ export default function CollaboratorsClient({
             warning: t.removeModal.warning,
             cancel: t.removeModal.cancel,
             confirm: t.removeModal.confirm,
-            removing: t.removing,
+            busy: t.removing,
           }}
         />
       )}

@@ -21,6 +21,8 @@ import type { Orientation } from "@/lib/family-picture/image-client";
 import FamilyPictureGenerateStep from "./FamilyPictureGenerateStep";
 import FamilyPictureResultStep from "./FamilyPictureResultStep";
 import FamilyPictureGallery from "./FamilyPictureGallery";
+import DestructiveConfirmation from "../../../components/DestructiveConfirmation";
+import { familyPictureTitle } from "./family-picture-title";
 import type { FamilyPictureVersionSummary } from "./FamilyPictureVersionGallery";
 
 const CUSTOM_SETTING = "custom" as const;
@@ -115,6 +117,13 @@ export interface FamilyPictureT {
     readyUpdated: string;
     failedRefunded: string;
     empty: string;
+    delete: string;
+    deleteConfirmTitle: string;
+    deleteConfirmBody: string;
+    deleteConfirmWarning: string;
+    deleteCancel: string;
+    deleteConfirm: string;
+    deleting: string;
   };
   versions: {
     title: string;
@@ -138,6 +147,7 @@ export interface FamilyPictureT {
     ERR_NOT_FOUND: string;
     ERR_VERSION_REQUIRED: string;
     ERR_VERSION_NOT_FOUND: string;
+    ERR_GENERATION_IN_PROGRESS: string;
     generic: string;
     [key: string]: string;
   };
@@ -297,6 +307,10 @@ export default function FamilyPictureClient({
   const [versions, setVersions] = useState<FamilyPictureVersionSummary[] | null>(null);
   const [reverting, setReverting] = useState(false);
   const [revertError, setRevertError] = useState<string | null>(null);
+
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   // Distinguishes "this pending cycle is a tweak" from the initial
   // generation, so the poll effect knows a failure should keep the last
   // successful Version on screen instead of showing the full failure state.
@@ -672,7 +686,37 @@ export default function FamilyPictureClient({
     [generation, treeId, loadGallery, t.errors],
   );
 
+  const handleDelete = useCallback(async () => {
+    if (!pendingDeleteId) return;
+    const id = pendingDeleteId;
+    setDeleting(true);
+    setDeleteError(null);
+    try {
+      const response = await fetch(`/api/trees/${treeId}/family-pictures/${id}`, {
+        method: "DELETE",
+      });
+      const payload = (await response.json().catch(() => null)) as {
+        errorCode?: string;
+      } | null;
+
+      if (!response.ok) {
+        setDeleteError(mapErrorCode(payload?.errorCode, t.errors));
+        return;
+      }
+
+      setPendingDeleteId(null);
+      if (viewingId === id) setViewingId(null);
+      if (generation?.familyPictureId === id) resetCreator();
+      void loadGallery();
+    } catch {
+      setDeleteError(t.errors.generic);
+    } finally {
+      setDeleting(false);
+    }
+  }, [pendingDeleteId, treeId, viewingId, generation, resetCreator, loadGallery, t.errors]);
+
   const viewingPicture = gallery?.find((p) => p.id === viewingId) ?? null;
+  const pendingDeletePicture = gallery?.find((p) => p.id === pendingDeleteId) ?? null;
 
   return (
     <div className="w-full max-w-6xl mx-auto px-6 pt-24 pb-24">
@@ -1313,6 +1357,30 @@ export default function FamilyPictureClient({
         t={t.gallery}
         pictures={gallery}
         onView={(id) => setViewingId(id)}
+        onDelete={(id) => {
+          setDeleteError(null);
+          setPendingDeleteId(id);
+        }}
+      />
+
+      <DestructiveConfirmation
+        isOpen={pendingDeleteId !== null}
+        isBusy={deleting}
+        subject={pendingDeletePicture ? familyPictureTitle(pendingDeletePicture) : ""}
+        onClose={() => {
+          if (deleting) return;
+          setPendingDeleteId(null);
+          setDeleteError(null);
+        }}
+        onConfirm={() => void handleDelete()}
+        t={{
+          title: t.gallery.deleteConfirmTitle,
+          body: t.gallery.deleteConfirmBody,
+          warning: deleteError ?? t.gallery.deleteConfirmWarning,
+          cancel: t.gallery.deleteCancel,
+          confirm: t.gallery.deleteConfirm,
+          busy: t.gallery.deleting,
+        }}
       />
 
       {viewingPicture && viewingPicture.imageUrl && (
