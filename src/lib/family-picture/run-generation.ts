@@ -43,11 +43,14 @@ export async function processFamilyPictureGeneration(
       return photo.body;
     },
     uploadVersionImage: async (key, bytes) => {
+      // The provider generates natively as JPG, so every new Version key
+      // it produces is `.jpg`.
       await uploadProcessedPhoto({
         s3Client,
         bucket,
         key,
         buffer: Buffer.from(bytes),
+        contentType: "image/jpeg",
       });
     },
     nextVersionNumber: async (familyPictureId) => {
@@ -112,11 +115,14 @@ export async function processFamilyPictureTweak(job: TweakJob): Promise<void> {
       return photo.body;
     },
     uploadVersionImage: async (key, bytes) => {
+      // The provider generates natively as JPG, so every new Version key
+      // it produces is `.jpg`.
       await uploadProcessedPhoto({
         s3Client,
         bucket,
         key,
         buffer: Buffer.from(bytes),
+        contentType: "image/jpeg",
       });
     },
     nextVersionNumber: async (familyPictureId) => {

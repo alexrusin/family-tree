@@ -131,7 +131,7 @@ export function createFamilyPictureImageClient(
           image: images,
           prompt,
           size: OUTPUT_SIZE,
-          output_format: "webp",
+          output_format: "jpeg",
         });
         return extractImageBytes(response);
       } catch (error) {
@@ -156,7 +156,7 @@ export function createFamilyPictureImageClient(
           image,
           prompt,
           size: OUTPUT_SIZE,
-          output_format: "webp",
+          output_format: "jpeg",
         });
         return extractImageBytes(response);
       } catch (error) {

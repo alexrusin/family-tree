@@ -61,6 +61,7 @@ describe("generate", () => {
     expect(body.model).toBe("gpt-image-test");
     expect(body.prompt).toBe("a warm family portrait");
     expect(body.size).toBe("1024x1024");
+    expect(body.output_format).toBe("jpeg");
     expect(Array.isArray(body.image)).toBe(true);
     expect(body.image).toHaveLength(2);
   });
@@ -80,6 +81,7 @@ describe("tweak", () => {
     expect(edit).toHaveBeenCalledTimes(1);
     const body = edit.mock.calls[0][0];
     expect(body.prompt).toBe("make it sunset");
+    expect(body.output_format).toBe("jpeg");
     // With no crops this stays a single-image edit.
     expect(Array.isArray(body.image)).toBe(false);
   });
