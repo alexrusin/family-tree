@@ -27,8 +27,8 @@ interface FamilyPictureResultStepT {
   };
 }
 
-/** The image route and its watermarked-download counterpart differ only in
- * this one path segment; both carry the same `?v=` Version selector. */
+/** The image route and its download counterpart differ only in this one
+ * path segment; both carry the same `?v=` Version selector. */
 function toDownloadUrl(imageUrl: string): string {
   return imageUrl.replace("/image?", "/download?");
 }

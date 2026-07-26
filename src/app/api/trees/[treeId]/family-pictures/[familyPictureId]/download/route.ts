@@ -1,7 +1,6 @@
 import { withTreeRole } from "@/lib/with-tree-role";
 import { createS3Client, downloadPhotoByKey } from "@/lib/tree-domain/photo-upload";
 import { resolveCurrentVersion } from "@/lib/family-picture/current-version";
-import { burnAiGeneratedLabel } from "@/lib/family-picture/watermark";
 
 function isPhotoNotFoundError(error: unknown): boolean {
   if (!error || typeof error !== "object") {
@@ -11,12 +10,28 @@ function isPhotoNotFoundError(error: unknown): boolean {
   return maybeError.Code === "NoSuchKey" || maybeError.name === "NoSuchKey";
 }
 
+const EXTENSION_CONTENT_TYPES: Record<string, string> = {
+  jpg: "image/jpeg",
+  jpeg: "image/jpeg",
+  webp: "image/webp",
+};
+
+/** Derives Content-Type and filename extension from the stored key so a
+ * Version's download always matches whatever format it was actually stored
+ * in (ADR 0009), rather than hardcoding one format for every Version. */
+function fileInfoForKey(key: string): { contentType: string; extension: string } {
+  const extension = key.split(".").pop()?.toLowerCase() ?? "";
+  return {
+    contentType: EXTENSION_CONTENT_TYPES[extension] ?? "application/octet-stream",
+    extension,
+  };
+}
+
 /**
- * Serves an exported copy of a Family Picture with the "AI-generated" label
- * burned into the pixels (PRD provenance requirement), as an attachment
- * download. The S3-stored Version itself is left untouched so it keeps the
- * provider's own provenance metadata (ADR 0007) — only this export copy is
- * re-encoded.
+ * Serves the untouched S3 original for a Family Picture Version as an
+ * attachment download (ADR 0009) — no re-encode, so the served bytes and
+ * the provider's native provenance metadata (C2PA, per ADR 0007) are
+ * preserved exactly as stored.
  */
 export const GET = withTreeRole<{ treeId: string; familyPictureId: string }>(
   "viewer",
@@ -66,13 +81,13 @@ export const GET = withTreeRole<{ treeId: string; familyPictureId: string }>(
         key: version.s3Key,
       });
 
-      const watermarked = await burnAiGeneratedLabel(photo.body);
+      const { contentType, extension } = fileInfoForKey(version.s3Key);
 
-      return new Response(Buffer.from(watermarked), {
+      return new Response(Buffer.from(photo.body), {
         status: 200,
         headers: {
-          "Content-Type": "image/webp",
-          "Content-Disposition": `attachment; filename="family-picture-v${version.versionNumber}.webp"`,
+          "Content-Type": contentType,
+          "Content-Disposition": `attachment; filename="family-picture-v${version.versionNumber}.${extension}"`,
           "Cache-Control": "private, max-age=60",
         },
       });
