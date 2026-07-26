@@ -1,4 +1,5 @@
 import type { SettingPresetId, StylePresetId } from "./prompt-builder";
+import type { Orientation } from "./image-client";
 
 export interface PresetOption<Id extends string> {
   id: Id;
@@ -37,6 +38,12 @@ export function isStylePresetId(value: string): value is StylePresetId {
 
 export function isSettingPresetId(value: string): value is SettingPresetId {
   return SETTING_PRESET_IDS.has(value);
+}
+
+const ORIENTATIONS = new Set<string>(["landscape", "portrait"]);
+
+export function isOrientation(value: string): value is Orientation {
+  return ORIENTATIONS.has(value);
 }
 
 /** Server-validation cap for both free-text fields (custom place, personal touch). */

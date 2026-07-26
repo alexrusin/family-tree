@@ -3,7 +3,7 @@ import {
   buildFamilyPictureTweakPrompt,
   type Setting,
 } from "./prompt-builder";
-import type { ImageBytes, ImageClient } from "./image-client";
+import type { ImageBytes, ImageClient, Orientation } from "./image-client";
 import type { StylePresetId } from "./prompt-builder";
 
 /** Everything the orchestrator needs to know about the Generation it's running. */
@@ -15,6 +15,7 @@ export interface GenerationJob {
   stylePreset: StylePresetId;
   setting: Setting;
   personalTouch: string | null;
+  orientation: Orientation;
 }
 
 /** Everything the orchestrator needs to know about the tweak Generation it's running. */
@@ -32,6 +33,8 @@ export interface TweakJob {
    */
   referencePhotoKeys: string[];
   instruction: string;
+  /** Sourced from the stored Family Picture, never from the tweak request — Orientation is locked at creation. */
+  orientation: Orientation;
 }
 
 /**
@@ -128,7 +131,11 @@ export async function runFamilyPictureGeneration(
       job.personalTouch,
     );
 
-    const imageBytes = await deps.imageClient.generate(referenceImages, prompt);
+    const imageBytes = await deps.imageClient.generate(
+      referenceImages,
+      prompt,
+      job.orientation,
+    );
     await persistSuccessfulVersion(
       deps,
       job.familyPictureId,
@@ -168,7 +175,12 @@ export async function runFamilyPictureTweak(
       )
     ).filter((bytes): bytes is ImageBytes => bytes !== null);
     const prompt = buildFamilyPictureTweakPrompt(job.instruction);
-    const imageBytes = await deps.imageClient.tweak(baseImage, referenceImages, prompt);
+    const imageBytes = await deps.imageClient.tweak(
+      baseImage,
+      referenceImages,
+      prompt,
+      job.orientation,
+    );
     await persistSuccessfulVersion(
       deps,
       job.familyPictureId,

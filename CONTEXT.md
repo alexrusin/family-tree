@@ -194,6 +194,11 @@ One image in a Family Picture's ordered history, produced by a single Generation
 
 The per-User, monthly cap on the number of Generations a User may consume. It exists to bound spend on an otherwise free feature and is the lever later monetization (subscription tier or purchased credits) will adjust.
 
+## Family Picture Orientation
+
+The fixed landscape-or-portrait shape a Family Picture is generated in. The User chooses it (Landscape or Portrait; there is no square) when first generating the picture, and it is then locked: every subsequent Version and tweak inherits the same Orientation, because a tweak refines the existing composition rather than recomposing it. It is an attribute of the Family Picture as a whole, not of an individual Version.
+_Avoid_: size, dimensions, aspect ratio
+
 ## Example Dialogue
 
 **Developer**: A Collaborator Viewer opened the Family Tree through the app and said the branches still overlap. Will they see the Manual Tree Arrangement an editor saved yesterday?

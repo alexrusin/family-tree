@@ -53,6 +53,7 @@ describe("generate", () => {
     const result = await client.generate(
       [new Uint8Array([1, 2, 3]), new Uint8Array([4, 5, 6])],
       "a warm family portrait",
+      "landscape",
     );
 
     expect(Buffer.from(result)).toEqual(expectedBytes);
@@ -60,9 +61,21 @@ describe("generate", () => {
     const body = edit.mock.calls[0][0];
     expect(body.model).toBe("gpt-image-test");
     expect(body.prompt).toBe("a warm family portrait");
-    expect(body.size).toBe("1024x1024");
+    expect(body.size).toBe("1536x1024");
+    expect(body.output_format).toBe("jpeg");
     expect(Array.isArray(body.image)).toBe(true);
     expect(body.image).toHaveLength(2);
+  });
+
+  it("maps portrait orientation to the 2:3 provider size", async () => {
+    const edit = vi.fn().mockResolvedValue(
+      fakeResponse(Buffer.from("x").toString("base64")),
+    );
+    const client = createFamilyPictureImageClient(fakeClient(edit), "gpt-image-test");
+
+    await client.generate([new Uint8Array([1])], "prompt", "portrait");
+
+    expect(edit.mock.calls[0][0].size).toBe("1024x1536");
   });
 });
 
@@ -74,12 +87,19 @@ describe("tweak", () => {
     );
     const client = createFamilyPictureImageClient(fakeClient(edit), "gpt-image-test");
 
-    const result = await client.tweak(new Uint8Array([9, 9, 9]), [], "make it sunset");
+    const result = await client.tweak(
+      new Uint8Array([9, 9, 9]),
+      [],
+      "make it sunset",
+      "landscape",
+    );
 
     expect(Buffer.from(result)).toEqual(expectedBytes);
     expect(edit).toHaveBeenCalledTimes(1);
     const body = edit.mock.calls[0][0];
     expect(body.prompt).toBe("make it sunset");
+    expect(body.size).toBe("1536x1024");
+    expect(body.output_format).toBe("jpeg");
     // With no crops this stays a single-image edit.
     expect(Array.isArray(body.image)).toBe(false);
   });
@@ -92,12 +112,22 @@ describe("tweak", () => {
       new Uint8Array([9]),
       [new Uint8Array([1]), new Uint8Array([2])],
       "make it sunset",
+      "landscape",
     );
 
     const body = edit.mock.calls[0][0];
     // Base Version first (the image being edited), then one entry per crop.
     expect(Array.isArray(body.image)).toBe(true);
     expect(body.image).toHaveLength(3);
+  });
+
+  it("maps portrait orientation to the 2:3 provider size on tweak", async () => {
+    const edit = vi.fn().mockResolvedValue(fakeResponse(Buffer.from("x").toString("base64")));
+    const client = createFamilyPictureImageClient(fakeClient(edit), "gpt-image-test");
+
+    await client.tweak(new Uint8Array([9]), [], "make it sunset", "portrait");
+
+    expect(edit.mock.calls[0][0].size).toBe("1024x1536");
   });
 });
 
@@ -114,7 +144,7 @@ describe("typed failures", () => {
     const client = createFamilyPictureImageClient(fakeClient(edit), "gpt-image-test");
 
     await expect(
-      client.generate([new Uint8Array([1])], "prompt"),
+      client.generate([new Uint8Array([1])], "prompt", "landscape"),
     ).rejects.toBeInstanceOf(ImageGenerationRefusedError);
   });
 
@@ -130,7 +160,7 @@ describe("typed failures", () => {
     const client = createFamilyPictureImageClient(fakeClient(edit), "gpt-image-test");
 
     await expect(
-      client.tweak(new Uint8Array([1]), [], "instruction"),
+      client.tweak(new Uint8Array([1]), [], "instruction", "landscape"),
     ).rejects.toBeInstanceOf(ImageGenerationBillingError);
   });
 
@@ -146,7 +176,7 @@ describe("typed failures", () => {
     const client = createFamilyPictureImageClient(fakeClient(edit), "gpt-image-test");
 
     await expect(
-      client.generate([new Uint8Array([1])], "prompt"),
+      client.generate([new Uint8Array([1])], "prompt", "landscape"),
     ).rejects.toBeInstanceOf(ImageGenerationBillingError);
   });
 
@@ -155,7 +185,7 @@ describe("typed failures", () => {
     const client = createFamilyPictureImageClient(fakeClient(edit), "gpt-image-test");
 
     await expect(
-      client.generate([new Uint8Array([1])], "prompt"),
+      client.generate([new Uint8Array([1])], "prompt", "landscape"),
     ).rejects.toBeInstanceOf(ImageGenerationProviderError);
   });
 
@@ -164,7 +194,7 @@ describe("typed failures", () => {
     const client = createFamilyPictureImageClient(fakeClient(edit), "gpt-image-test");
 
     await expect(
-      client.generate([new Uint8Array([1])], "prompt"),
+      client.generate([new Uint8Array([1])], "prompt", "landscape"),
     ).rejects.toBeInstanceOf(ImageGenerationProviderError);
   });
 });

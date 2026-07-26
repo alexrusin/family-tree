@@ -3,6 +3,9 @@ import type { ImagesResponse } from "openai/resources/images";
 
 export type ImageBytes = Uint8Array;
 
+/** Fixed shape of a Family Picture, chosen at creation and locked for every Version (CONTEXT.md "Family Picture Orientation"). No square. */
+export type Orientation = "landscape" | "portrait";
+
 /**
  * The provider declined the request outright (content policy / moderation).
  * The orchestrator should refund the Generation reservation, not retry.
@@ -41,18 +44,28 @@ export class ImageGenerationProviderError extends Error {
  * interface so the spike-decided provider (ADR 0007) can be swapped later.
  */
 export interface ImageClient {
-  generate(referenceImages: ImageBytes[], prompt: string): Promise<ImageBytes>;
+  generate(
+    referenceImages: ImageBytes[],
+    prompt: string,
+    orientation: Orientation,
+  ): Promise<ImageBytes>;
   tweak(
     baseImage: ImageBytes,
     referenceImages: ImageBytes[],
     prompt: string,
+    orientation: Orientation,
   ): Promise<ImageBytes>;
 }
 
 // Confirmed in issue 06-preset-catalog-and-model-id (sign-off 2026-07-04).
 // OPENAI_IMAGE_MODEL lets the id be overridden as configuration if it changes.
 const SPIKE_MODEL_ID = "gpt-image-2";
-const OUTPUT_SIZE = "1024x1024";
+
+// Provider size mapping, owned here so the orchestrator stays provider-agnostic.
+const ORIENTATION_SIZES: Record<Orientation, "1536x1024" | "1024x1536"> = {
+  landscape: "1536x1024",
+  portrait: "1024x1536",
+};
 
 const REFUSAL_ERROR_CODES = new Set([
   "content_policy_violation",
@@ -119,7 +132,7 @@ export function createFamilyPictureImageClient(
   model: string = resolveGptImageModel(),
 ): ImageClient {
   return {
-    async generate(referenceImages, prompt) {
+    async generate(referenceImages, prompt, orientation) {
       try {
         const images = await Promise.all(
           referenceImages.map((image, index) =>
@@ -130,8 +143,8 @@ export function createFamilyPictureImageClient(
           model,
           image: images,
           prompt,
-          size: OUTPUT_SIZE,
-          output_format: "webp",
+          size: ORIENTATION_SIZES[orientation],
+          output_format: "jpeg",
         });
         return extractImageBytes(response);
       } catch (error) {
@@ -139,7 +152,7 @@ export function createFamilyPictureImageClient(
       }
     },
 
-    async tweak(baseImage, referenceImages, prompt) {
+    async tweak(baseImage, referenceImages, prompt, orientation) {
       try {
         const base = await toUploadableImage(baseImage, "base.png");
         const references = await Promise.all(
@@ -155,8 +168,8 @@ export function createFamilyPictureImageClient(
           model,
           image,
           prompt,
-          size: OUTPUT_SIZE,
-          output_format: "webp",
+          size: ORIENTATION_SIZES[orientation],
+          output_format: "jpeg",
         });
         return extractImageBytes(response);
       } catch (error) {

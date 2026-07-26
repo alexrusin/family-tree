@@ -70,6 +70,7 @@ describe("/api/trees/[treeId]/family-pictures/[familyPictureId]/tweak", () => {
       userId: "user-1",
       currentVersionNumber: 1,
       memberSnapshot: [{ id: "m1" }, { id: "m2" }],
+      orientation: "landscape",
     });
     prismaMock.familyPictureVersion.findUnique.mockResolvedValue({
       s3Key: "users/user-1/family-pictures/fp1/v1.webp",
@@ -114,7 +115,25 @@ describe("/api/trees/[treeId]/family-pictures/[familyPictureId]/tweak", () => {
       baseImageKey: "users/user-1/family-pictures/fp1/v1.webp",
       referencePhotoKeys: ["trees/t1/members/m1.webp", "trees/t1/members/m2.webp"],
       instruction: "make it sunset",
+      orientation: "landscape",
     });
+  });
+
+  it("inherits orientation from the stored Family Picture rather than the request", async () => {
+    prismaMock.familyPicture.findFirst.mockResolvedValue({
+      userId: "user-1",
+      currentVersionNumber: 1,
+      memberSnapshot: [{ id: "m1" }, { id: "m2" }],
+      orientation: "portrait",
+    });
+
+    // Even if the request tried to smuggle in a different orientation, the
+    // route never reads it — it's a locked attribute of the Family Picture.
+    await POST(jsonRequest({ instruction: "make it sunset", orientation: "landscape" }), params());
+
+    expect(processFamilyPictureTweakMock).toHaveBeenCalledWith(
+      expect.objectContaining({ orientation: "portrait" }),
+    );
   });
 
   it("passes the depicted members' current face crops as likeness references (story 17)", async () => {

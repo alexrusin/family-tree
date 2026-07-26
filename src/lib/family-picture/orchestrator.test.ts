@@ -32,6 +32,7 @@ const job = {
   stylePreset: "bw" as const,
   setting: { preset: "garden" as const },
   personalTouch: "add a birthday cake",
+  orientation: "landscape" as const,
 };
 
 describe("runFamilyPictureGeneration", () => {
@@ -44,6 +45,7 @@ describe("runFamilyPictureGeneration", () => {
     expect(deps.imageClient.generate).toHaveBeenCalledWith(
       [new Uint8Array([9]), new Uint8Array([9])],
       expect.stringContaining("add a birthday cake"),
+      "landscape",
     );
     expect(deps.uploadVersionImage).toHaveBeenCalledWith(
       "users/u1/family-pictures/fp1/v1.webp",
@@ -59,6 +61,18 @@ describe("runFamilyPictureGeneration", () => {
     expect(deps.markFailed).not.toHaveBeenCalled();
     expect(deps.consumeAllowance).toHaveBeenCalledWith("gen1");
     expect(deps.refundAllowance).not.toHaveBeenCalled();
+  });
+
+  it("passes the job's orientation through to the image client", async () => {
+    const deps = makeDeps();
+
+    await runFamilyPictureGeneration(deps, { ...job, orientation: "portrait" });
+
+    expect(deps.imageClient.generate).toHaveBeenCalledWith(
+      expect.any(Array),
+      expect.any(String),
+      "portrait",
+    );
   });
 
   it("failure path: an image client error marks the Generation failed, refunds the allowance, and writes nothing", async () => {
@@ -124,6 +138,7 @@ const tweakJob = {
   baseImageKey: "users/u1/family-pictures/fp1/v1.webp",
   referencePhotoKeys: ["trees/t1/members/m1.webp", "trees/t1/members/m2.webp"],
   instruction: "make it sunset",
+  orientation: "landscape" as const,
 };
 
 describe("runFamilyPictureTweak", () => {
@@ -144,6 +159,7 @@ describe("runFamilyPictureTweak", () => {
       new Uint8Array([9]),
       [new Uint8Array([24]), new Uint8Array([24])],
       expect.stringContaining("make it sunset"),
+      "landscape",
     );
     const tweakPrompt = vi.mocked(deps.imageClient.tweak).mock.calls[0][2];
     expect(tweakPrompt).toMatch(/likeness/i);
@@ -208,6 +224,7 @@ describe("runFamilyPictureTweak", () => {
       new Uint8Array([9]),
       [new Uint8Array([7])],
       expect.any(String),
+      "landscape",
     );
     expect(deps.markSucceeded).toHaveBeenCalledWith("gen2");
     expect(deps.markFailed).not.toHaveBeenCalled();
@@ -225,7 +242,21 @@ describe("runFamilyPictureTweak", () => {
       new Uint8Array([9]),
       [],
       expect.any(String),
+      "landscape",
     );
     expect(deps.markSucceeded).toHaveBeenCalledWith("gen2");
+  });
+
+  it("passes the job's orientation through to the image client", async () => {
+    const deps = makeTweakDeps();
+
+    await runFamilyPictureTweak(deps, { ...tweakJob, orientation: "portrait" });
+
+    expect(deps.imageClient.tweak).toHaveBeenCalledWith(
+      expect.any(Uint8Array),
+      expect.any(Array),
+      expect.any(String),
+      "portrait",
+    );
   });
 });

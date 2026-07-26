@@ -143,14 +143,17 @@ export async function uploadProcessedPhoto(params: {
   bucket: string;
   key: string;
   buffer: Buffer;
+  contentType?: string;
 }): Promise<void> {
+  const contentType = params.contentType ?? "image/webp";
+
   try {
     await params.s3Client.send(
       new PutObjectCommand({
         Bucket: params.bucket,
         Key: params.key,
         Body: params.buffer,
-        ContentType: "image/webp",
+        ContentType: contentType,
       }),
     );
   } catch (error) {
@@ -164,7 +167,7 @@ export async function uploadProcessedPhoto(params: {
         Bucket: params.bucket,
         Key: params.key,
         Body: params.buffer,
-        ContentType: "image/webp",
+        ContentType: contentType,
       }),
     );
   }

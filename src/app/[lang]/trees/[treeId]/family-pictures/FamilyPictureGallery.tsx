@@ -46,7 +46,7 @@ export default function FamilyPictureGallery({
       ) : pictures.length === 0 ? (
         <p className="text-sm text-stone-400 py-8 text-center">{t.empty}</p>
       ) : (
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 items-start">
           {pictures.map((picture) => (
             <div
               key={picture.id}
@@ -75,7 +75,13 @@ export default function FamilyPictureGallery({
                   <Trash2 className="w-4 h-4" />
                 </button>
               )}
-              <div className="relative aspect-[4/3] bg-stone-100">
+              <div
+                className={[
+                  "relative bg-stone-100",
+                  picture.orientation === "portrait" ? "aspect-[2/3]" : "aspect-[3/2]",
+                ].join(" ")}
+              >
+
                 {picture.status === "pending" && (
                   <div className="w-full h-full flex items-center justify-center">
                     <Loader2 className="w-8 h-8 text-amber-700 animate-spin" />

@@ -1,27 +1,21 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { NextRequest } from "next/server";
 
-const {
-  getSessionMock,
-  prismaMock,
-  createS3ClientMock,
-  downloadPhotoByKeyMock,
-  burnAiGeneratedLabelMock,
-} = vi.hoisted(() => {
-  const getSessionMock = vi.fn();
-  const prismaMock = {
-    familyTree: { findUnique: vi.fn() },
-    collaborator: { findUnique: vi.fn() },
-    familyPicture: { findFirst: vi.fn() },
-  };
-  return {
-    getSessionMock,
-    prismaMock,
-    createS3ClientMock: vi.fn(() => ({})),
-    downloadPhotoByKeyMock: vi.fn(),
-    burnAiGeneratedLabelMock: vi.fn(),
-  };
-});
+const { getSessionMock, prismaMock, createS3ClientMock, downloadPhotoByKeyMock } =
+  vi.hoisted(() => {
+    const getSessionMock = vi.fn();
+    const prismaMock = {
+      familyTree: { findUnique: vi.fn() },
+      collaborator: { findUnique: vi.fn() },
+      familyPicture: { findFirst: vi.fn() },
+    };
+    return {
+      getSessionMock,
+      prismaMock,
+      createS3ClientMock: vi.fn(() => ({})),
+      downloadPhotoByKeyMock: vi.fn(),
+    };
+  });
 
 vi.mock("@/lib/auth", () => ({
   auth: { api: { getSession: getSessionMock } },
@@ -32,10 +26,6 @@ vi.mock("@/lib/prisma", () => ({ prisma: prismaMock }));
 vi.mock("@/lib/tree-domain/photo-upload", () => ({
   createS3Client: createS3ClientMock,
   downloadPhotoByKey: downloadPhotoByKeyMock,
-}));
-
-vi.mock("@/lib/family-picture/watermark", () => ({
-  burnAiGeneratedLabel: burnAiGeneratedLabelMock,
 }));
 
 const { GET } = await import("./route");
@@ -54,16 +44,15 @@ describe("/api/trees/[treeId]/family-pictures/[familyPictureId]/download", () =>
       body: new Uint8Array([1, 2, 3]),
       contentType: "image/webp",
     });
-    burnAiGeneratedLabelMock.mockResolvedValue(new Uint8Array([9, 9, 9]));
   });
 
-  it("serves the current Version as a watermarked attachment", async () => {
+  it("serves the untouched stored bytes for the current Version", async () => {
     prismaMock.familyPicture.findFirst.mockResolvedValue({
       userId: "user-1",
       currentVersionNumber: 2,
       versions: [
-        { s3Key: "k2", versionNumber: 2 },
-        { s3Key: "k1", versionNumber: 1 },
+        { s3Key: "k2.webp", versionNumber: 2 },
+        { s3Key: "k1.webp", versionNumber: 1 },
       ],
     });
 
@@ -80,14 +69,37 @@ describe("/api/trees/[treeId]/family-pictures/[familyPictureId]/download", () =>
     expect(downloadPhotoByKeyMock).toHaveBeenCalledWith({
       s3Client: {},
       bucket: "test-bucket",
-      key: "k2",
+      key: "k2.webp",
     });
-    expect(burnAiGeneratedLabelMock).toHaveBeenCalledWith(
-      new Uint8Array([1, 2, 3]),
+
+    const body = new Uint8Array(await response.arrayBuffer());
+    expect(body).toEqual(new Uint8Array([1, 2, 3]));
+  });
+
+  it("derives Content-Type and filename from a jpg Version's stored key", async () => {
+    prismaMock.familyPicture.findFirst.mockResolvedValue({
+      userId: "user-1",
+      currentVersionNumber: 3,
+      versions: [{ s3Key: "k3.jpg", versionNumber: 3 }],
+    });
+    downloadPhotoByKeyMock.mockResolvedValue({
+      body: new Uint8Array([4, 5, 6]),
+      contentType: "image/jpeg",
+    });
+
+    const response = await GET(
+      new NextRequest("http://localhost/api/trees/t1/family-pictures/fp1/download"),
+      params(),
+    );
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("Content-Type")).toBe("image/jpeg");
+    expect(response.headers.get("Content-Disposition")).toBe(
+      'attachment; filename="family-picture-v3.jpg"',
     );
 
     const body = new Uint8Array(await response.arrayBuffer());
-    expect(body).toEqual(new Uint8Array([9, 9, 9]));
+    expect(body).toEqual(new Uint8Array([4, 5, 6]));
   });
 
   it("serves a specific requested Version via ?v=", async () => {
@@ -95,8 +107,8 @@ describe("/api/trees/[treeId]/family-pictures/[familyPictureId]/download", () =>
       userId: "user-1",
       currentVersionNumber: 2,
       versions: [
-        { s3Key: "k2", versionNumber: 2 },
-        { s3Key: "k1", versionNumber: 1 },
+        { s3Key: "k2.webp", versionNumber: 2 },
+        { s3Key: "k1.webp", versionNumber: 1 },
       ],
     });
 
@@ -114,7 +126,7 @@ describe("/api/trees/[treeId]/family-pictures/[familyPictureId]/download", () =>
     expect(downloadPhotoByKeyMock).toHaveBeenCalledWith({
       s3Client: {},
       bucket: "test-bucket",
-      key: "k1",
+      key: "k1.webp",
     });
   });
 
