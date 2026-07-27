@@ -40,7 +40,7 @@ export function isSettingPresetId(value: string): value is SettingPresetId {
   return SETTING_PRESET_IDS.has(value);
 }
 
-const ORIENTATIONS = new Set<string>(["landscape", "portrait"]);
+const ORIENTATIONS = new Set<string>(["landscape", "portrait", "square"]);
 
 export function isOrientation(value: string): value is Orientation {
   return ORIENTATIONS.has(value);

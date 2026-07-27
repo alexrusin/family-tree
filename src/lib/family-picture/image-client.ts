@@ -3,8 +3,8 @@ import type { ImagesResponse } from "openai/resources/images";
 
 export type ImageBytes = Uint8Array;
 
-/** Fixed shape of a Family Picture, chosen at creation and locked for every Version (CONTEXT.md "Family Picture Orientation"). No square. */
-export type Orientation = "landscape" | "portrait";
+/** Fixed shape of a Family Picture, chosen at creation and locked for every Version (CONTEXT.md "Family Picture Orientation"). Landscape, portrait, or square. */
+export type Orientation = "landscape" | "portrait" | "square";
 
 /**
  * The provider declined the request outright (content policy / moderation).
@@ -62,9 +62,13 @@ export interface ImageClient {
 const SPIKE_MODEL_ID = "gpt-image-2";
 
 // Provider size mapping, owned here so the orchestrator stays provider-agnostic.
-const ORIENTATION_SIZES: Record<Orientation, "1536x1024" | "1024x1536"> = {
+const ORIENTATION_SIZES: Record<
+  Orientation,
+  "1536x1024" | "1024x1536" | "1024x1024"
+> = {
   landscape: "1536x1024",
   portrait: "1024x1536",
+  square: "1024x1024",
 };
 
 const REFUSAL_ERROR_CODES = new Set([

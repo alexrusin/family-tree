@@ -77,6 +77,17 @@ describe("generate", () => {
 
     expect(edit.mock.calls[0][0].size).toBe("1024x1536");
   });
+
+  it("maps square orientation to the 1:1 provider size", async () => {
+    const edit = vi.fn().mockResolvedValue(
+      fakeResponse(Buffer.from("x").toString("base64")),
+    );
+    const client = createFamilyPictureImageClient(fakeClient(edit), "gpt-image-test");
+
+    await client.generate([new Uint8Array([1])], "prompt", "square");
+
+    expect(edit.mock.calls[0][0].size).toBe("1024x1024");
+  });
 });
 
 describe("tweak", () => {
@@ -128,6 +139,15 @@ describe("tweak", () => {
     await client.tweak(new Uint8Array([9]), [], "make it sunset", "portrait");
 
     expect(edit.mock.calls[0][0].size).toBe("1024x1536");
+  });
+
+  it("maps square orientation to the 1:1 provider size on tweak", async () => {
+    const edit = vi.fn().mockResolvedValue(fakeResponse(Buffer.from("x").toString("base64")));
+    const client = createFamilyPictureImageClient(fakeClient(edit), "gpt-image-test");
+
+    await client.tweak(new Uint8Array([9]), [], "make it sunset", "square");
+
+    expect(edit.mock.calls[0][0].size).toBe("1024x1024");
   });
 });
 

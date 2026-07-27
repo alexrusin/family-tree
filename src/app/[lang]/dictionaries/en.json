@@ -617,6 +617,8 @@
       "landscapeSub": "Wide · classic photo",
       "portraitLabel": "Portrait",
       "portraitSub": "Tall · framed print",
+      "squareLabel": "Square",
+      "squareSub": "1:1 · canvas print",
       "back": "Back",
       "generateButton": "Generate portrait"
     },
@@ -670,7 +672,7 @@
       "ERR_MEMBERS_REQUIRED": "Choose at least one relative.",
       "ERR_INVALID_STYLE_PRESET": "Choose a style.",
       "ERR_INVALID_SETTING": "Choose a setting, or name your own place.",
-      "ERR_INVALID_ORIENTATION": "Choose landscape or portrait.",
+      "ERR_INVALID_ORIENTATION": "Choose landscape, portrait, or square.",
       "ERR_TEXT_TOO_LONG": "Keep it to 150 characters or fewer.",
       "ERR_MEMBER_NOT_FOUND": "One of the selected relatives could no longer be found. Please review your selection.",
       "ERR_INELIGIBLE_MEMBERS": "One or more selected relatives can no longer be included. Please review your selection.",
