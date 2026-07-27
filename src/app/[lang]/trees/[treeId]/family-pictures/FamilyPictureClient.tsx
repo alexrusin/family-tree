@@ -84,6 +84,8 @@ export interface FamilyPictureT {
     landscapeSub: string;
     portraitLabel: string;
     portraitSub: string;
+    squareLabel: string;
+    squareSub: string;
     back: string;
     generateButton: string;
   };
@@ -1174,7 +1176,7 @@ export default function FamilyPictureClient({
               <p className="text-stone-500 text-sm mb-5">
                 {t.presets.orientationSubtitle}
               </p>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-3 gap-3">
                 {(
                   [
                     {
@@ -1188,6 +1190,12 @@ export default function FamilyPictureClient({
                       label: t.presets.portraitLabel,
                       sub: t.presets.portraitSub,
                       glyphClass: "w-5 h-8",
+                    },
+                    {
+                      id: "square",
+                      label: t.presets.squareLabel,
+                      sub: t.presets.squareSub,
+                      glyphClass: "w-6 h-6",
                     },
                   ] as const
                 ).map((preset) => (

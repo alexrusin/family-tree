@@ -196,7 +196,7 @@ The per-User, monthly cap on the number of Generations a User may consume. It ex
 
 ## Family Picture Orientation
 
-The fixed landscape-or-portrait shape a Family Picture is generated in. The User chooses it (Landscape or Portrait; there is no square) when first generating the picture, and it is then locked: every subsequent Version and tweak inherits the same Orientation, because a tweak refines the existing composition rather than recomposing it. It is an attribute of the Family Picture as a whole, not of an individual Version.
+The fixed shape a Family Picture is generated in. The User chooses it (Landscape, Portrait, or Square) when first generating the picture, and it is then locked: every subsequent Version and tweak inherits the same Orientation, because a tweak refines the existing composition rather than recomposing it. It is an attribute of the Family Picture as a whole, not of an individual Version.
 _Avoid_: size, dimensions, aspect ratio
 
 ## Example Dialogue

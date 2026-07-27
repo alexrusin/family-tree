@@ -78,7 +78,11 @@ export default function FamilyPictureGallery({
               <div
                 className={[
                   "relative bg-stone-100",
-                  picture.orientation === "portrait" ? "aspect-[2/3]" : "aspect-[3/2]",
+                  picture.orientation === "portrait"
+                    ? "aspect-[2/3]"
+                    : picture.orientation === "square"
+                      ? "aspect-square"
+                      : "aspect-[3/2]",
                 ].join(" ")}
               >
 

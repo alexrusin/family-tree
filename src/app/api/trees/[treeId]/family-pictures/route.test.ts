@@ -366,7 +366,7 @@ describe("/api/trees/[treeId]/family-pictures", () => {
           memberIds: ["m1"],
           stylePreset: "bw",
           settingPreset: "garden",
-          orientation: "square",
+          orientation: "diagonal",
         }),
         { params: Promise.resolve({ treeId: "t1" }) },
       );
